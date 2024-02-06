@@ -6,14 +6,14 @@
 #
 #    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 #
-from WorkerThread import WorkerThread
+from WorkerProcess import WorkerProcess
 import avro.schema
 from avro.io import DatumReader
 import io
 
-class WorkerThread1(WorkerThread):
-	def __init__(self, thread_id, workermanager, name="S22Rate"):
-		super().__init__(thread_id, workermanager, name)
+class WorkerProcess1(WorkerProcess):
+	def __init__(self, thread_id, workermanager, processdata_shared, name="S22Rate"):
+		super().__init__(thread_id, workermanager, processdata_shared, name)
 
 		# Load Avro schema from the provided schema string
 		avro_schema_str = '''
@@ -43,7 +43,7 @@ class WorkerThread1(WorkerThread):
 	def process_data(self, data, priority):
 		super().process_data(data, priority)
 		# Custom processing logic for Worker1
-		#print("Process data...")
+		print("Process data...")
 		# Deserialize the Avro message using avro library
 		if self.supervisor.dataflowtype == "Stream":
 			bytes_io = io.BytesIO(data)
@@ -56,4 +56,3 @@ class WorkerThread1(WorkerThread):
 			
 		if self.supervisor.dataflowtype == "File":
 			print(data)
-

@@ -1,10 +1,18 @@
+# Copyright (C) 2024 INAF
+# This software was provided as IKC to the Cherenkov Telescope Array Observatory
+# This software is distributed under the terms of the BSD-3-Clause license
+#
+# Authors:
+#
+#    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
+#
 import sys
 import threading
 from Supervisor1 import Supervisor1
 
 def main(json_file_path, consumername):
     #try:
-        supervisor_instance = Supervisor1(json_file_path, consumername)
+        supervisor_instance = Supervisor1(json_file_path, "File", consumername)
         supervisor_instance.start()
     #except Exception as e:
     #    print(f"Error: {e}")

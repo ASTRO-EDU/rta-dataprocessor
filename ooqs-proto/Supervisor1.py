@@ -1,15 +1,20 @@
 from Supervisor import Supervisor
-from WorkerThread1 import WorkerThread1
+from WorkerManager1 import WorkerManager1
 
 class Supervisor1(Supervisor):
-    def __init__(self, config_file="config.json", name="None"):
-        super().__init__(config_file, name)
+	def __init__(self, config_file="config.json", dataflowtype = "Stream", name="OOQS1"):
+		super().__init__(config_file, dataflowtype, name)
 
-    def start_threads(self, num_threads=5):
-        #Worker threads
-        for i in range(num_threads):
-            thread = WorkerThread1(i, self)
-            self.worker_threads.append(thread)
-            thread.start()
-            print("Started ooqs threads")
+	def start_managers(self):
+		# manager1 = WorkerManager1(self, "Thread", "S22Rate")
+		# manager1.start()
+		# self.manager_workers.append(manager1)
+
+		manager1 = WorkerManager1(self, "Process", "S22Rate")
+		manager1.start()
+		self.manager_workers.append(manager1)
+
+		# manager2 = WorkerManager1(self, "Thread", "S22Mean")
+		# manager2.start()
+		# self.manager_workers.append(manager2)
 

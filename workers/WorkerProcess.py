@@ -6,20 +6,23 @@
 #
 #    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 #
-import threading
 import queue
+import multiprocessing
 import json
 import time
+from multiprocessing import Event, Queue, Process
 from threading import Timer
+import psutil
 
-class WorkerThread(threading.Thread):
-    def __init__(self, worker_id, manager, name="None"):
+class WorkerProcess(Process):
+    def __init__(self, worker_id, manager, processdata_shared, name="None"):
         super().__init__()
         self.manager = manager
         self.supervisor = manager.supervisor
         self.worker_id = worker_id
         self.name = name
-        self.globalname = f"WorkerThread-{self.supervisor.name}-{self.manager.name}-{self.name}-{self.worker_id}"
+        self.pidprocess = psutil.Process().pid
+        self.globalname = f"WorkerProcess-{self.supervisor.name}-{self.manager.name}-{self.name}-{self.worker_id}"
 
         self.low_priority_queue = self.manager.low_priority_queue
         self.high_priority_queue = self.manager.high_priority_queue
@@ -32,25 +35,23 @@ class WorkerThread(threading.Thread):
         self.total_processed_data_count = 0
         self.processing_rate = 0
 
-        self._stop_event = threading.Event()  # Set the stop event
+        self._stop_event = Event()  # Set the stop event
 
-        self.processdata = 0
+        self.processdata_shared = processdata_shared
 
-        print(f"{self.globalname} started")
+        print(f"{self.globalname} started {self.pidprocess}")
 
     def stop(self):
         self._stop_event.set()  # Set the stop event
 
-    def set_processdata(self, processdata1):
-        self.processdata=processdata1
-
     def run(self):
-        self.start_timer(10)
+        self.start_timer(1)
 
         while not self._stop_event.is_set():
-            time.sleep(0.00001) #must be 0
-
-            if self.manager.processdata == 1:
+            time.sleep(0.0001) #must be 0
+ 
+            if self.processdata_shared.value == 1:
+ 
                 try:
                     # Check and process high-priority queue first
                     high_priority_data = self.high_priority_queue.get_nowait()
@@ -62,9 +63,9 @@ class WorkerThread(threading.Thread):
                         self.process_data(low_priority_data, priority="Low")
                     except queue.Empty:
                         pass  # Continue if both queues are empty
-        
+
         self.timer.cancel()
-        print(f"Worker stop {self.globalname}")
+        print(f"WorkerProcess stop {self.globalname}")
 
     def start_timer(self, interval):
         self.timer = Timer(interval, self.calcdatarate)
@@ -74,7 +75,9 @@ class WorkerThread(threading.Thread):
         elapsed_time = time.time() - self.next_time
         self.next_time = time.time()
         self.processing_rate = self.processed_data_count / elapsed_time
+        self.manager.processing_rates_shared[self.worker_id] = self.processing_rate
         self.total_processed_data_count += self.processed_data_count
+        self.manager.total_processed_data_count_shared[self.worker_id] = self.total_processed_data_count
         print(f"{self.globalname} rate Hz {self.processing_rate:.1f} total events {self.total_processed_data_count}")
         self.processed_data_count = 0
 

@@ -15,28 +15,26 @@ import threading
 import avro.schema
 import avro.io
 import sys
+import h5py
+import os
 
 class AvroDataGenerator:
-    def __init__(self, config_file_path, queue, delay):
+    def __init__(self, config_file_path, queue, interval, output_folder="output"):
         self.config = self.read_config(config_file_path)
-        self.delay = float(delay)
+        self.interval = float(interval)
         self.queue = queue
+        self.output_folder = output_folder
 
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUSH)
 
         if self.queue == "hp":
-            self.socket.connect(self.config["datastream_hp_socket_push"])
+            self.socket.connect(self.config["datafile_hp_socket_push"])
         else:
-            self.socket.connect(self.config["datastream_lp_socket_push"])
+            self.socket.connect(self.config["datafile_lp_socket_push"])
 
-        #monitoring
-        self.start_time = time.time()
-        self.next_time = self.start_time
         self.processed_data_count = 0
         self.processing_rate = 0
-
-
 
     def generate_avro_data(self):
         # Generate an array of 16384 double values for the 'data' field
@@ -85,25 +83,25 @@ class AvroDataGenerator:
         return avro_message, avro_schema
 
     def main(self):
-        self.command_thread = threading.Thread(target=self.calcdatarate, daemon=True)
-        self.command_thread.start()
+        self.monitoring_thread = threading.Thread(target=self.calcdatarate, daemon=True)
+        self.monitoring_thread.start()
+
+        start_time = time.time()
+        current_file = None
+        avro_messages = []
 
         while True:
+            elapsed_time = time.time() - start_time
+
+            if elapsed_time >= self.interval:
+                start_time = time.time()
+                current_file = self.create_hdf5_file()
+                self.write_to_hdf5(current_file, avro_messages)
+                avro_messages = []
+
             avro_message, avro_schema = self.create_avro_message()
             self.processed_data_count += 1
-            #print(avro_message)
-            # Serialize the Avro message using avro library
-            writer = avro.io.DatumWriter(avro_schema)
-            bytes_io = io.BytesIO()
-            encoder = avro.io.BinaryEncoder(bytes_io)
-            writer.write(avro_message, encoder)
-            avro_binary_data = bytes_io.getvalue()
-
-            # Send the serialized Avro message via ZeroMQ
-            self.socket.send(avro_binary_data)
-
-            # Simulate a delay (adjust as needed)
-            time.sleep(self.delay)
+            avro_messages.append(avro_message)
 
     def read_config(self, file_path="config.json"):
         with open(file_path, "r") as file:
@@ -112,8 +110,7 @@ class AvroDataGenerator:
 
     def calcdatarate(self):
         while True:
-            print("dc")
-            time.sleep(60)        
+            time.sleep(60)
             elapsed_time = time.time() - self.next_time
             if elapsed_time > 60:
                 self.next_time = time.time()
@@ -121,16 +118,34 @@ class AvroDataGenerator:
                 print(self.processing_rate)
                 self.processed_data_count = 0
 
+    def create_hdf5_file(self):
+        timestamp = int(time.time())
+        filename = os.path.join(self.output_folder, f"data_{timestamp}.h5")
+
+        # Create the directory if it does not exist
+        os.makedirs(self.output_folder, exist_ok=True)
+        
+        return filename
+
+    def write_to_hdf5(self, filename, avro_messages):
+        with h5py.File(filename, "w") as file:
+            for i, avro_message in enumerate(avro_messages):
+                group = file.create_group(f"data_group_{i}")
+                group.create_dataset("data", data=avro_message["data"])
+
+        # Send the filename via ZeroMQ
+        print(filename)
+        self.socket.send(filename.encode())
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
-        print("Usage: python script.py <config_file> <queue (lp|hp)> <delay>")
+        print("Usage: python script.py <config_file> <queue (lp|hp)> <interval>")
         sys.exit(1)
 
     config_file_path = sys.argv[1]
     queue = sys.argv[2]
-    delay = sys.argv[3]
+    interval = sys.argv[3]
 
-    avro_data_generator = AvroDataGenerator(config_file_path, queue, delay)
+    avro_data_generator = AvroDataGenerator(config_file_path, queue, interval)
     avro_data_generator.main()
 
