@@ -148,19 +148,25 @@ class Supervisor:
                 for manager in self.manager_workers: 
                     self.high_priority_queue.put(data) 
 
+    #to be reimplemented
+    def decode_file(self, filename):
+        return filename
+
     def listen_for_lp_file(self):
         while True:
             if not self.suspenddata:
                 filename = self.socket_lp_file.recv()
                 for manager in self.manager_workers: 
-                    manager.low_priority_queue.put(filename) 
+                    data = self.decode_file(filename) 
+                    manager.low_priority_queue.put(data) 
 
     def listen_for_hp_file(self):
         while True:
             if not self.suspenddata:
                 filename = self.socket_hp_file.recv()
-                for manager in self.manager_workers: 
-                    self.high_priority_queue.put(filename) 
+                for manager in self.manager_workers:
+                    data = self.decode_file(filename) 
+                    self.high_priority_queue.put(data) 
 
     def listen_for_commands(self):
         while True:

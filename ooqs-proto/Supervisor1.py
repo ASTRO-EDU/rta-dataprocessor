@@ -18,3 +18,5 @@ class Supervisor1(Supervisor):
 		# manager2.start()
 		# self.manager_workers.append(manager2)
 
+	def decode_file(self, filename):
+		return filename
