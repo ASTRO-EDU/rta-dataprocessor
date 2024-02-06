@@ -176,6 +176,7 @@ class Supervisor:
         if pidtarget == self.name or pidtarget == "all".lower() or pidtarget == "*":
             if subtype_value == "shutdown":
                 self.status = "Shutdown"
+                self.suspenddata = True
                 self.stop_all(True)
                 self.continueall = False
             if subtype_value == "cleanedshutdown":
@@ -257,7 +258,10 @@ class Supervisor:
 
         # Stop managers
         for manager in self.manager_workers: 
-            manager.stop(fast)
+            if manager.manager_type == "Process":
+                manager.stop(False)
+            else:
+                manager.stop(fast)
             manager.join()
 
         print("All workers and managers terminated.")
