@@ -7,10 +7,14 @@
 	"datafile_lp_socket_pull": "tcp://*:5557",
 	"datafile_hp_socket_push": "tcp://localhost:5558",
 	"datafile_hp_socket_pull": "tcp://*:5558",
-	"command_socket_pubsub": "tcp://127.0.0.1:5559",
-	"monitoring_socket_push": "tcp://localhost:5560",
-	"monitoring_socket_pull": "tcp://*:5560",
-	"result_socket_push": "tcp://localhost:5561",
+	"datastring_lp_socket_push": "tcp://localhost:5559",
+	"datastring_lp_socket_pull": "tcp://*:5559",
+	"datastring_hp_socket_push": "tcp://localhost:5560",
+	"datastring_hp_socket_pull": "tcp://*:5560",
+	"command_socket_pubsub": "tcp://127.0.0.1:5561",
+	"monitoring_socket_push": "tcp://localhost:5562",
+	"monitoring_socket_pull": "tcp://*:5562",
+	"result_socket_push": "tcp://localhost:5563",
 	"num_workers": 5
   }
   

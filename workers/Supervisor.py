@@ -32,7 +32,9 @@ class Supervisor:
         self.context = zmq.Context()
 
         print(f"Supervisor: {self.dataflowtype} configuration")   
+
         if self.dataflowtype == "Stream":
+            print(f"self.globalname {self.dataflowtype}")
             #low priority data stream connection
             self.socket_lp_data = self.context.socket(zmq.PULL)
             self.socket_lp_data.bind(self.config_data["datastream_lp_socket_pull"])
@@ -41,12 +43,22 @@ class Supervisor:
             self.socket_hp_data.bind(self.config_data["datastream_hp_socket_pull"])
 
         if self.dataflowtype == "File":
-        #low priority data file connection
+            print(f"self.globalname {self.dataflowtype}")            
+            #low priority data file connection
             self.socket_lp_file = self.context.socket(zmq.PULL)
             self.socket_lp_file.bind(self.config_data["datafile_lp_socket_pull"])
             #high priority data file connection
             self.socket_hp_file = self.context.socket(zmq.PULL)
             self.socket_hp_file.bind(self.config_data["datafile_hp_socket_pull"])
+
+        if self.dataflowtype == "String":
+            print(f"self.globalname {self.dataflowtype}")
+            #low priority data file connection
+            self.socket_lp_string = self.context.socket(zmq.PULL)
+            self.socket_lp_string.bind(self.config_data["datastring_lp_socket_pull"])
+            #high priority data file connection
+            self.socket_hp_string = self.context.socket(zmq.PULL)
+            self.socket_hp_string.bind(self.config_data["datastring_hp_socket_pull"])
         
         self.socket_command = self.context.socket(zmq.SUB)
         self.socket_command.connect(self.config_data["command_socket_pubsub"])
@@ -89,6 +101,7 @@ class Supervisor:
         #self.command_thread.start()
 
         if self.dataflowtype == "Stream":
+            print(f"self.globalname {self.dataflowtype}")
             #Data receiving on two queues: high and low priority
             self.lp_data_thread = threading.Thread(target=self.listen_for_lp_data, daemon=True)
             self.lp_data_thread.start()
@@ -97,12 +110,22 @@ class Supervisor:
             self.hp_data_thread.start()
         
         if self.dataflowtype == "File":
+            print(f"self.globalname {self.dataflowtype}")
             #Data receiving on two queues: high and low priority
             self.lp_data_thread = threading.Thread(target=self.listen_for_lp_file, daemon=True)
             self.lp_data_thread.start()
 
             self.hp_data_thread = threading.Thread(target=self.listen_for_hp_file, daemon=True)
-            self.hp_data_thread.start()       
+            self.hp_data_thread.start()
+
+        if self.dataflowtype == "String":
+            #Data receiving on two queues: high and low priority
+            print(f"self.globalname {self.dataflowtype}")
+            self.lp_data_thread = threading.Thread(target=self.listen_for_lp_string, daemon=True)
+            self.lp_data_thread.start()
+
+            self.hp_data_thread = threading.Thread(target=self.listen_for_hp_string, daemon=True)
+            self.hp_data_thread.start()      
 
     #to be reimplemented ####
     def start_managers(self):
@@ -145,6 +168,20 @@ class Supervisor:
         while True:
             if not self.suspenddata:
                 data = self.socket_hp_data.recv()
+                for manager in self.manager_workers: 
+                    self.high_priority_queue.put(data) 
+
+    def listen_for_lp_string(self):
+        while True:
+            if not self.suspenddata:
+                data = self.socket_lp_string.recv_string()
+                for manager in self.manager_workers: 
+                    manager.low_priority_queue.put(data) 
+
+    def listen_for_hp_string(self):
+        while True:
+            if not self.suspenddata:
+                data = self.socket_hp_string.recv_string()
                 for manager in self.manager_workers: 
                     self.high_priority_queue.put(data) 
 
