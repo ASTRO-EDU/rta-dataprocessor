@@ -28,8 +28,8 @@ if __name__ == "__main__":
     consumername = sys.argv[2]
     dataflowtype = sys.argv[3]
 
-    if dataflowtype not in ["Stream", "File"]:
-        print("Invalid command type. Use 'Stream', 'File'.")
+    if dataflowtype not in ["Stream", "File", "String"]:
+        print("Invalid command type. Use 'Stream', 'File', 'String'.")
         sys.exit(1)
 
     # Call the main function with the provided JSON file path

@@ -57,3 +57,5 @@ class WorkerThread1(WorkerThread):
 		if self.supervisor.dataflowtype == "File":
 			print(data)
 
+		if self.supervisor.dataflowtype == "String":
+			print(data)
