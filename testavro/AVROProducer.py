@@ -26,12 +26,12 @@ class AvroDataGenerator:
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUSH)
 
-        if self.type == "string":
+        if self.type == "String":
             if self.queue == "hp":
                 self.socket.connect(self.config["datastring_hp_socket_push"])
             else:
                 self.socket.connect(self.config["datastring_lp_socket_push"])
-        if self.type == "binary":
+        if self.type == "Stream":
             if self.queue == "hp":
                 self.socket.connect(self.config["datastream_hp_socket_push"])
             else:
@@ -100,7 +100,7 @@ class AvroDataGenerator:
             self.processed_data_count += 1
             #print(avro_message)
             # Serialize the Avro message using avro library
-            if self.type == "binary":
+            if self.type == "Stream":
                 writer = avro.io.DatumWriter(avro_schema)
                 bytes_io = io.BytesIO()
                 encoder = avro.io.BinaryEncoder(bytes_io)
@@ -110,7 +110,7 @@ class AvroDataGenerator:
                 # Send the serialized Avro message via ZeroMQ
                 self.socket.send(avro_binary_data)
             
-            if self.type == "string":
+            if self.type == "String":
                 self.socket.send_string(json.dumps(avro_message))
 
             # Simulate a delay (adjust as needed)
@@ -135,7 +135,7 @@ class AvroDataGenerator:
 
 if __name__ == "__main__":
     if len(sys.argv) != 5:
-        print("Usage: python script.py <config_file> <queue (lp|hp)> <delay> <type binary|string>")
+        print("Usage: python script.py <config_file> <queue (lp|hp)> <delay> <type Stream|String>")
     
         sys.exit(1)
 
