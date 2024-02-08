@@ -1,3 +1,11 @@
+# Copyright (C) 2024 INAF
+# This software was provided as IKC to the Cherenkov Telescope Array Observatory
+# This software is distributed under the terms of the BSD-3-Clause license
+#
+# Authors:
+#
+#    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
+#
 from MonitoringPoint import MonitoringPoint
 from WorkerThread import WorkerThread
 from MonitoringThread import MonitoringThread
@@ -7,76 +15,65 @@ import json
 import zmq
 import queue
 import threading
-# Copyright (C) 2024 INAF
-# This software was provided as IKC to the Cherenkov Telescope Array Observatory
-# This software is distributed under the terms of the BSD-3-Clause license
-#
-# Authors:
-#
-#    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
+import signal
 import time
 import sys
 import psutil
 
 class Supervisor:
-    #dataflowtype = Stream | File
-    def __init__(self, config_file="config.json", dataflowtype="Stream", name = "None"):
+    def __init__(self, config_file="config.json", name = "None"):
         self.load_configuration(config_file)
         self.name = name
         self.globalname = "Supervisor-"+name
         self.continueall = True
-        self.dataflowtype = dataflowtype
-
         self.pid = psutil.Process().pid
 
         self.context = zmq.Context()
 
-        print(f"Supervisor: {self.dataflowtype} configuration")   
+        try:
+            self.processingtype = self.config_data["processingtype"]
+            self.dataflowtype = self.config_data["dataflowtype"]
+    
+            print(f"Supervisor: {self.globalname} / {self.dataflowtype} / {self.processingtype}")   
 
-        if self.dataflowtype == "Stream":
-            print(f"self.globalname {self.dataflowtype}")
             #low priority data stream connection
             self.socket_lp_data = self.context.socket(zmq.PULL)
-            self.socket_lp_data.bind(self.config_data["datastream_lp_socket_pull"])
+            self.socket_lp_data.bind(self.config_data["data_lp_socket_pull"])
             #high priority data stream connection
             self.socket_hp_data = self.context.socket(zmq.PULL)
-            self.socket_hp_data.bind(self.config_data["datastream_hp_socket_pull"])
+            self.socket_hp_data.bind(self.config_data["data_hp_socket_pull"])
+            
+            #command
+            self.socket_command = self.context.socket(zmq.SUB)
+            self.socket_command.connect(self.config_data["command_socket_pubsub"])
+            self.socket_command.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
+            
+            #monitoring
+            self.socket_monitoring = self.context.socket(zmq.PUSH)
+            self.socket_monitoring.connect(self.config_data["monitoring_socket_push"])
+            # self.monitoringpoint = MonitoringPoint(self)
+            # self.monitoring_thread = None
 
-        if self.dataflowtype == "File":
-            print(f"self.globalname {self.dataflowtype}")            
-            #low priority data file connection
-            self.socket_lp_file = self.context.socket(zmq.PULL)
-            self.socket_lp_file.bind(self.config_data["datafile_lp_socket_pull"])
-            #high priority data file connection
-            self.socket_hp_file = self.context.socket(zmq.PULL)
-            self.socket_hp_file.bind(self.config_data["datafile_hp_socket_pull"])
+        except Exception as e:
+            # Handle any other unexpected exceptions
+            print(f"ERROR: An unexpected error occurred: {e}")
+            sys.exit(1)
 
-        if self.dataflowtype == "String":
-            print(f"self.globalname {self.dataflowtype}")
-            #low priority data file connection
-            self.socket_lp_string = self.context.socket(zmq.PULL)
-            self.socket_lp_string.bind(self.config_data["datastring_lp_socket_pull"])
-            #high priority data file connection
-            self.socket_hp_string = self.context.socket(zmq.PULL)
-            self.socket_hp_string.bind(self.config_data["datastring_hp_socket_pull"])
-        
-        self.socket_command = self.context.socket(zmq.SUB)
-        self.socket_command.connect(self.config_data["command_socket_pubsub"])
-        self.socket_command.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
-        
-        self.socket_monitoring = self.context.socket(zmq.PUSH)
-        self.socket_monitoring.connect(self.config_data["monitoring_socket_push"])
-        # self.monitoringpoint = MonitoringPoint(self)
-        # self.monitoring_thread = None
+        else:
 
-        self.manager_workers = []
-        self.status = "Initialised"
+            self.manager_workers = []
 
-        #process data based on Supervisor state
-        self.processdata = 0
-        self.suspenddata = False
+            #process data based on Supervisor state
+            self.processdata = 0
+            self.suspenddata = False
 
-        print(f"{self.globalname} started")
+            # Set up signal handlers
+            signal.signal(signal.SIGTERM, self.handle_signals)
+            signal.signal(signal.SIGINT, self.handle_signals)
+
+            self.status = "Initialised"
+
+            print(f"{self.globalname} started")
 
     def load_configuration(self, config_file):
         try:
@@ -100,8 +97,7 @@ class Supervisor:
         #self.command_thread = threading.Thread(target=self.listen_for_commands, daemon=True)
         #self.command_thread.start()
 
-        if self.dataflowtype == "Stream":
-            print(f"self.globalname {self.dataflowtype}")
+        if self.dataflowtype == "binary":
             #Data receiving on two queues: high and low priority
             self.lp_data_thread = threading.Thread(target=self.listen_for_lp_data, daemon=True)
             self.lp_data_thread.start()
@@ -109,8 +105,7 @@ class Supervisor:
             self.hp_data_thread = threading.Thread(target=self.listen_for_hp_data, daemon=True)
             self.hp_data_thread.start()
         
-        if self.dataflowtype == "File":
-            print(f"self.globalname {self.dataflowtype}")
+        if self.dataflowtype == "filename":
             #Data receiving on two queues: high and low priority
             self.lp_data_thread = threading.Thread(target=self.listen_for_lp_file, daemon=True)
             self.lp_data_thread.start()
@@ -118,9 +113,8 @@ class Supervisor:
             self.hp_data_thread = threading.Thread(target=self.listen_for_hp_file, daemon=True)
             self.hp_data_thread.start()
 
-        if self.dataflowtype == "String":
+        if self.dataflowtype == "string":
             #Data receiving on two queues: high and low priority
-            print(f"self.globalname {self.dataflowtype}")
             self.lp_data_thread = threading.Thread(target=self.listen_for_lp_string, daemon=True)
             self.lp_data_thread.start()
 
@@ -129,16 +123,15 @@ class Supervisor:
 
     #to be reimplemented ####
     def start_managers(self):
-        #manager_type="Process" or manager_type="Thread"
-        manager = WorkerManager(self, "Process", "Generic")
+        manager = WorkerManager(self, "Generic")
         manager.start()
         self.manager_workers.append(manager)
 
     def start_workers(self, num_workers=5):
         for manager in self.manager_workers: 
-            if manager.manager_type == "Thread":
+            if self.processingtype == "thread":
                 manager.start_worker_threads(num_workers)
-            if manager.manager_type == "Process":
+            if self.processingtype == "process":
                 manager.start_worker_processes(num_workers)
 
     def start(self):
@@ -157,6 +150,18 @@ class Supervisor:
             self.stop_all()
             self.continueall = False
 
+    def handle_signals(self, signum, frame):
+        # Handle different signals
+        if signum == signal.SIGTERM:
+            print("SIGTERM received. Terminating with cleanedshutdown.")
+            self.command_cleanedshutdown()
+        elif signum == signal.SIGINT:
+            print("SIGINT received. Terminating with shutdown.")
+            self.command_shutdown()
+        else:
+            print(f"Received signal {signum}. Terminating.")
+            self.command_shutdown()
+
     def listen_for_lp_data(self):
         while True:
             if not self.suspenddata:
@@ -174,14 +179,14 @@ class Supervisor:
     def listen_for_lp_string(self):
         while True:
             if not self.suspenddata:
-                data = self.socket_lp_string.recv_string()
+                data = self.socket_lp_data.recv_string()
                 for manager in self.manager_workers: 
                     manager.low_priority_queue.put(data) 
 
     def listen_for_hp_string(self):
         while True:
             if not self.suspenddata:
-                data = self.socket_hp_string.recv_string()
+                data = self.socket_hp_data.recv_string()
                 for manager in self.manager_workers: 
                     self.high_priority_queue.put(data) 
 
@@ -192,7 +197,7 @@ class Supervisor:
     def listen_for_lp_file(self):
         while True:
             if not self.suspenddata:
-                filename = self.socket_lp_file.recv()
+                filename = self.socket_lp_data.recv()
                 for manager in self.manager_workers: 
                     data = self.decode_file(filename) 
                     manager.low_priority_queue.put(data) 
@@ -200,7 +205,7 @@ class Supervisor:
     def listen_for_hp_file(self):
         while True:
             if not self.suspenddata:
-                filename = self.socket_hp_file.recv()
+                filename = self.socket_hp_data.recv()
                 for manager in self.manager_workers:
                     data = self.decode_file(filename) 
                     self.high_priority_queue.put(data) 
@@ -211,6 +216,30 @@ class Supervisor:
             command = json.loads(self.socket_command.recv_string())
             self.process_command(command)
 
+    def command_shutdown(self):
+        self.status = "Shutdown"
+        self.suspenddata = True
+        self.stop_all(True)
+        self.continueall = False
+    
+    def command_cleanedshutdown(self):
+        if self.status == "Processing":
+            self.status = "EndingProcessing"
+            self.suspenddata = True
+            for manager in self.manager_workers:
+                print(f"Trying to stop {manager.globalname}...")
+                manager.status = "EndingProcessing"
+                manager.suspenddata = True
+                while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0:
+                    time.sleep(0.1)
+                print(f"Queues of manager {manager.globalname} are empty {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize() }")
+                manager.status = "Shutdown"
+        else:
+            print("WARNING! Not in Processing state for a cleaned shutdown. Force the shutdown.") 
+        self.status = "Shutdown"
+        self.stop_all(False)
+        self.continueall = False
+
     def process_command(self, command):
         print(f"Received command: {command}")
         subtype_value = command['header']['subtype']
@@ -218,27 +247,9 @@ class Supervisor:
         pidsource = command['header']['pidsource']
         if pidtarget == self.name or pidtarget == "all".lower() or pidtarget == "*":
             if subtype_value == "shutdown":
-                self.status = "Shutdown"
-                self.suspenddata = True
-                self.stop_all(True)
-                self.continueall = False
+                self.command_shutdown()  
             if subtype_value == "cleanedshutdown":
-                if self.status == "Processing":
-                    self.status = "EndingProcessing"
-                    self.suspenddata = True
-                    for manager in self.manager_workers:
-                        print(f"Trying to stop {manager.globalname}...")
-                        manager.status = "EndingProcessing"
-                        manager.suspenddata = True
-                        while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0:
-                            time.sleep(0.1)
-                        print(f"Queues of manager {manager.globalname} are empty {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize() }")
-                        manager.status = "Shutdown"
-                else:
-                    print("WARNING! Not in Processing state for a cleaned shutdown. Force the shutdown.") 
-                self.status = "Shutdown"
-                self.stop_all(False)
-                self.continueall = False
+                self.command_cleanedshutdown()
             if subtype_value == "getstatus":
                 for manager in self.manager_workers:
                     manager.monitoring_thread.sendto(pidsource)
@@ -301,7 +312,7 @@ class Supervisor:
 
         # Stop managers
         for manager in self.manager_workers: 
-            if manager.manager_type == "Process":
+            if manager.processingtype == "process":
                 manager.stop(False)
             else:
                 manager.stop(fast)

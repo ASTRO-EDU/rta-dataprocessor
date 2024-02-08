@@ -22,14 +22,14 @@ import multiprocessing
 
 class WorkerManager(threading.Thread):
     #manager_type="Process" or manager_type="Thread"
-    def __init__(self, supervisor, manager_type="Process", name = "None"):
+    def __init__(self, supervisor, name = "None"):
         super().__init__()
         self.supervisor = supervisor
         self.config_data = self.supervisor.config_data
         self.name = name
         self.globalname = "WorkerManager-"+self.supervisor.name + "-" + name
         self.continueall = True
-        self.manager_type = manager_type
+        self.processingtype = self.supervisor.processingtype
         #number max of workers
         self.max_workes = 100
 
@@ -43,12 +43,12 @@ class WorkerManager(threading.Thread):
         self.socket_result.connect(self.config_data["result_socket_push"])
 
         #thread
-        if self.manager_type == "Thread":
+        if self.processingtype == "thread":
             self.low_priority_queue = queue.Queue()
             self.high_priority_queue = queue.Queue()
 
         #processes
-        if self.manager_type == "Process":
+        if self.processingtype == "process":
             self.low_priority_queue = multiprocessing.Queue()
             self.high_priority_queue = multiprocessing.Queue()
 
@@ -76,10 +76,10 @@ class WorkerManager(threading.Thread):
     def set_processdata(self, processdata):
         self.processdata = processdata
 
-        if self.manager_type == "Process":
+        if self.processingtype == "process":
             self.processdata_shared.value = processdata
         
-        if self.manager_type == "Thread":
+        if self.processingtype == "thread":
             for worker in self.worker_threads:
                 worker.set_processdata(self.processdata)
 
@@ -128,20 +128,25 @@ class WorkerManager(threading.Thread):
 
     def stop(self, fast=False):
         self.stop_processes()
-        if self.manager_type == "Process":
+        if self.processingtype == "process":
             if fast == False:
-                print("Close queues...")
+                print("Closing queues...")
+
+                print(f"   - low_priority_queue size {self.low_priority_queue.qsize()}")
                 while not self.low_priority_queue.empty():
                     item = self.low_priority_queue.get_nowait()
-                print("   low_priority_queue empty")
                 self.low_priority_queue.close()
                 self.low_priority_queue.cancel_join_thread() 
+                print(f"   - low_priority_queue empty")
+
+                print(f"   - high_priority_queue size {self.high_priority_queue.qsize()}")
                 while not self.high_priority_queue.empty():
                     item = self.high_priority_queue.get_nowait()
-                print("   high_priority_queue empty")
                 self.high_priority_queue.close()
                 self.high_priority_queue.cancel_join_thread() 
-                print("End close queues")
+                print(f"   - high_priority_queue empty")
+
+                print("End closing queues")
         self._stop_event.set()  # Set the stop event to exit from this thread
 
     def stop_processes(self):

@@ -13,8 +13,8 @@ import io
 import threading
 
 class WorkerManager1(WorkerManager):
-	def __init__(self, supervisor, manager_type="Thread", name = "S22"):
-		super().__init__(supervisor, manager_type, name)
+	def __init__(self, supervisor, name = "S22"):
+		super().__init__(supervisor, name)
 
 	def start_worker_threads(self, num_threads=5):
 		#Worker threads

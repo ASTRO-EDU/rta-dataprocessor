@@ -53,12 +53,12 @@ class MonitoringPoint:
             self.update("queue_lp_size", self.manager.low_priority_queue.qsize())
             self.update("queue_hp_size", self.manager.high_priority_queue.qsize())
             
-            if self.manager.manager_type == "Process":
+            if self.manager.processingtype == "process":
                 for worker in self.manager.worker_processes:
                     #print(f"Monitor {worker.globalname} {worker.processing_rate}")
                     self.processing_rates[worker.worker_id] = self.manager.processing_rates_shared[worker.worker_id]
                     self.processing_tot_events[worker.worker_id] = self.manager.total_processed_data_count_shared[worker.worker_id]
-            if self.manager.manager_type == "Thread":
+            if self.manager.processingtype == "thread":
                 for worker in self.manager.worker_threads:
                     self.processing_rates[worker.worker_id] = worker.processing_rate
                     self.processing_tot_events[worker.worker_id] = worker.total_processed_data_count
