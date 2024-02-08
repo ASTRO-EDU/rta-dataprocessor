@@ -66,8 +66,8 @@ class WorkerManager(threading.Thread):
         #process data based on Supervisor state
         self.processdata = 0
         self.processdata_shared = multiprocessing.Value('i', 0)
-        self.suspenddata = 0
-        self.suspenddata_shared = multiprocessing.Value('i', 0)
+        self.stopdata = 0
+        self.stopdata_shared = multiprocessing.Value('i', 0)
 
         self._stop_event = threading.Event()  # Used to stop the manager
 

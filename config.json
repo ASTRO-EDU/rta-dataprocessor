@@ -1,6 +1,6 @@
 {
 	"dataflowtype": "binary",
-	"processingtype": "thread",
+	"processingtype": "process",
 	"data_lp_socket_push": "tcp://localhost:5555",
 	"data_lp_socket_pull": "tcp://*:5555",
 	"data_hp_socket_push": "tcp://localhost:5556",

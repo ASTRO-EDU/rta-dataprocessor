@@ -65,7 +65,7 @@ class Supervisor:
 
             #process data based on Supervisor state
             self.processdata = 0
-            self.suspenddata = False
+            self.stopdata = False
 
             # Set up signal handlers
             signal.signal(signal.SIGTERM, self.handle_signals)
@@ -164,28 +164,28 @@ class Supervisor:
 
     def listen_for_lp_data(self):
         while True:
-            if not self.suspenddata:
+            if not self.stopdata:
                 data = self.socket_lp_data.recv()
                 for manager in self.manager_workers: 
                     manager.low_priority_queue.put(data) 
 
     def listen_for_hp_data(self):
         while True:
-            if not self.suspenddata:
+            if not self.stopdata:
                 data = self.socket_hp_data.recv()
                 for manager in self.manager_workers: 
                     self.high_priority_queue.put(data) 
 
     def listen_for_lp_string(self):
         while True:
-            if not self.suspenddata:
+            if not self.stopdata:
                 data = self.socket_lp_data.recv_string()
                 for manager in self.manager_workers: 
                     manager.low_priority_queue.put(data) 
 
     def listen_for_hp_string(self):
         while True:
-            if not self.suspenddata:
+            if not self.stopdata:
                 data = self.socket_hp_data.recv_string()
                 for manager in self.manager_workers: 
                     self.high_priority_queue.put(data) 
@@ -196,7 +196,7 @@ class Supervisor:
 
     def listen_for_lp_file(self):
         while True:
-            if not self.suspenddata:
+            if not self.stopdata:
                 filename = self.socket_lp_data.recv()
                 for manager in self.manager_workers: 
                     data = self.decode_file(filename) 
@@ -204,7 +204,7 @@ class Supervisor:
 
     def listen_for_hp_file(self):
         while True:
-            if not self.suspenddata:
+            if not self.stopdata:
                 filename = self.socket_hp_data.recv()
                 for manager in self.manager_workers:
                     data = self.decode_file(filename) 
@@ -218,18 +218,18 @@ class Supervisor:
 
     def command_shutdown(self):
         self.status = "Shutdown"
-        self.suspenddata = True
+        self.stopdata = True
         self.stop_all(True)
         self.continueall = False
     
     def command_cleanedshutdown(self):
         if self.status == "Processing":
             self.status = "EndingProcessing"
-            self.suspenddata = True
+            self.stopdata = True
             for manager in self.manager_workers:
                 print(f"Trying to stop {manager.globalname}...")
                 manager.status = "EndingProcessing"
-                manager.suspenddata = True
+                manager.stopdata = True
                 while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0:
                     time.sleep(0.1)
                 print(f"Queues of manager {manager.globalname} are empty {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize() }")
@@ -259,32 +259,23 @@ class Supervisor:
                     manager.status = "Processing"
                     manager.set_processdata(1)
                 pass
-            if subtype_value == "suspend": #data processing
-                self.status = "Suspend"
-                for manager in self.manager_workers:
-                    manager.status = "Suspend"
-                    manager.set_processdata(0)
-                pass
-            if subtype_value == "suspenddata": #data acquisition
-                for manager in self.manager_workers:
-                    manager.suspenddata = True
-                pass
-            if subtype_value == "startdata": #data acquisition
-                for manager in self.manager_workers:
-                    manager.suspenddata = False
-                pass
-            if subtype_value == "restart": #data processing
-                self.status = "Processing"
-                for manager in self.manager_workers:
-                    manager.status = "Processing"
-                    manager.set_processdata(1)
-                pass       
             if subtype_value == "stop": #data processing
                 self.status = "Waiting"
                 for manager in self.manager_workers:
                     manager.status = "Waiting"
                     manager.set_processdata(0)
-                pass    
+                pass  
+            if subtype_value == "stopdata": #data acquisition
+                self.stopdata = True
+                for manager in self.manager_workers:
+                    manager.stopdata = True
+                pass
+            if subtype_value == "startdata": #data acquisition
+                self.stopdata = False
+                for manager in self.manager_workers:
+                    manager.stopdata = False
+                pass
+  
         # monitoringpoint_data = self.monitoringpoint.get_data()
         # print(f"MonitoringPoint data: {monitoringpoint_data}")
 
@@ -294,7 +285,7 @@ class Supervisor:
         # self.monitoring_thread.stop()
         # self.monitoring_thread.join()
 
-        self.suspenddata = True
+        self.stopdata = True
         time.sleep(0.1)
 
         # Stop worker threads

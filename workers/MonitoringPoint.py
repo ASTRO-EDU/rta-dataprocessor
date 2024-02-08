@@ -49,7 +49,7 @@ class MonitoringPoint:
             self.resource_monitor()
             self.data["header"]["time"] = time.time()
             self.set_status(self.manager.status)
-            self.data["suspededdatainput"] = self.manager.suspenddata
+            self.data["stopdatainput"] = self.manager.stopdata
             self.update("queue_lp_size", self.manager.low_priority_queue.qsize())
             self.update("queue_hp_size", self.manager.high_priority_queue.qsize())
             
