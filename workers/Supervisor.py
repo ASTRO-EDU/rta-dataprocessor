@@ -240,6 +240,28 @@ class Supervisor:
         self.stop_all(False)
         self.continueall = False
 
+    def command_start(self):
+        self.status = "Processing"
+        for manager in self.manager_workers:
+            manager.status = "Processing"
+            manager.set_processdata(1)
+
+    def command_stop(self):
+        self.status = "Waiting"
+        for manager in self.manager_workers:
+            manager.status = "Waiting"
+            manager.set_processdata(0)
+
+    def command_startdata(self):
+        self.stopdata = False
+        for manager in self.manager_workers:
+            manager.stopdata = False
+
+    def command_stopdata(self):
+        self.stopdata = True
+        for manager in self.manager_workers:
+            manager.stopdata = True
+
     def process_command(self, command):
         print(f"Received command: {command}")
         subtype_value = command['header']['subtype']
@@ -254,27 +276,13 @@ class Supervisor:
                 for manager in self.manager_workers:
                     manager.monitoring_thread.sendto(pidsource)
             if subtype_value == "start": #data processing
-                self.status = "Processing"
-                for manager in self.manager_workers:
-                    manager.status = "Processing"
-                    manager.set_processdata(1)
-                pass
+                    self.command_start()
             if subtype_value == "stop": #data processing
-                self.status = "Waiting"
-                for manager in self.manager_workers:
-                    manager.status = "Waiting"
-                    manager.set_processdata(0)
-                pass  
+                    self.command_stop()
             if subtype_value == "stopdata": #data acquisition
-                self.stopdata = True
-                for manager in self.manager_workers:
-                    manager.stopdata = True
-                pass
+                    self.command_stopdata()
             if subtype_value == "startdata": #data acquisition
-                self.stopdata = False
-                for manager in self.manager_workers:
-                    manager.stopdata = False
-                pass
+                    self.command_startdata()
   
         # monitoringpoint_data = self.monitoringpoint.get_data()
         # print(f"MonitoringPoint data: {monitoringpoint_data}")
