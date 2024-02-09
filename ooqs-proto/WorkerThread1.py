@@ -45,7 +45,7 @@ class WorkerThread1(WorkerThread):
 		# Custom processing logic for Worker1
 		#print("Process data...")
 		# Deserialize the Avro message using avro library
-		if self.supervisor.dataflowtype == "Stream":
+		if self.supervisor.dataflowtype == "binary":
 			bytes_io = io.BytesIO(data)
 			decoder = avro.io.BinaryDecoder(bytes_io)
 			avro_message = self.reader.read(decoder)
@@ -54,8 +54,8 @@ class WorkerThread1(WorkerThread):
 			#print(self.globalname)
 			#print(avro_message)
 			
-		if self.supervisor.dataflowtype == "File":
+		if self.supervisor.dataflowtype == "filename":
 			print(data)
 
-		if self.supervisor.dataflowtype == "String":
+		if self.supervisor.dataflowtype == "string":
 			print(data)

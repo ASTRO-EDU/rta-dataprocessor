@@ -20,7 +20,7 @@ def main(config_file_path):
     # Connect to the ZeroMQ pull-type endpoint
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
-    socket.bind(config["datastream_lp_socket_pull"])  # Replace with your actual endpoint
+    socket.bind(config["data_lp_socket_pull"])  # Replace with your actual endpoint
 
     # Load Avro schema from the provided schema string
     avro_schema_str = '''

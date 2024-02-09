@@ -1,21 +1,16 @@
 {
-	"datastream_lp_socket_push": "tcp://localhost:5555",
-	"datastream_lp_socket_pull": "tcp://*:5555",
-	"datastream_hp_socket_push": "tcp://localhost:5556",
-	"datastream_hp_socket_pull": "tcp://*:5556",
-	"datafile_lp_socket_push": "tcp://localhost:5557",
-	"datafile_lp_socket_pull": "tcp://*:5557",
-	"datafile_hp_socket_push": "tcp://localhost:5558",
-	"datafile_hp_socket_pull": "tcp://*:5558",
-	"datastring_lp_socket_push": "tcp://localhost:5559",
-	"datastring_lp_socket_pull": "tcp://*:5559",
-	"datastring_hp_socket_push": "tcp://localhost:5560",
-	"datastring_hp_socket_pull": "tcp://*:5560",
+	"dataflowtype": "binary",
+	"processingtype": "process",
+	"data_lp_socket_push": "tcp://localhost:5555",
+	"data_lp_socket_pull": "tcp://*:5555",
+	"data_hp_socket_push": "tcp://localhost:5556",
+	"data_hp_socket_pull": "tcp://*:5556",
 	"command_socket_pubsub": "tcp://127.0.0.1:5561",
 	"monitoring_socket_push": "tcp://localhost:5562",
 	"monitoring_socket_pull": "tcp://*:5562",
 	"result_socket_push": "tcp://localhost:5563",
-	"num_workers": 5
+	"num_workers": 5,
+	"comment": "dataflowtype=binary|filename|string processingtype=process|thread"
   }
   
   

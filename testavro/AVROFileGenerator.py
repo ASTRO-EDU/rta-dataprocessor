@@ -29,9 +29,9 @@ class AvroDataGenerator:
         self.socket = self.context.socket(zmq.PUSH)
 
         if self.queue == "hp":
-            self.socket.connect(self.config["datafile_hp_socket_push"])
+            self.socket.connect(self.config["data_hp_socket_push"])
         else:
-            self.socket.connect(self.config["datafile_lp_socket_push"])
+            self.socket.connect(self.config["data_lp_socket_push"])
 
         self.processed_data_count = 0
         self.processing_rate = 0
