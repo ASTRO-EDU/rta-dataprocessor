@@ -22,20 +22,24 @@ class AvroDataGenerator:
         self.delay = float(delay)
         self.queue = queue
         self.type = self.config["dataflowtype"]
+        print(self.config["datasockettype"])
 
         self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.PUSH)
+        if self.config["datasockettype"] == "pushpull":
+            self.socket = self.context.socket(zmq.PUSH)
+        if self.config["datasockettype"] == "pubsub":
+            self.socket = self.context.socket(zmq.PUB)
 
-        if self.type == "string":
-            if self.queue == "hp":
+        if self.queue == "hp":
+            if self.config["datasockettype"] == "pushpull":
                 self.socket.connect(self.config["data_hp_socket_push"])
-            else:
+            if self.config["datasockettype"] == "pubsub":
+                self.socket.bind(self.config["data_hp_socket_pubsub"])
+        else:
+            if self.config["datasockettype"] == "pushpull":
                 self.socket.connect(self.config["data_lp_socket_push"])
-        if self.type == "binary":
-            if self.queue == "hp":
-                self.socket.connect(self.config["data_hp_socket_push"])
-            else:
-                self.socket.connect(self.config["data_lp_socket_push"])
+            if self.config["datasockettype"] == "pubsub":
+                self.socket.bind(self.config["data_lp_socket_pubsub"])
 
         #monitoring
         self.start_time = time.time()

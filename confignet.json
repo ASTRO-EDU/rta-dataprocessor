@@ -1,16 +1,19 @@
 {
 	"dataflowtype": "binary",
 	"processingtype": "process",
+	"datasockettype": "pushpull",
 	"data_lp_socket_push": "tcp://172.17.0.3:5555",
 	"data_lp_socket_pull": "tcp://*:5555",
+	"data_lp_socket_pubsub": "tcp://172.17.0.3:5555",
 	"data_hp_socket_push": "tcp://172.17.0.3:5556",
 	"data_hp_socket_pull": "tcp://*:5556",
+	"data_hp_socket_pubsub": "tcp://172.17.0.3:5556",
 	"command_socket_pubsub": "tcp://172.17.0.2:5561",
 	"monitoring_socket_push": "tcp://172.17.0.2:5562",
 	"monitoring_socket_pull": "tcp://*:5562",
 	"result_socket_push": "tcp://localhost:5563",
 	"num_workers": 5,
-	"comment": "dataflowtype=binary|filename|string processingtype=process|thread"
+	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
   }
   
   

@@ -10,9 +10,18 @@ class Supervisor1(Supervisor):
 		manager1.start()
 		self.manager_workers.append(manager1)
 
-		# manager2 = WorkerManager1(self, "Thread", "S22Mean")
+		# manager2 = WorkerManager1(self, "S22Mean")
 		# manager2.start()
 		# self.manager_workers.append(manager2)
 
-	def decode_file(self, filename):
-		return filename
+	#to be reimplemented ####
+	#Decode the data before load it into the queue. For "dataflowtype": "binary"
+	def decode_data(self, data):
+		return data
+
+	#to be reimplemented ####
+	#Open the file before load it into the queue. For "dataflowtype": "file"
+	#Return an array of data and the size of the array
+	def open_file(self, filename):
+		f = [filename]
+		return f, 1

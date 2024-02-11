@@ -17,6 +17,7 @@ class WorkerManager1(WorkerManager):
 		super().__init__(supervisor, name)
 
 	def start_worker_threads(self, num_threads=5):
+		super().start_worker_threads(num_threads)
 		#Worker threads
 		for i in range(num_threads):
 			thread = WorkerThread1(i, self, "Rate")
@@ -24,6 +25,7 @@ class WorkerManager1(WorkerManager):
 			thread.start()
 
 	def start_worker_processes(self, num_processes=5):
+		super().start_worker_processes(num_processes)
 		# Worker processes
 		for i in range(num_processes):
 			process = WorkerProcess1(i, self, self.processdata_shared)

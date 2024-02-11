@@ -64,8 +64,6 @@ class MonitoringPoint:
                     self.processing_tot_events[worker.worker_id] = worker.total_processed_data_count
             self.data["processing_rates"] = self.processing_rates
             self.data["processing_tot_events"] = self.processing_tot_events
-             # Create a copy of the data
-            #data_copy = self.data.copy()
             return self.data
  
     def set_status(self, new_status):
