@@ -33,15 +33,26 @@ class Supervisor:
         try:
             self.processingtype = self.config_data["processingtype"]
             self.dataflowtype = self.config_data["dataflowtype"]
-    
-            print(f"Supervisor: {self.globalname} / {self.dataflowtype} / {self.processingtype}")   
+            self.datasockettype = self.config_data["datasockettype"]
+     
+            print(f"Supervisor: {self.globalname} / {self.dataflowtype} / {self.processingtype} / {self.datasockettype}")   
 
-            #low priority data stream connection
-            self.socket_lp_data = self.context.socket(zmq.PULL)
-            self.socket_lp_data.bind(self.config_data["data_lp_socket_pull"])
-            #high priority data stream connection
-            self.socket_hp_data = self.context.socket(zmq.PULL)
-            self.socket_hp_data.bind(self.config_data["data_hp_socket_pull"])
+            if self.datasockettype == "pushpull":
+                #low priority data stream connection
+                self.socket_lp_data = self.context.socket(zmq.PULL)
+                self.socket_lp_data.bind(self.config_data["data_lp_socket_pull"])
+                #high priority data stream connection
+                self.socket_hp_data = self.context.socket(zmq.PULL)
+                self.socket_hp_data.bind(self.config_data["data_hp_socket_pull"])
+            elif self.datasockettype == "pubsub":
+                self.socket_lp_data = self.context.socket(zmq.SUB)
+                self.socket_lp_data.connect(self.config_data["data_lp_socket_pubsub"])
+                self.socket_lp_data.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
+                self.socket_hp_data = self.context.socket(zmq.SUB)
+                self.socket_hp_data.connect(self.config_data["data_hp_socket_pubsub"])
+                self.socket_hp_data.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
+            else:
+                raise ValueError("Config file: datasockettype must be pushpull or pubsub")
             
             #command
             self.socket_command = self.context.socket(zmq.SUB)
@@ -147,8 +158,7 @@ class Supervisor:
                 time.sleep(1)  # To avoid 100 per cent CPU
         except KeyboardInterrupt:
             print("Keyboard interrupt received. Terminating.")
-            self.stop_all()
-            self.continueall = False
+            self.command_shutdown()
 
     def handle_signals(self, signum, frame):
         # Handle different signals
@@ -162,19 +172,26 @@ class Supervisor:
             print(f"Received signal {signum}. Terminating.")
             self.command_shutdown()
 
+    #to be reimplemented ####
+    #Decode the data before load it into the queue. For "dataflowtype": "binary"
+    def decode_data(self, data):
+        return data
+
     def listen_for_lp_data(self):
         while True:
             if not self.stopdata:
                 data = self.socket_lp_data.recv()
-                for manager in self.manager_workers: 
-                    manager.low_priority_queue.put(data) 
+                for manager in self.manager_workers:
+                    decodeddata = self.decode_data(data)  
+                    manager.low_priority_queue.put(decodeddata) 
 
     def listen_for_hp_data(self):
         while True:
             if not self.stopdata:
                 data = self.socket_hp_data.recv()
                 for manager in self.manager_workers: 
-                    self.high_priority_queue.put(data) 
+                    decodeddata = self.decode_data(data)
+                    manager.high_priority_queue.put(decodeddata) 
 
     def listen_for_lp_string(self):
         while True:
@@ -188,27 +205,32 @@ class Supervisor:
             if not self.stopdata:
                 data = self.socket_hp_data.recv_string()
                 for manager in self.manager_workers: 
-                    self.high_priority_queue.put(data) 
+                    manager.high_priority_queue.put(data) 
 
-    #to be reimplemented
-    def decode_file(self, filename):
-        return filename
+    #to be reimplemented ####
+    #Open the file before load it into the queue. For "dataflowtype": "file"
+    #Return an array of data and the size of the array
+    def open_file(self, filename):
+        f = [filename]
+        return f, 1
 
     def listen_for_lp_file(self):
         while True:
             if not self.stopdata:
                 filename = self.socket_lp_data.recv()
                 for manager in self.manager_workers: 
-                    data = self.decode_file(filename) 
-                    manager.low_priority_queue.put(data) 
+                    data, size = self.open_file(filename) 
+                    for i in range(size):
+                        manager.low_priority_queue.put(data[i]) 
 
     def listen_for_hp_file(self):
         while True:
             if not self.stopdata:
                 filename = self.socket_hp_data.recv()
                 for manager in self.manager_workers:
-                    data = self.decode_file(filename) 
-                    self.high_priority_queue.put(data) 
+                    data, size = self.open_file(filename) 
+                    for i in range(size):
+                        manager.high_priority_queue.put(data[i]) 
 
     def listen_for_commands(self):
         while True:
@@ -218,18 +240,18 @@ class Supervisor:
 
     def command_shutdown(self):
         self.status = "Shutdown"
-        self.stopdata = True
+        self.command_stopdata()
+        self.command_stop()
         self.stop_all(True)
         self.continueall = False
     
     def command_cleanedshutdown(self):
         if self.status == "Processing":
             self.status = "EndingProcessing"
-            self.stopdata = True
+            self.command_stopdata()
             for manager in self.manager_workers:
                 print(f"Trying to stop {manager.globalname}...")
                 manager.status = "EndingProcessing"
-                manager.stopdata = True
                 while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0:
                     time.sleep(0.1)
                 print(f"Queues of manager {manager.globalname} are empty {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize() }")
@@ -293,21 +315,8 @@ class Supervisor:
         # self.monitoring_thread.stop()
         # self.monitoring_thread.join()
 
-        self.stopdata = True
+        self.command_stopdata()
         time.sleep(0.1)
-
-        # Stop worker threads
-        for manager in self.manager_workers: 
-            for thread in manager.worker_threads:
-                thread.stop()
-                thread.join()
-
-
-       # Stop worker processes
-        for manager in self.manager_workers: 
-            for process in manager.worker_processes:
-                process.stop()
-                process.join()
 
         # Stop managers
         for manager in self.manager_workers: 

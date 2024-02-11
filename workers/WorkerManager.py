@@ -95,10 +95,10 @@ class WorkerManager(threading.Thread):
         if num_threads > self.max_workes:
             print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
         self.num_workers = num_threads
-        for i in range(num_threads):
-            thread = WorkerThread(i, self)
-            self.worker_threads.append(thread)
-            thread.start()
+        # for i in range(num_threads):
+        #     thread = WorkerThread(i, self)
+        #     self.worker_threads.append(thread)
+        #     thread.start()
 
     # to be reimplemented
     def start_worker_processes(self, num_processes=5):
@@ -106,10 +106,10 @@ class WorkerManager(threading.Thread):
         if num_processes > self.max_workes:
             print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
         self.num_workers = num_processes
-        for i in range(num_processes):
-            process = WorkerProcess(i, self, self.processdata_shared)
-            self.worker_processes.append(process)
-            process.start()
+        # for i in range(num_processes):
+        #     process = WorkerProcess(i, self, self.processdata_shared)
+        #     self.worker_processes.append(process)
+        #     process.start()
 
 
     def run(self):
@@ -147,7 +147,16 @@ class WorkerManager(threading.Thread):
                 print(f"   - high_priority_queue empty")
 
                 print("End closing queues")
+
+        for process in self.worker_processes:
+            process.stop()
+            process.join()
+         # Stop worker threads
+        for thread in self.worker_threads:
+            thread.stop()
+            thread.join()       
         self._stop_event.set()  # Set the stop event to exit from this thread
+
 
     def stop_processes(self):
         print("Stopping Manager threads...")

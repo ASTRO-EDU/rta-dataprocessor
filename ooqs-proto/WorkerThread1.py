@@ -52,7 +52,7 @@ class WorkerThread1(WorkerThread):
 
 			# Process the decoded Avro message as needed
 			#print(self.globalname)
-			#print(avro_message)
+			print(avro_message)
 			
 		if self.supervisor.dataflowtype == "filename":
 			print(data)

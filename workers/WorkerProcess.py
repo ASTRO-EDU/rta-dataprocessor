@@ -13,6 +13,7 @@ import time
 from multiprocessing import Event, Queue, Process
 from threading import Timer
 import psutil
+import signal
 
 class WorkerProcess(Process):
     def __init__(self, worker_id, manager, processdata_shared, name="None"):
@@ -39,30 +40,42 @@ class WorkerProcess(Process):
 
         self.processdata_shared = processdata_shared
 
+        self.start_timer(1)
+
+        #signal.signal(signal.SIGINT, self.handle_signals)
+
         print(f"{self.globalname} started {self.pidprocess}")
 
     def stop(self):
+        self.timer.cancel()
+        time.sleep(0.1)
         self._stop_event.set()  # Set the stop event
 
-    def run(self):
-        self.start_timer(1)
+    def handle_signals(self, signum, frame):
+        # Handle different signals
+        if signum == signal.SIGINT:
+            print(f"SIGINT received. Do nothing for {self.globalname}")
 
-        while not self._stop_event.is_set():
-            time.sleep(0.0001) #must be 0
- 
-            if self.processdata_shared.value == 1:
- 
-                try:
-                    # Check and process high-priority queue first
-                    high_priority_data = self.high_priority_queue.get_nowait()
-                    self.process_data(high_priority_data, priority="High")
-                except queue.Empty:
+    def run(self):
+        try:
+            while not self._stop_event.is_set():
+                time.sleep(0.0001) #must be 0
+    
+                if self.processdata_shared.value == 1:
+    
                     try:
-                        # Process low-priority queue if high-priority queue is empty
-                        low_priority_data = self.low_priority_queue.get(timeout=1)
-                        self.process_data(low_priority_data, priority="Low")
+                        # Check and process high-priority queue first
+                        high_priority_data = self.high_priority_queue.get_nowait()
+                        self.process_data(high_priority_data, priority="High")
                     except queue.Empty:
-                        pass  # Continue if both queues are empty
+                        try:
+                            # Process low-priority queue if high-priority queue is empty
+                            low_priority_data = self.low_priority_queue.get(timeout=1)
+                            self.process_data(low_priority_data, priority="Low")
+                        except queue.Empty:
+                            pass  # Continue if both queues are empty
+        except Exception:
+            pass
 
         self.timer.cancel()
         print(f"WorkerProcess stop {self.globalname}")
@@ -84,6 +97,7 @@ class WorkerProcess(Process):
         if not self._stop_event.is_set():
             self.start_timer(10)
 
+    #to be reimplemented
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
         # Increment the processed data count and calculate the rate
