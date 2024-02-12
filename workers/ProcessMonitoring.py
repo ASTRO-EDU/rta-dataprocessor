@@ -9,12 +9,15 @@
 import zmq
 import json
 import sys
+from ConfigurationManager import ConfigurationManager
 
 class MonitoringConsumer:
-    def __init__(self, monitoring_socket_bind):
+    def __init__(self, config_file_path, processname="CommandCenter"):
+        self.processname = processname
+        self.load_configuration(config_file_path, processname)
         self.context = zmq.Context()
         self.socket_monitoring = self.context.socket(zmq.PULL)
-        self.socket_monitoring.bind(monitoring_socket_bind)
+        self.socket_monitoring.bind(self.config.get("monitoring_socket"))
 
     def receive_and_decode_messages(self):
         while True:
@@ -22,10 +25,10 @@ class MonitoringConsumer:
             decoded_message = json.loads(message)
             print("Received and decoded message:", decoded_message)
 
-def read_config(file_path="config.json"):
-    with open(file_path, "r") as file:
-        config = json.load(file)
-    return config
+    def load_configuration(self, config_file, name="CommandCenter"):
+        self.config_manager = ConfigurationManager(config_file)
+        self.config=self.config_manager.get_configuration(name)
+        print(self.config)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -34,11 +37,8 @@ if __name__ == "__main__":
 
     config_file_path = sys.argv[1]
 
-    # Read configuration from the provided file
-    config = read_config(config_file_path)
-
     # Use the configuration to initialize the MonitoringConsumer
-    monitoring_consumer = MonitoringConsumer(config["monitoring_socket_pull"])
+    monitoring_consumer = MonitoringConsumer(config_file_path, "CommandCenter")
 
     try:
         monitoring_consumer.receive_and_decode_messages()

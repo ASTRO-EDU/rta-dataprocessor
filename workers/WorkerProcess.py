@@ -16,7 +16,7 @@ import psutil
 import signal
 
 class WorkerProcess(Process):
-    def __init__(self, worker_id, manager, processdata_shared, name="None"):
+    def __init__(self, worker_id, manager, processdata_shared, name):
         super().__init__()
         self.manager = manager
         self.supervisor = manager.supervisor
@@ -84,14 +84,14 @@ class WorkerProcess(Process):
         self.timer = Timer(interval, self.calcdatarate)
         self.timer.start()
 
-    def calcdatarate(self):    
+    def calcdatarate(self):
         elapsed_time = time.time() - self.next_time
         self.next_time = time.time()
         self.processing_rate = self.processed_data_count / elapsed_time
         self.manager.processing_rates_shared[self.worker_id] = self.processing_rate
         self.total_processed_data_count += self.processed_data_count
         self.manager.total_processed_data_count_shared[self.worker_id] = self.total_processed_data_count
-        print(f"{self.globalname} rate Hz {self.processing_rate:.1f} total events {self.total_processed_data_count}")
+        print(f"{self.globalname} Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count}")
         self.processed_data_count = 0
 
         if not self._stop_event.is_set():

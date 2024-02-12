@@ -22,10 +22,10 @@ import multiprocessing
 
 class WorkerManager(threading.Thread):
     #manager_type="Process" or manager_type="Thread"
-    def __init__(self, supervisor, name = "None"):
+    def __init__(self, supervisor, name = "None", result_socket_type="None", result_socket="None"):
         super().__init__()
         self.supervisor = supervisor
-        self.config_data = self.supervisor.config_data
+        self.config = self.supervisor.config
         self.name = name
         self.globalname = "WorkerManager-"+self.supervisor.name + "-" + name
         self.continueall = True
@@ -39,15 +39,20 @@ class WorkerManager(threading.Thread):
                 
         self.socket_monitoring = self.supervisor.socket_monitoring
 
-        self.socket_result = self.context.socket(zmq.PUSH)
-        self.socket_result.connect(self.config_data["result_socket_push"])
+        #output sockert
+        if result_socket_type == "pushpull":
+            self.socket_result = self.context.socket(zmq.PUSH)
+            self.socket_result.connect(result_socket)
+        if result_socket_type == "pubsub":
+            self.socket_result = self.context.socket(zmq.PUB)
+            self.socket_result.bind(result_socket)
 
-        #thread
+        #input queue for thread
         if self.processingtype == "thread":
             self.low_priority_queue = queue.Queue()
             self.high_priority_queue = queue.Queue()
 
-        #processes
+        #input queue for processes
         if self.processingtype == "process":
             self.low_priority_queue = multiprocessing.Queue()
             self.high_priority_queue = multiprocessing.Queue()
@@ -90,24 +95,24 @@ class WorkerManager(threading.Thread):
         self.monitoring_thread.start()
 
     #to be reimplemented
-    def start_worker_threads(self, num_threads=5):
+    def start_worker_threads(self, num_threads):
         #Worker threads
         if num_threads > self.max_workes:
             print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
         self.num_workers = num_threads
         # for i in range(num_threads):
-        #     thread = WorkerThread(i, self)
+        #     thread = WorkerThread(i, self, "name")
         #     self.worker_threads.append(thread)
         #     thread.start()
 
     # to be reimplemented
-    def start_worker_processes(self, num_processes=5):
+    def start_worker_processes(self, num_processes):
         # Worker processes
         if num_processes > self.max_workes:
             print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
         self.num_workers = num_processes
         # for i in range(num_processes):
-        #     process = WorkerProcess(i, self, self.processdata_shared)
+        #     process = WorkerProcess(i, self, self.processdata_shared, "name")
         #     self.worker_processes.append(process)
         #     process.start()
 

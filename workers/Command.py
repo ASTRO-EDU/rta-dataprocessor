@@ -10,16 +10,18 @@ import sys
 import zmq
 import json
 import time
+from ConfigurationManager import ConfigurationManager
 
 class Command:
-    def __init__(self, command_monitoring_socket_bind, processname="Command"):
+    def __init__(self, config_file_path, processname="CommandCenter"):
         self.context = zmq.Context()
         self.processname = processname
+        self.load_configuration(config_file_path, processname)
 
         # PUB socket for sending commands
         self.socket_command = self.context.socket(zmq.PUB)
-        self.socket_command.bind(command_monitoring_socket_bind)
-        print("Send commands to " + command_monitoring_socket_bind)
+        self.socket_command.bind(self.config.get("command_socket"))
+        print("Send commands to " + self.config.get("command_socket"))
 
     def send_command(self, subtype, pidtarget_processname, priority="Low"):
         time.sleep(0.3) #wait otherwise the first message is not received
@@ -38,11 +40,12 @@ class Command:
         self.socket_command.send_string(message)
         print(f"Sent {subtype} command." + message)
 
+    def load_configuration(self, config_file, name="CommandCenter"):
+        self.config_manager = ConfigurationManager(config_file)
+        self.config=self.config_manager.get_configuration(name)
+        print(self.config)
 
-def read_config(file_path="config.json"):
-    with open(file_path, "r") as file:
-        config = json.load(file)
-    return config
+
 
 def main():
     if len(sys.argv) != 4:
@@ -52,8 +55,6 @@ def main():
      
     config_file_path = sys.argv[1]
 
-    # Read configuration from the provided file
-    config = read_config(config_file_path)
 
     command_subtype = sys.argv[2].lower()
     pidtarget_processname = sys.argv[3]
@@ -62,7 +63,7 @@ def main():
         print("Invalid command type. Use 'shutdown', 'cleanedshutdown', 'start', 'stop', 'startdata', 'stopdata',  or 'getstatus'.")
         sys.exit(1)
 
-    command = Command(config["command_socket_pubsub"])  # Adjust the address based on your setup
+    command = Command(config_file_path, "CommandCenter")  # Adjust the address based on your setup
 
     try:
         

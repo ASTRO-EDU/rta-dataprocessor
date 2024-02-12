@@ -1,19 +1,39 @@
-{
-	"dataflowtype": "binary",
-	"processingtype": "process",
-	"datasockettype": "pushpull",
-	"data_lp_socket_push": "tcp://localhost:5555",
-	"data_lp_socket_pull": "tcp://*:5555",
-	"data_lp_socket_pubsub": "tcp://localhost:5555",
-	"data_hp_socket_push": "tcp://localhost:5556",
-	"data_hp_socket_pull": "tcp://*:5556",
-	"data_hp_socket_pubsub": "tcp://localhost:5556",
-	"command_socket_pubsub": "tcp://127.0.0.1:5561",
-	"monitoring_socket_push": "tcp://localhost:5562",
-	"monitoring_socket_pull": "tcp://*:5562",
-	"result_socket_push": "tcp://localhost:5563",
-	"num_workers": 5,
+[
+  {
+	"processname": "CommandCenter",
+	"command_socket": "tcp://127.0.0.1:5561",
+	"monitoring_socket": "tcp://localhost:5562"
+  },
+  {
+	"processname": "OOQS1",
+	"dataflow_type": "binary",
+	"processing_type": "process",
+	"datasocket_type": "pushpull",
+	"data_lp_socket": "tcp://localhost:5555",
+	"data_hp_socket": "tcp://localhost:5556",
+	"command_socket": "tcp://127.0.0.1:5561",
+	"monitoring_socket": "tcp://localhost:5562",
+	"manager_result_socket_type": ["pushpull", "pushpull"],
+	"manager_result_socket": ["tcp://localhost:5563", "tcp://localhost:5564"],
+	"manager_num_workers": [5, 2],
+	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+  },
+  {
+	"processname": "OOQS2",
+	"dataflow_type": "binary",
+	"processing_type": "process",
+	"datasocket_type": "pushpull",
+	"data_lp_socket": "tcp://localhost:5555",
+	"data_hp_socket": "tcp://localhost:5556",
+	"command_socket": "tcp://127.0.0.1:5561",
+	"monitoring_socket": "tcp://localhost:5562",
+	"manager_result_socket_type": ["pushpull", "pushpull"],
+	"manager_result_socket": ["tcp://localhost:5563", "tcp://localhost:5564"],
+	"manager_num_workers": [5, 2],
 	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
   }
+
+]
+
   
   

@@ -11,8 +11,9 @@ from WorkerThread import WorkerThread
 from MonitoringThread import MonitoringThread
 from WorkerManager import WorkerManager
 from WorkerProcess import WorkerProcess
-import json
+from ConfigurationManager import ConfigurationManager, get_pull_config
 import zmq
+import json
 import queue
 import threading
 import signal
@@ -22,8 +23,15 @@ import psutil
 
 class Supervisor:
     def __init__(self, config_file="config.json", name = "None"):
-        self.load_configuration(config_file)
         self.name = name
+        self.config_manager = None
+
+        #workers config
+        self.num_workers = None
+        self.result_sockets = None 
+        self.result_sockets_type = None
+
+        self.load_configuration(config_file, name)
         self.globalname = "Supervisor-"+name
         self.continueall = True
         self.pid = psutil.Process().pid
@@ -31,44 +39,44 @@ class Supervisor:
         self.context = zmq.Context()
 
         try:
-            self.processingtype = self.config_data["processingtype"]
-            self.dataflowtype = self.config_data["dataflowtype"]
-            self.datasockettype = self.config_data["datasockettype"]
+            self.processingtype = self.config.get("processing_type")
+            self.dataflowtype = self.config.get("dataflow_type")
+            self.datasockettype = self.config.get("datasocket_type")
      
             print(f"Supervisor: {self.globalname} / {self.dataflowtype} / {self.processingtype} / {self.datasockettype}")   
 
             if self.datasockettype == "pushpull":
                 #low priority data stream connection
                 self.socket_lp_data = self.context.socket(zmq.PULL)
-                self.socket_lp_data.bind(self.config_data["data_lp_socket_pull"])
+                self.socket_lp_data.bind(get_pull_config(self.config.get("data_lp_socket")))
                 #high priority data stream connection
                 self.socket_hp_data = self.context.socket(zmq.PULL)
-                self.socket_hp_data.bind(self.config_data["data_hp_socket_pull"])
+                self.socket_hp_data.bind(get_pull_config(self.config.get("data_hp_socket")))
             elif self.datasockettype == "pubsub":
                 self.socket_lp_data = self.context.socket(zmq.SUB)
-                self.socket_lp_data.connect(self.config_data["data_lp_socket_pubsub"])
+                self.socket_lp_data.connect(self.config.get("data_lp_socket"))
                 self.socket_lp_data.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
                 self.socket_hp_data = self.context.socket(zmq.SUB)
-                self.socket_hp_data.connect(self.config_data["data_hp_socket_pubsub"])
+                self.socket_hp_data.connect(self.config.get("data_hp_socket"))
                 self.socket_hp_data.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
             else:
                 raise ValueError("Config file: datasockettype must be pushpull or pubsub")
             
             #command
             self.socket_command = self.context.socket(zmq.SUB)
-            self.socket_command.connect(self.config_data["command_socket_pubsub"])
+            self.socket_command.connect(self.config.get("command_socket"))
             self.socket_command.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
             
             #monitoring
             self.socket_monitoring = self.context.socket(zmq.PUSH)
-            self.socket_monitoring.connect(self.config_data["monitoring_socket_push"])
+            self.socket_monitoring.connect(self.config.get("monitoring_socket"))
             # self.monitoringpoint = MonitoringPoint(self)
             # self.monitoring_thread = None
 
         except Exception as e:
-            # Handle any other unexpected exceptions
-            print(f"ERROR: An unexpected error occurred: {e}")
-            sys.exit(1)
+           # Handle any other unexpected exceptions
+           print(f"ERROR: An unexpected error occurred: {e}")
+           sys.exit(1)
 
         else:
 
@@ -86,19 +94,13 @@ class Supervisor:
 
             print(f"{self.globalname} started")
 
-    def load_configuration(self, config_file):
-        try:
-            with open(config_file, "r") as file:
-                self.config_data = json.load(file)
-                print(self.config_data)
-        except FileNotFoundError:
-            print(f"Error: File '{config_file}' not found.")
-            return
-        except json.JSONDecodeError:
-            print(f"Error: Invalid JSON format in file '{config_file}'.")
-            return
-
-        self.num_workers = self.config_data.get("num_workers", 5)
+    def load_configuration(self, config_file, name):
+        self.config_manager = ConfigurationManager(config_file)
+        self.config=self.config_manager.get_configuration(name)
+        print(self.config)
+        #self.config.get("data_hp_socket")
+        #config_manager.get_pull_config("OOQS1", "data_hp_socket")
+        self.result_sockets_type, self.result_sockets, self.num_workers = self.config_manager.get_workers_config(name)
 
     def start_service_threads(self):
         #Monitoring thread
@@ -134,21 +136,24 @@ class Supervisor:
 
     #to be reimplemented ####
     def start_managers(self):
-        manager = WorkerManager(self, "Generic")
+        indexmanager=0
+        manager = WorkerManager(self, "Generic", self.result_sockets[indexmanager], self.result_sockets_type[indexmanager])
         manager.start()
         self.manager_workers.append(manager)
 
-    def start_workers(self, num_workers=5):
+    def start_workers(self):
+        indexmanager=0
         for manager in self.manager_workers: 
             if self.processingtype == "thread":
-                manager.start_worker_threads(num_workers)
+                manager.start_worker_threads(self.num_workers[indexmanager])
             if self.processingtype == "process":
-                manager.start_worker_processes(num_workers)
+                manager.start_worker_processes(self.num_workers[indexmanager])
+            indexmanager = indexmanager + 1
 
     def start(self):
         self.start_service_threads()
         self.start_managers()
-        self.start_workers(self.num_workers)
+        self.start_workers()
 
         self.status = "Waiting"
 

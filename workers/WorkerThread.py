@@ -13,7 +13,7 @@ import time
 from threading import Timer
 
 class WorkerThread(threading.Thread):
-    def __init__(self, worker_id, manager, name="None"):
+    def __init__(self, worker_id, manager, name):
         super().__init__()
         self.manager = manager
         self.supervisor = manager.supervisor

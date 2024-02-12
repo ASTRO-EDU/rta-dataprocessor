@@ -13,10 +13,10 @@ import io
 import threading
 
 class WorkerManager1(WorkerManager):
-	def __init__(self, supervisor, name = "S22"):
-		super().__init__(supervisor, name)
+	def __init__(self, supervisor, name = "S22", result_socket_type="None", result_socket="None"):
+		super().__init__(supervisor, name, result_socket_type, result_socket)
 
-	def start_worker_threads(self, num_threads=5):
+	def start_worker_threads(self, num_threads):
 		super().start_worker_threads(num_threads)
 		#Worker threads
 		for i in range(num_threads):
@@ -24,11 +24,11 @@ class WorkerManager1(WorkerManager):
 			self.worker_threads.append(thread)
 			thread.start()
 
-	def start_worker_processes(self, num_processes=5):
+	def start_worker_processes(self, num_processes):
 		super().start_worker_processes(num_processes)
 		# Worker processes
 		for i in range(num_processes):
-			process = WorkerProcess1(i, self, self.processdata_shared)
+			process = WorkerProcess1(i, self, self.processdata_shared, "Rate")
 			self.worker_processes.append(process)
 			process.start()
 			

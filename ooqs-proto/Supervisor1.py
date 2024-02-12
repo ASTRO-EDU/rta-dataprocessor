@@ -6,11 +6,13 @@ class Supervisor1(Supervisor):
 		super().__init__(config_file, name)
 
 	def start_managers(self):
-		manager1 = WorkerManager1(self, "S22Rate")
+		indexmanager=0
+		manager1 = WorkerManager1(self, "S22Rate", self.result_sockets[indexmanager], self.result_sockets_type[indexmanager])
 		manager1.start()
 		self.manager_workers.append(manager1)
 
-		# manager2 = WorkerManager1(self, "S22Mean")
+		indexmanager=1
+		# manager2 = WorkerManager1(self, "S22Mean", self.result_sockets[indexmanager], self.result_sockets_type[indexmanager])
 		# manager2.start()
 		# self.manager_workers.append(manager2)
 
