@@ -64,7 +64,7 @@ class WorkerThread(threading.Thread):
                         pass  # Continue if both queues are empty
         
         self.timer.cancel()
-        print(f"Worker stop {self.globalname}")
+        print(f"WorkerThread stop {self.globalname}")
 
     def start_timer(self, interval):
         self.timer = Timer(interval, self.calcdatarate)

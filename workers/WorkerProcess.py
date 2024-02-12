@@ -13,7 +13,7 @@ import time
 from multiprocessing import Event, Queue, Process
 from threading import Timer
 import psutil
-import signal
+#import signal
 
 class WorkerProcess(Process):
     def __init__(self, worker_id, manager, processdata_shared, name):
@@ -41,7 +41,8 @@ class WorkerProcess(Process):
         self.processdata_shared = processdata_shared
 
         self.start_timer(1)
-
+        self.timer.cancel()
+        
         #signal.signal(signal.SIGINT, self.handle_signals)
 
         print(f"{self.globalname} started {self.pidprocess}")
@@ -51,18 +52,20 @@ class WorkerProcess(Process):
         time.sleep(0.1)
         self._stop_event.set()  # Set the stop event
 
-    def handle_signals(self, signum, frame):
-        # Handle different signals
-        if signum == signal.SIGINT:
-            print(f"SIGINT received. Do nothing for {self.globalname}")
+    # def handle_signals(self, signum, frame):
+    #     # Handle different signals
+    #     if signum == signal.SIGINT:
+    #         print(f"SIGINT received. Do nothing for {self.globalname}")
 
     def run(self):
+        self.start_timer(10)
+
         try:
             while not self._stop_event.is_set():
                 time.sleep(0.0001) #must be 0
-    
+
                 if self.processdata_shared.value == 1:
-    
+
                     try:
                         # Check and process high-priority queue first
                         high_priority_data = self.high_priority_queue.get_nowait()
