@@ -22,8 +22,10 @@ import multiprocessing
 
 class WorkerManager(threading.Thread):
     #manager_type="Process" or manager_type="Thread"
-    def __init__(self, supervisor, name = "None", result_socket_type="None", result_socket_address="None", result_dataflow_type="None"):
+    def __init__(self, manager_id, supervisor, name = "None"):
         super().__init__()
+        #unique ID within the supervisor
+        self.manager_id = manager_id
         self.supervisor = supervisor
         self.config = self.supervisor.config
         self.name = name
@@ -32,13 +34,14 @@ class WorkerManager(threading.Thread):
         self.processingtype = self.supervisor.processingtype
         #number max of workers
         self.max_workes = 100
-        self.result_socket_type = result_socket_type
-        self.result_socket_address = result_socket_address
-        self.result_dataflow_type = result_dataflow_type
+        self.result_socket_type = self.supervisor.manager_result_sockets_type[manager_id]
+        self.result_socket = self.supervisor.manager_result_sockets[manager_id]
+        self.result_dataflow_type = self.supervisor.manager_result_dataflow_type[manager_id]
 
         self.pid = psutil.Process().pid
 
         self.context = self.supervisor.context
+        #self.context = zmq.Context()
                 
         self.socket_monitoring = self.supervisor.socket_monitoring
 
@@ -54,12 +57,15 @@ class WorkerManager(threading.Thread):
 
         #output sockert
         self.socket_result = None
-        if result_socket_type == "pushpull":
-            self.socket_result = self.context.socket(zmq.PUSH)
-            self.socket_result.connect(result_socket_address)
-        if result_socket_type == "pubsub":
-            self.socket_result = self.context.socket(zmq.PUB)
-            self.socket_result.bind(result_socket_address)
+        if self.result_socket != "none":
+            if self.result_socket_type == "pushpull":
+                self.socket_result = self.context.socket(zmq.PUSH)
+                self.socket_result.connect(self.result_socket)
+                print("result socket pushpull")
+            if self.result_socket_type == "pubsub":
+                self.socket_result = self.context.socket(zmq.PUB)
+                self.socket_result.bind(self.result_socket)
+                print("result socket pubsub")
 
         self.monitoringpoint = None
         self.monitoring_thread = None
@@ -81,6 +87,7 @@ class WorkerManager(threading.Thread):
         self._stop_event = threading.Event()  # Used to stop the manager
 
         print(f"{self.globalname} started")
+        print(f"Socket result parameters: {self.result_socket_type} / {self.result_socket} / {self.result_dataflow_type}")
 
     def set_processdata(self, processdata):
         self.processdata = processdata
@@ -135,15 +142,27 @@ class WorkerManager(threading.Thread):
             self.stop_processes()
             self.continueall = False
 
-    def send_result(data):
-        print("send_result")
-        if self.socket_result == None:
-            print("WARNING: no socket result available to send results")
+    def send_result(self, data):
+        #print(data)
+        if self.result_socket == "none":
+            #print("WARNING: no socket result available to send results")
             return
         if self.result_dataflow_type == "string" or self.result_dataflow_type == "filename":
-            self.socket_result.send_string(data)
+            try:
+                data = str(data)
+                print(data)
+                self.socket_result.send_string(data)
+            except Exception as e:
+                # Handle any other unexpected exceptions
+                print(f"ERROR: data not in binary format to be send to : {e}")
         if self.result_dataflow_type == "binary":
-            self.socket_result.send(data)
+            #print(str(data))
+            try:
+                self.socket_result.send(data)
+            except Exception as e:
+                # Handle any other unexpected exceptions
+                print(f"ERROR: data not in binary format to be send to socket_result: {e}")
+
 
     def stop(self, fast=False):
         self.stop_processes()

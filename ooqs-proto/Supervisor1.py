@@ -7,12 +7,12 @@ class Supervisor1(Supervisor):
 
 	def start_managers(self):
 		indexmanager=0
-		manager1 = WorkerManager1(self, "S22Rate", self.result_sockets[indexmanager], self.result_sockets_type[indexmanager], self.result_dataflow_type[indexmanager])
+		manager1 = WorkerManager1(indexmanager, self, "S22Rate")
 		manager1.start()
 		self.manager_workers.append(manager1)
 
 		indexmanager=1
-		manager2 = WorkerManager1(self, "S22Mean", self.result_sockets[indexmanager], self.result_sockets_type[indexmanager], self.result_dataflow_type[indexmanager])
+		manager2 = WorkerManager1(indexmanager, self, "S22Mean")
 		manager2.start()
 		self.manager_workers.append(manager2)
 

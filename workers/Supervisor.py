@@ -26,11 +26,11 @@ class Supervisor:
         self.name = name
         self.config_manager = None
 
-        #workers config
-        self.num_workers = None
-        self.result_sockets = None 
-        self.result_sockets_type = None
-        self.result_dataflow_type = None
+        #workers manager config
+        self.manager_num_workers = None
+        self.manager_result_sockets = None 
+        self.manager_result_sockets_type = None
+        self.manager_result_dataflow_type = None
 
         self.load_configuration(config_file, name)
         self.globalname = "Supervisor-"+name
@@ -101,7 +101,7 @@ class Supervisor:
         print(self.config)
         #self.config.get("data_hp_socket")
         #config_manager.get_pull_config("OOQS1", "data_hp_socket")
-        self.result_sockets_type, self.result_dataflow_type, self.result_sockets, self.num_workers = self.config_manager.get_workers_config(name)
+        self.manager_result_sockets_type, self.manager_result_dataflow_type, self.manager_result_sockets, self.manager_num_workers = self.config_manager.get_workers_config(name)
 
     def start_service_threads(self):
         #Monitoring thread
@@ -146,9 +146,9 @@ class Supervisor:
         indexmanager=0
         for manager in self.manager_workers: 
             if self.processingtype == "thread":
-                manager.start_worker_threads(self.num_workers[indexmanager])
+                manager.start_worker_threads(self.manager_num_workers[indexmanager])
             if self.processingtype == "process":
-                manager.start_worker_processes(self.num_workers[indexmanager])
+                manager.start_worker_processes(self.manager_num_workers[indexmanager])
             indexmanager = indexmanager + 1
 
     def start(self):
