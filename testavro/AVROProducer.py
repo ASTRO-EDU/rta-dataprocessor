@@ -38,9 +38,9 @@ class AvroDataGenerator:
                 self.socket.bind(self.config.get("data_hp_socket"))
         else:
             if self.config.get("datasocket_type") == "pushpull":
-                self.socket.connect(self.config["data_lp_socket"])
+                self.socket.connect(self.config.get("data_lp_socket"))
             if self.config.get("datasocket_type") == "pubsub":
-                self.socket.bind(self.config["data_lp_socket"])
+                self.socket.bind(self.config.get("data_lp_socket"))
 
         #monitoring
         self.start_time = time.time()
@@ -123,11 +123,6 @@ class AvroDataGenerator:
 
             # Simulate a delay (adjust as needed)
             time.sleep(self.delay)
-
-    def read_config(self, file_path="config.json"):
-        with open(file_path, "r") as file:
-            config = json.load(file)
-        return config
 
     def calcdatarate(self):
         while True:

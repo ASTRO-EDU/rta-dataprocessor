@@ -11,25 +11,18 @@ import json
 import time
 import sys
 
-def read_config(file_path="config.json"):
-    with open(file_path, "r") as file:
-        config = json.load(file)
-    return config
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python ProcessMonitoring.py <config_file>")
+        print("Usage: python ProcessMonitoring.py <socket>")
         sys.exit(1)
 
-    config_file_path = sys.argv[1]
-
-    # Read configuration from the provided file
-    config = read_config(config_file_path)
-
+    socketstring = sys.argv[1]
 
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
-    socket.bind(config["monitoring_socket_pull"])
+    socket.bind(socketstring)
 
     while True:
         message = socket.recv_string()

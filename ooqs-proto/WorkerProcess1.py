@@ -54,7 +54,8 @@ class WorkerProcess1(WorkerProcess):
 
 			# Process the decoded Avro message as needed
 			#print(self.globalname)
-			#print(avro_message)
+			print(avro_message)
+			self.manager.send_result(avro_message)
 			
 		if self.supervisor.dataflowtype == "filename":
 			print(data)

@@ -30,6 +30,7 @@ class Supervisor:
         self.num_workers = None
         self.result_sockets = None 
         self.result_sockets_type = None
+        self.result_dataflow_type = None
 
         self.load_configuration(config_file, name)
         self.globalname = "Supervisor-"+name
@@ -100,7 +101,7 @@ class Supervisor:
         print(self.config)
         #self.config.get("data_hp_socket")
         #config_manager.get_pull_config("OOQS1", "data_hp_socket")
-        self.result_sockets_type, self.result_sockets, self.num_workers = self.config_manager.get_workers_config(name)
+        self.result_sockets_type, self.result_dataflow_type, self.result_sockets, self.num_workers = self.config_manager.get_workers_config(name)
 
     def start_service_threads(self):
         #Monitoring thread
@@ -137,7 +138,7 @@ class Supervisor:
     #to be reimplemented ####
     def start_managers(self):
         indexmanager=0
-        manager = WorkerManager(self, "Generic", self.result_sockets[indexmanager], self.result_sockets_type[indexmanager])
+        manager = WorkerManager(self, "Generic", self.result_sockets[indexmanager], self.result_sockets_type[indexmanager], self.result_dataflow_type[indexmanager])
         manager.start()
         self.manager_workers.append(manager)
 

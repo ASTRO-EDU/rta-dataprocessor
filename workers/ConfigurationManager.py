@@ -20,6 +20,7 @@ class ConfigurationManager:
         "command_socket",
         "monitoring_socket",
         "manager_result_socket",
+        "manager_result_dataflow_type",
         "manager_result_socket_type",
         "manager_num_workers",
         "comment"
@@ -63,11 +64,12 @@ class ConfigurationManager:
         config = self.get_configuration(processorname)
         if config:
             result_socket_type = config.get("manager_result_socket_type", [])
+            result_dataflow_type = config.get("manager_result_dataflow_type", [])
             result_sockets = config.get("manager_result_socket", [])
             num_workers = config.get("manager_num_workers", [])
-            return result_socket_type, result_sockets, num_workers
+            return result_socket_type, result_dataflow_type, result_sockets, num_workers
         else:
-            return [], [], []
+            return [], [], [], []
 
 
 #config_manager = ConfigurationManager(file_path)
