@@ -75,11 +75,7 @@ class Supervisor:
             # self.monitoring_thread = None
 
             #results
-            #self.socket_result = self.context.socket(zmq.PUSH)
-            #self.socket_result.connect("tcp://localhost:5563")
             self.socket_result = [None] * 100
-            # self.socket_result = self.context.socket(zmq.PUB)
-            # self.socket_result.bind("tcp://localhost:5563")
 
         except Exception as e:
            # Handle any other unexpected exceptions
@@ -106,8 +102,6 @@ class Supervisor:
         self.config_manager = ConfigurationManager(config_file)
         self.config=self.config_manager.get_configuration(name)
         print(self.config)
-        #self.config.get("data_hp_socket")
-        #config_manager.get_pull_config("OOQS1", "data_hp_socket")
         self.manager_result_sockets_type, self.manager_result_dataflow_type, self.manager_result_sockets, self.manager_num_workers = self.config_manager.get_workers_config(name)
 
     def start_service_threads(self):

@@ -13,8 +13,6 @@ import time
 from multiprocessing import Event, Queue, Process
 from threading import Timer
 import psutil
-import zmq
-#import signal
 
 class WorkerProcess(Process):
     def __init__(self, worker_id, manager, processdata_shared, name):
@@ -45,19 +43,12 @@ class WorkerProcess(Process):
         self.start_timer(1)
         self.timer.cancel()
 
-        #signal.signal(signal.SIGINT, self.handle_signals)
-
         print(f"{self.globalname} started {self.pidprocess}")
 
     def stop(self):
         self.timer.cancel()
         time.sleep(0.1)
         self._stop_event.set()  # Set the stop event
-
-    # def handle_signals(self, signum, frame):
-    #     # Handle different signals
-    #     if signum == signal.SIGINT:
-    #         print(f"SIGINT received. Do nothing for {self.globalname}")
 
     def run(self):
         self.start_timer(10)
@@ -102,7 +93,7 @@ class WorkerProcess(Process):
         if not self._stop_event.is_set():
             self.start_timer(10)
 
-    #to be reimplemented
+    #to be reimplemented ###
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
         # Increment the processed data count and calculate the rate

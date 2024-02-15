@@ -7,7 +7,6 @@
 #    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 #
 import sys
-import threading
 from Supervisor import Supervisor
 
 def main(json_file_path, consumername):

@@ -10,7 +10,6 @@ import threading
 import queue
 import json
 import time
-import zmq
 from threading import Timer
 
 class WorkerThread(threading.Thread):
@@ -36,19 +35,6 @@ class WorkerThread(threading.Thread):
         self._stop_event = threading.Event()  # Set the stop event
 
         self.processdata = 0
-
-        #output sockert
-        # self.socket_result = None
-        # self.context = zmq.Context()
-        # if self.manager.result_socket != "none":
-        #     if self.manager.result_socket_type == "pushpull":
-        #         self.socket_result = self.manager.context.socket(zmq.PUSH)
-        #         self.socket_result.connect(self.manager.result_socket)
-        #         print(f"---result socket pushpull {self.globalname} {self.manager.result_socket}")
-        #     if self.manager.result_socket_type == "pubsub":
-        #         self.socket_result = self.manager.context.socket(zmq.PUB)
-        #         self.socket_result.bind(self.manager.result_socket)
-        #         print(f"---result socket pubsub {self.globalname} {self.manager.result_socket}")
 
         print(f"{self.globalname} started")
 
@@ -95,6 +81,7 @@ class WorkerThread(threading.Thread):
         if not self._stop_event.is_set():
             self.start_timer(10)
 
+    #to be reimplemented ###
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
         # Increment the processed data count and calculate the rate

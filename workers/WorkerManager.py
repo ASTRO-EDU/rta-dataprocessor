@@ -10,14 +10,10 @@ from MonitoringPoint import MonitoringPoint
 from WorkerThread import WorkerThread
 from WorkerProcess import WorkerProcess
 from MonitoringThread import MonitoringThread
-import json
-import zmq
 import queue
 import threading
 import time
-import sys
 import psutil
-import threading
 import multiprocessing
 
 class WorkerManager(threading.Thread):
@@ -39,14 +35,11 @@ class WorkerManager(threading.Thread):
         self.result_dataflow_type = self.supervisor.manager_result_dataflow_type[manager_id]
 
         #results
-        #self.socket_result = self.supervisor.context.socket(zmq.PUSH)
-        #self.socket_result.connect("tcp://localhost:5563")
         self.socket_result = self.supervisor.socket_result
 
         self.pid = psutil.Process().pid
 
         self.context = self.supervisor.context
-        #self.context = zmq.Context()
                 
         self.socket_monitoring = self.supervisor.socket_monitoring
 
@@ -101,7 +94,7 @@ class WorkerManager(threading.Thread):
         self.monitoring_thread = MonitoringThread(self.socket_monitoring, self.monitoringpoint)
         self.monitoring_thread.start()
 
-    #to be reimplemented
+    #to be reimplemented ###
     def start_worker_threads(self, num_threads):
         #Worker threads
         if num_threads > self.max_workes:
@@ -112,7 +105,7 @@ class WorkerManager(threading.Thread):
         #     self.worker_threads.append(thread)
         #     thread.start()
 
-    # to be reimplemented
+    # to be reimplemented ###
     def start_worker_processes(self, num_processes):
         # Worker processes
         if num_processes > self.max_workes:
@@ -170,7 +163,7 @@ class WorkerManager(threading.Thread):
         for process in self.worker_processes:
             process.stop()
             process.join()
-         # Stop worker threads
+        # Stop worker threads
         for thread in self.worker_threads:
             thread.stop()
             thread.join()       
