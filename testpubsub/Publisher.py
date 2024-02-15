@@ -9,6 +9,7 @@
 import zmq
 import json
 import time
+import sys
 
 def publish_data(socketstring):
     context = zmq.Context()

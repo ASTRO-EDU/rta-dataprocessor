@@ -26,7 +26,8 @@ if __name__ == "__main__":
 
     while True:
         message = socket.recv_string()
-        decoded_message = json.loads(message)
+        #decoded_message = json.loads(message)
+        decoded_message = message
         # Esegui l'aggregazione o altre operazioni sui dati ricevuti
         print("Dati ricevuti:", decoded_message)
 

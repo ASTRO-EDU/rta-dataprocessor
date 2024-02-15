@@ -23,7 +23,8 @@ class AvroDataGenerator:
         self.delay = float(delay)
         self.queue = queue
         self.type = self.config.get("dataflow_type")
-        print(self.config.get("datasocket_type"))
+        self.datasocket_type = self.config.get("datasocket_type")
+        print(f"{self.type} {self.datasocket_type}")
 
         self.context = zmq.Context()
         if self.config.get("datasocket_type") == "pushpull":

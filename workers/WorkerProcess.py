@@ -13,6 +13,7 @@ import time
 from multiprocessing import Event, Queue, Process
 from threading import Timer
 import psutil
+import zmq
 #import signal
 
 class WorkerProcess(Process):
@@ -27,6 +28,7 @@ class WorkerProcess(Process):
 
         self.low_priority_queue = self.manager.low_priority_queue
         self.high_priority_queue = self.manager.high_priority_queue
+        self.result_queue = self.manager.result_queue
         self.monitoringpoint = self.manager.monitoringpoint
 
         #monitoring
@@ -42,7 +44,7 @@ class WorkerProcess(Process):
 
         self.start_timer(1)
         self.timer.cancel()
-        
+
         #signal.signal(signal.SIGINT, self.handle_signals)
 
         print(f"{self.globalname} started {self.pidprocess}")

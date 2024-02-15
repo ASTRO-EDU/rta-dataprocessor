@@ -38,6 +38,11 @@ class WorkerManager(threading.Thread):
         self.result_socket = self.supervisor.manager_result_sockets[manager_id]
         self.result_dataflow_type = self.supervisor.manager_result_dataflow_type[manager_id]
 
+        #results
+        #self.socket_result = self.supervisor.context.socket(zmq.PUSH)
+        #self.socket_result.connect("tcp://localhost:5563")
+        self.socket_result = self.supervisor.socket_result
+
         self.pid = psutil.Process().pid
 
         self.context = self.supervisor.context
@@ -49,23 +54,14 @@ class WorkerManager(threading.Thread):
         if self.processingtype == "thread":
             self.low_priority_queue = queue.Queue()
             self.high_priority_queue = queue.Queue()
+            self.result_queue = queue.Queue()
 
         #input queue for processes
         if self.processingtype == "process":
             self.low_priority_queue = multiprocessing.Queue()
             self.high_priority_queue = multiprocessing.Queue()
+            self.result_queue = multiprocessing.Queue()
 
-        #output sockert
-        self.socket_result = None
-        if self.result_socket != "none":
-            if self.result_socket_type == "pushpull":
-                self.socket_result = self.context.socket(zmq.PUSH)
-                self.socket_result.connect(self.result_socket)
-                print("result socket pushpull")
-            if self.result_socket_type == "pubsub":
-                self.socket_result = self.context.socket(zmq.PUB)
-                self.socket_result.bind(self.result_socket)
-                print("result socket pubsub")
 
         self.monitoringpoint = None
         self.monitoring_thread = None
@@ -142,28 +138,6 @@ class WorkerManager(threading.Thread):
             self.stop_processes()
             self.continueall = False
 
-    def send_result(self, data):
-        #print(data)
-        if self.result_socket == "none":
-            #print("WARNING: no socket result available to send results")
-            return
-        if self.result_dataflow_type == "string" or self.result_dataflow_type == "filename":
-            try:
-                data = str(data)
-                print(data)
-                self.socket_result.send_string(data)
-            except Exception as e:
-                # Handle any other unexpected exceptions
-                print(f"ERROR: data not in binary format to be send to : {e}")
-        if self.result_dataflow_type == "binary":
-            #print(str(data))
-            try:
-                self.socket_result.send(data)
-            except Exception as e:
-                # Handle any other unexpected exceptions
-                print(f"ERROR: data not in binary format to be send to socket_result: {e}")
-
-
     def stop(self, fast=False):
         self.stop_processes()
         if self.processingtype == "process":
@@ -183,6 +157,13 @@ class WorkerManager(threading.Thread):
                 self.high_priority_queue.close()
                 self.high_priority_queue.cancel_join_thread() 
                 print(f"   - high_priority_queue empty")
+
+                print(f"   - result_queue size {self.result_queue.qsize()}")
+                while not self.result_queue.empty():
+                    item = self.result_queue.get_nowait()
+                self.result_queue.close()
+                self.result_queue.cancel_join_thread() 
+                print(f"   - result_queue empty")
 
                 print("End closing queues")
 

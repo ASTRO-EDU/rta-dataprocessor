@@ -9,6 +9,8 @@
 import zmq
 import json
 import time
+import sys
+
 def subscribe_data(socketstring):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
@@ -21,7 +23,8 @@ def subscribe_data(socketstring):
     try:
         while True:
             message = socket.recv_string()
-            data = json.loads(message)
+            #data = json.loads(message)
+            data = message
             print(f"Received: {data}")
 
     except KeyboardInterrupt:

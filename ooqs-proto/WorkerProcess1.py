@@ -55,11 +55,20 @@ class WorkerProcess1(WorkerProcess):
 			# Process the decoded Avro message as needed
 			#print(self.globalname)
 			#print(avro_message)
-			self.manager.send_result(avro_message)
+			#print(data)
+			self.manager.result_queue.put(data)
 			
 		if self.supervisor.dataflowtype == "filename":
 			print(data)
+			self.manager.result_queue.put(str(data))
 
 		if self.supervisor.dataflowtype == "string":
-			#print(data)
-			self.manager.send_result(data)
+			print(data)
+			#self.manager.result_queue.put(data)
+			#self.socket_result.send_string(data)
+			#print("WorkerProcess1")
+			self.manager.result_queue.put(str(data))
+			
+
+
+			

@@ -10,6 +10,7 @@ import threading
 import queue
 import json
 import time
+import zmq
 from threading import Timer
 
 class WorkerThread(threading.Thread):
@@ -35,6 +36,19 @@ class WorkerThread(threading.Thread):
         self._stop_event = threading.Event()  # Set the stop event
 
         self.processdata = 0
+
+        #output sockert
+        # self.socket_result = None
+        # self.context = zmq.Context()
+        # if self.manager.result_socket != "none":
+        #     if self.manager.result_socket_type == "pushpull":
+        #         self.socket_result = self.manager.context.socket(zmq.PUSH)
+        #         self.socket_result.connect(self.manager.result_socket)
+        #         print(f"---result socket pushpull {self.globalname} {self.manager.result_socket}")
+        #     if self.manager.result_socket_type == "pubsub":
+        #         self.socket_result = self.manager.context.socket(zmq.PUB)
+        #         self.socket_result.bind(self.manager.result_socket)
+        #         print(f"---result socket pubsub {self.globalname} {self.manager.result_socket}")
 
         print(f"{self.globalname} started")
 

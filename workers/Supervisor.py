@@ -74,6 +74,13 @@ class Supervisor:
             # self.monitoringpoint = MonitoringPoint(self)
             # self.monitoring_thread = None
 
+            #results
+            #self.socket_result = self.context.socket(zmq.PUSH)
+            #self.socket_result.connect("tcp://localhost:5563")
+            self.socket_result = [None] * 100
+            # self.socket_result = self.context.socket(zmq.PUB)
+            # self.socket_result.bind("tcp://localhost:5563")
+
         except Exception as e:
            # Handle any other unexpected exceptions
            print(f"ERROR: An unexpected error occurred: {e}")
@@ -133,12 +140,34 @@ class Supervisor:
             self.lp_data_thread.start()
 
             self.hp_data_thread = threading.Thread(target=self.listen_for_hp_string, daemon=True)
-            self.hp_data_thread.start()      
+            self.hp_data_thread.start()  
+
+        self.result_thread = threading.Thread(target=self.listen_for_result, daemon=True)
+        self.result_thread.start()       
+
+    def setup_result_channel(self, manager, indexmanager):
+        #output sockert
+        self.socket_result[indexmanager] = None
+        self.context = zmq.Context()
+
+        if manager.result_socket != "none":
+            if manager.result_socket_type == "pushpull":
+                self.socket_result[indexmanager] = self.context.socket(zmq.PUSH)
+                self.socket_result[indexmanager].connect(manager.result_socket)
+                print(f"---result socket pushpull {manager.globalname} {manager.result_socket}")
+
+            if manager.result_socket_type == "pubsub":
+                self.socket_result[indexmanager] = self.context.socket(zmq.PUB)
+                self.socket_result[indexmanager].bind(manager.result_socket)
+                print(f"---result socket pushpull {manager.globalname} {manager.result_socket}")
+
 
     #to be reimplemented ####
     def start_managers(self):
+        #PATTERN
         indexmanager=0
-        manager = WorkerManager(self, "Generic", self.result_sockets[indexmanager], self.result_sockets_type[indexmanager], self.result_dataflow_type[indexmanager])
+        manager = WorkerManager(self, "Generic")
+        self.setup_result_channel(manager, indexmanager)
         manager.start()
         self.manager_workers.append(manager)
 
@@ -182,6 +211,48 @@ class Supervisor:
     #Decode the data before load it into the queue. For "dataflowtype": "binary"
     def decode_data(self, data):
         return data
+
+    def listen_for_result(self):
+        while self.continueall:
+            if self.stopdata == False:
+                indexmanager = 0
+                for manager in self.manager_workers:
+                    self.send_result(manager, indexmanager) 
+                    indexmanager = indexmanager + 1
+
+    def send_result(self, manager, indexmanager):
+        data = None
+        try:
+            data = manager.result_queue.get_nowait()
+        except queue.Empty:
+            return
+        except Exception as e:
+            # Handle any other unexpected exceptions
+            print(f"WARNING: {e}")
+
+        if manager.result_socket == "none":
+            #print("WARNING: no socket result available to send results")
+            return
+        if manager.result_dataflow_type == "string" or manager.result_dataflow_type == "filename":
+            try:
+                data = str(data)
+                print(data)
+                #print(manager.result_queue.qsize())
+                self.socket_result[indexmanager].send_string("I am alive")
+                #print(f"I am alive: {data}")
+                print(f"I am alive {time.time()}")
+                self.socket_result[indexmanager].send_string(data)
+            except Exception as e:
+                # Handle any other unexpected exceptions
+                print(f"ERROR: data not in string format to be send to : {e}")
+        if manager.result_dataflow_type == "binary":
+            try:
+                data = str(manager.result_queue.get_nowait())
+                self.socket_result[indexmanager].send(data)
+                return 
+            except Exception as e:
+                # Handle any other unexpected exceptions
+                print(f"ERROR: data not in binary format to be send to socket_result: {e}")
 
     def listen_for_lp_data(self):
         while True:
