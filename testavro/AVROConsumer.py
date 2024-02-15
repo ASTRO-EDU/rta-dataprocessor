@@ -13,14 +13,20 @@ import io
 import json
 import struct
 import sys
+from ConfigurationManager import ConfigurationManager
 
-def main(config_file_path):
-    config = read_config(config_file_path)
+def load_configuration(self, config_file, name="CONS1"):
+    config_manager = ConfigurationManager(config_file)
+    config=config_manager.get_configuration(name)
+    return config
+
+def main(config_file_path, processname):
+    config = load_configuration(config_file_path, processname)
 
     # Connect to the ZeroMQ pull-type endpoint
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
-    socket.bind(config["data_lp_socket_pull"])  # Replace with your actual endpoint
+    socket.bind(config.get("data_lp_socket_pull"))  # Replace with your actual endpoint
 
     # Load Avro schema from the provided schema string
     avro_schema_str = '''
@@ -66,10 +72,11 @@ def read_config(file_path="config.json"):
     return config
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python script.py <config_file>")
+    if len(sys.argv) != 3:
+        print("Usage: python script.py <config_file> <processname>")
         sys.exit(1)
 
     config_file_path = sys.argv[1]
+    processname = sys.argv[2]
 
-    main(config_file_path)
+    main(config_file_path, processname)

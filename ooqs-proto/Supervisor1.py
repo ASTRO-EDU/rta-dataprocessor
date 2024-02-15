@@ -1,16 +1,40 @@
 from Supervisor import Supervisor
 from WorkerManager1 import WorkerManager1
+import zmq
+import time
+import json
 
 class Supervisor1(Supervisor):
 	def __init__(self, config_file="config.json", name="OOQS1"):
 		super().__init__(config_file, name)
 
+		#test
+		# self.socket_result = self.context.socket(zmq.PUB)
+		# self.socket_result.bind("tcp://localhost:5563")
+		# self.socket_result = self.context.socket(zmq.PUSH)
+		# self.socket_result.connect("tcp://localhost:5563")
+		# data_sequence = [
+		# 	{"parameter1": 1, "parameter2": 2, "status": "Running"},
+		# 	{"parameter1": 3, "parameter2": 4, "status": "Paused"},
+		# 	{"parameter1": 5, "parameter2": 6, "status": "Stopped"}
+		# ]
+		# time.sleep(1)
+		# for data in data_sequence:
+		# 	message = json.dumps(data)
+		# 	self.socket_result.send_string(message)
+		# 	print(f"Sent: {message}")
+		# 	time.sleep(1)
+
 	def start_managers(self):
-		manager1 = WorkerManager1(self, "S22Rate")
+		indexmanager=0
+		manager1 = WorkerManager1(indexmanager, self, "S22Rate")
+		self.setup_result_channel(manager1, indexmanager)
 		manager1.start()
 		self.manager_workers.append(manager1)
 
-		# manager2 = WorkerManager1(self, "S22Mean")
+		# indexmanager=1
+		# manager2 = WorkerManager1(indexmanager, self, "S22Mean")
+		# self.setup_result_channel(manager2, indexmanager)
 		# manager2.start()
 		# self.manager_workers.append(manager2)
 

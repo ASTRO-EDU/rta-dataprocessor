@@ -10,28 +10,32 @@ from MonitoringPoint import MonitoringPoint
 from WorkerThread import WorkerThread
 from WorkerProcess import WorkerProcess
 from MonitoringThread import MonitoringThread
-import json
-import zmq
 import queue
 import threading
 import time
-import sys
 import psutil
-import threading
 import multiprocessing
 
 class WorkerManager(threading.Thread):
     #manager_type="Process" or manager_type="Thread"
-    def __init__(self, supervisor, name = "None"):
+    def __init__(self, manager_id, supervisor, name = "None"):
         super().__init__()
+        #unique ID within the supervisor
+        self.manager_id = manager_id
         self.supervisor = supervisor
-        self.config_data = self.supervisor.config_data
+        self.config = self.supervisor.config
         self.name = name
         self.globalname = "WorkerManager-"+self.supervisor.name + "-" + name
         self.continueall = True
         self.processingtype = self.supervisor.processingtype
         #number max of workers
         self.max_workes = 100
+        self.result_socket_type = self.supervisor.manager_result_sockets_type[manager_id]
+        self.result_socket = self.supervisor.manager_result_sockets[manager_id]
+        self.result_dataflow_type = self.supervisor.manager_result_dataflow_type[manager_id]
+
+        #results
+        self.socket_result = self.supervisor.socket_result
 
         self.pid = psutil.Process().pid
 
@@ -39,18 +43,18 @@ class WorkerManager(threading.Thread):
                 
         self.socket_monitoring = self.supervisor.socket_monitoring
 
-        self.socket_result = self.context.socket(zmq.PUSH)
-        self.socket_result.connect(self.config_data["result_socket_push"])
-
-        #thread
+        #input queue for thread
         if self.processingtype == "thread":
             self.low_priority_queue = queue.Queue()
             self.high_priority_queue = queue.Queue()
+            self.result_queue = queue.Queue()
 
-        #processes
+        #input queue for processes
         if self.processingtype == "process":
             self.low_priority_queue = multiprocessing.Queue()
             self.high_priority_queue = multiprocessing.Queue()
+            self.result_queue = multiprocessing.Queue()
+
 
         self.monitoringpoint = None
         self.monitoring_thread = None
@@ -72,6 +76,7 @@ class WorkerManager(threading.Thread):
         self._stop_event = threading.Event()  # Used to stop the manager
 
         print(f"{self.globalname} started")
+        print(f"Socket result parameters: {self.result_socket_type} / {self.result_socket} / {self.result_dataflow_type}")
 
     def set_processdata(self, processdata):
         self.processdata = processdata
@@ -89,25 +94,25 @@ class WorkerManager(threading.Thread):
         self.monitoring_thread = MonitoringThread(self.socket_monitoring, self.monitoringpoint)
         self.monitoring_thread.start()
 
-    #to be reimplemented
-    def start_worker_threads(self, num_threads=5):
+    #to be reimplemented ###
+    def start_worker_threads(self, num_threads):
         #Worker threads
         if num_threads > self.max_workes:
             print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
         self.num_workers = num_threads
         # for i in range(num_threads):
-        #     thread = WorkerThread(i, self)
+        #     thread = WorkerThread(i, self, "name")
         #     self.worker_threads.append(thread)
         #     thread.start()
 
-    # to be reimplemented
-    def start_worker_processes(self, num_processes=5):
+    # to be reimplemented ###
+    def start_worker_processes(self, num_processes):
         # Worker processes
         if num_processes > self.max_workes:
             print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
         self.num_workers = num_processes
         # for i in range(num_processes):
-        #     process = WorkerProcess(i, self, self.processdata_shared)
+        #     process = WorkerProcess(i, self, self.processdata_shared, "name")
         #     self.worker_processes.append(process)
         #     process.start()
 
@@ -146,12 +151,19 @@ class WorkerManager(threading.Thread):
                 self.high_priority_queue.cancel_join_thread() 
                 print(f"   - high_priority_queue empty")
 
+                print(f"   - result_queue size {self.result_queue.qsize()}")
+                while not self.result_queue.empty():
+                    item = self.result_queue.get_nowait()
+                self.result_queue.close()
+                self.result_queue.cancel_join_thread() 
+                print(f"   - result_queue empty")
+
                 print("End closing queues")
 
         for process in self.worker_processes:
             process.stop()
             process.join()
-         # Stop worker threads
+        # Stop worker threads
         for thread in self.worker_threads:
             thread.stop()
             thread.join()       

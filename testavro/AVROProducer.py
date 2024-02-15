@@ -15,31 +15,33 @@ import threading
 import avro.schema
 import avro.io
 import sys
+from ConfigurationManager import ConfigurationManager
 
 class AvroDataGenerator:
-    def __init__(self, config_file_path, queue, delay):
-        self.config = self.read_config(config_file_path)
+    def __init__(self, config_file_path, queue, delay, processname):
+        self.load_configuration(config_file_path, processname)
         self.delay = float(delay)
         self.queue = queue
-        self.type = self.config["dataflowtype"]
-        print(self.config["datasockettype"])
+        self.type = self.config.get("dataflow_type")
+        self.datasocket_type = self.config.get("datasocket_type")
+        print(f"{self.type} {self.datasocket_type}")
 
         self.context = zmq.Context()
-        if self.config["datasockettype"] == "pushpull":
+        if self.config.get("datasocket_type") == "pushpull":
             self.socket = self.context.socket(zmq.PUSH)
-        if self.config["datasockettype"] == "pubsub":
+        if self.config.get("datasocket_type") == "pubsub":
             self.socket = self.context.socket(zmq.PUB)
 
         if self.queue == "hp":
-            if self.config["datasockettype"] == "pushpull":
-                self.socket.connect(self.config["data_hp_socket_push"])
-            if self.config["datasockettype"] == "pubsub":
-                self.socket.bind(self.config["data_hp_socket_pubsub"])
+            if self.config.get("datasocket_type") == "pushpull":
+                self.socket.connect(self.config.get("data_hp_socket"))
+            if self.config.get("datasocket_type") == "pubsub":
+                self.socket.bind(self.config.get("data_hp_socket"))
         else:
-            if self.config["datasockettype"] == "pushpull":
-                self.socket.connect(self.config["data_lp_socket_push"])
-            if self.config["datasockettype"] == "pubsub":
-                self.socket.bind(self.config["data_lp_socket_pubsub"])
+            if self.config.get("datasocket_type") == "pushpull":
+                self.socket.connect(self.config.get("data_lp_socket"))
+            if self.config.get("datasocket_type") == "pubsub":
+                self.socket.bind(self.config.get("data_lp_socket"))
 
         #monitoring
         self.start_time = time.time()
@@ -47,7 +49,10 @@ class AvroDataGenerator:
         self.processed_data_count = 0
         self.processing_rate = 0
 
-
+    def load_configuration(self, config_file, name="CommandCenter"):
+        self.config_manager = ConfigurationManager(config_file)
+        self.config=self.config_manager.get_configuration(name)
+        print(self.config)
 
     def generate_avro_data(self):
         # Generate an array of 16384 double values for the 'data' field
@@ -120,11 +125,6 @@ class AvroDataGenerator:
             # Simulate a delay (adjust as needed)
             time.sleep(self.delay)
 
-    def read_config(self, file_path="config.json"):
-        with open(file_path, "r") as file:
-            config = json.load(file)
-        return config
-
     def calcdatarate(self):
         while True:
             print("dc")
@@ -138,15 +138,16 @@ class AvroDataGenerator:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python script.py <config_file> <queue (lp|hp)> <delay>")
+    if len(sys.argv) != 5:
+        print("Usage: python script.py <config_file> <queue (lp|hp)> <delay> <processnamedest>")
     
         sys.exit(1)
 
     config_file_path = sys.argv[1]
     queue = sys.argv[2]
     delay = sys.argv[3]
+    processnamedest = sys.argv[4]
 
-    avro_data_generator = AvroDataGenerator(config_file_path, queue, delay)
+    avro_data_generator = AvroDataGenerator(config_file_path, queue, delay, processnamedest)
     avro_data_generator.main()
 

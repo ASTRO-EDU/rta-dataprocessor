@@ -1,20 +1,38 @@
-{
-	"dataflowtype": "binary",
-	"processingtype": "process",
-	"datasockettype": "pushpull",
-	"data_lp_socket_push": "tcp://172.17.0.3:5555",
-	"data_lp_socket_pull": "tcp://*:5555",
-	"data_lp_socket_pubsub": "tcp://172.17.0.3:5555",
-	"data_hp_socket_push": "tcp://172.17.0.3:5556",
-	"data_hp_socket_pull": "tcp://*:5556",
-	"data_hp_socket_pubsub": "tcp://172.17.0.3:5556",
-	"command_socket_pubsub": "tcp://172.17.0.2:5561",
-	"monitoring_socket_push": "tcp://172.17.0.2:5562",
-	"monitoring_socket_pull": "tcp://*:5562",
-	"result_socket_push": "tcp://localhost:5563",
-	"num_workers": 5,
-	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
-  }
+  [
+	{
+	  "processname": "CommandCenter",
+	  "command_socket": "tcp://172.17.0.2:5561",
+	  "monitoring_socket": "tcp://172.17.0.2:5562"
+	},
+	{
+	  "processname": "OOQS1",
+	  "dataflow_type": "binary",
+	  "processing_type": "process",
+	  "datasocket_type": "pushpull",
+	  "data_lp_socket": "tcp://172.17.0.3:5555",
+	  "data_hp_socket": "tcp://172.17.0.3:5556",
+	  "command_socket": "tcp://172.17.0.2:5561",
+	  "monitoring_socket": "tcp://172.17.0.2:5562",
+	  "manager_result_socket_type": ["pushpull", "pushpull"],
+	  "manager_result_socket": ["tcp://172.17.0.3:5563", "tcp://172.17.0.3:5564"],
+	  "manager_num_workers": [5, 2],
+	  "comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+	},
+	{
+	  "processname": "OOQS2",
+	  "dataflow_type": "binary",
+	  "processing_type": "process",
+	  "datasocket_type": "pushpull",
+	  "data_lp_socket": "tcp://172.17.0.3:5555",
+	  "data_hp_socket": "tcp://172.17.0.3:5556",
+	  "command_socket": "tcp://172.17.0.2:5561",
+	  "monitoring_socket": "tcp://172.17.0.2:5562",
+	  "manager_result_socket_type": ["pushpull", "pushpull"],
+	  "manager_result_socket": ["tcp://172.17.0.3:5563", "tcp://172.17.0.3:5564"],
+	  "manager_num_workers": [5, 2],
+	  "comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+	}
+  ]
   
-  
-  
+	
+	

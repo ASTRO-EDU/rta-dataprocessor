@@ -9,11 +9,12 @@
 import zmq
 import json
 import time
+import sys
 
-def publish_data(config):
+def publish_data(socketstring):
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
-    socket.bind(config["command_socket_pubsub"])
+    socket.bind(socketstring)
 
     data_sequence = [
         {"parameter1": 1, "parameter2": 2, "status": "Running"},
@@ -27,19 +28,12 @@ def publish_data(config):
         print(f"Sent: {message}")
         time.sleep(1)
 
-def read_config(file_path="config.json"):
-    with open(file_path, "r") as file:
-        config = json.load(file)
-    return config
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python ProcessMonitoring.py <config_file>")
+        print("Usage: python ProcessMonitoring.py <socket>")
         sys.exit(1)
 
-    config_file_path = sys.argv[1]
-
-    # Read configuration from the provided file
-    config = read_config(config_file_path)
-
-    publish_data(config)
+    socket = sys.argv[1]
+    publish_data(socket)

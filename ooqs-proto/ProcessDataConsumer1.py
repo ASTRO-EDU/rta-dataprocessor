@@ -19,13 +19,13 @@ def main(json_file_path, consumername):
 
 if __name__ == "__main__":
     # Check if a JSON file path is provided as a command-line argument
-    if len(sys.argv) != 3:
-        print("Usage: python script.py <json_file_path> <consumername>. ")
+    if len(sys.argv) != 2:
+        print("Usage: python script.py <json_file_path> ")
         sys.exit(1)
 
     # Get the JSON file path from the command-line arguments
     json_file_path = sys.argv[1]
-    consumername = sys.argv[2]
+    consumername = "OOQS1"
 
     # Call the main function with the provided JSON file path
     main(json_file_path, consumername)

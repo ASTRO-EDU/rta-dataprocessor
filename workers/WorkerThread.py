@@ -13,7 +13,7 @@ import time
 from threading import Timer
 
 class WorkerThread(threading.Thread):
-    def __init__(self, worker_id, manager, name="None"):
+    def __init__(self, worker_id, manager, name):
         super().__init__()
         self.manager = manager
         self.supervisor = manager.supervisor
@@ -64,7 +64,7 @@ class WorkerThread(threading.Thread):
                         pass  # Continue if both queues are empty
         
         self.timer.cancel()
-        print(f"Worker stop {self.globalname}")
+        print(f"WorkerThread stop {self.globalname}")
 
     def start_timer(self, interval):
         self.timer = Timer(interval, self.calcdatarate)
@@ -81,6 +81,7 @@ class WorkerThread(threading.Thread):
         if not self._stop_event.is_set():
             self.start_timer(10)
 
+    #to be reimplemented ###
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
         # Increment the processed data count and calculate the rate
