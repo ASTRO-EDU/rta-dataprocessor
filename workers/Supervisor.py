@@ -320,27 +320,28 @@ class Supervisor:
             for manager in self.manager_workers:
                 print(f"Trying to stop {manager.globalname}...")
                 manager.status = "EndingProcessing"
-                while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0 and manager.result_queue.qsize() != 0:
+                while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0:
                     time.sleep(0.1)
-                print(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize()} {manager.result_queue.qsize()}")
+                print(f"Queues data of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize()}")
+                while manager.result_queue.qsize() != 0:
+                    time.sleep(0.1)
+                print(f"Queues result of manager {manager.globalname} have size {manager.result_queue.qsize()}")
                 manager.status = "Shutdown"
         else:
             print("WARNING! Not in Processing state for a cleaned shutdown. Force the shutdown.") 
-        self.status = "Shutdown"
+        self.command_stop()
         self.stop_all(False)
         self.continueall = False
+        self.status = "Shutdown"
 
     def command_reset(self):
-        if self.status == "Processing":
-            self.status = "Reset"
+        if self.status == "Processing" or self.status == "Waiting":
             self.command_stopdata()
+            self.command_stop()
             for manager in self.manager_workers:
                 print(f"Trying to reset {manager.globalname}...")
-                manager.status = "Reset"
-                while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0 and manager.result_queue.qsize() != 0:
-                    time.sleep(0.1)
+                manager.clean_queue()
                 print(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize()} {manager.result_queue.qsize()}")
-                manager.status = "Reset"
             self.status = "Waiting"
 
 

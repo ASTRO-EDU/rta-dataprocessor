@@ -81,6 +81,11 @@ class WorkerManager(threading.Thread):
     def set_processdata(self, processdata):
         self.processdata = processdata
 
+        if self.processdata == 1:
+            self.status = "Processing"
+        if self.processdata == 0:
+            self.status = "Waiting"
+
         if self.processingtype == "process":
             self.processdata_shared.value = processdata
         
@@ -131,6 +136,26 @@ class WorkerManager(threading.Thread):
             self.stop_processes()
             self.continueall = False
 
+    def clean_queue(self):
+        print("Cleaning queues...")
+
+        print(f"   - low_priority_queue size {self.low_priority_queue.qsize()}")
+        while not self.low_priority_queue.empty():
+            item = self.low_priority_queue.get_nowait()
+        print(f"   - low_priority_queue empty")
+ 
+        print(f"   - high_priority_queue size {self.high_priority_queue.qsize()}")
+        while not self.high_priority_queue.empty():
+            item = self.high_priority_queue.get_nowait()
+        print(f"   - high_priority_queue empty")
+
+        print(f"   - result_queue size {self.result_queue.qsize()}")
+        while not self.result_queue.empty():
+            item = self.result_queue.get_nowait()
+        print(f"   - result_queue empty")
+
+        print("End cleaning queues")
+
     def stop(self, fast=False):
         self.stop_processes()
         if self.processingtype == "process":
@@ -168,6 +193,7 @@ class WorkerManager(threading.Thread):
             thread.stop()
             thread.join()       
         self._stop_event.set()  # Set the stop event to exit from this thread
+        self.status = "End"
 
 
     def stop_processes(self):
