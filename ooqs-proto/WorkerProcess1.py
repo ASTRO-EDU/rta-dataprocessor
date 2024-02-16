@@ -63,7 +63,7 @@ class WorkerProcess1(WorkerProcess):
 			self.manager.result_queue.put(str(data))
 
 		if self.supervisor.dataflowtype == "string":
-			print(data)
+			#print(data)
 			#self.manager.result_queue.put(data)
 			#self.socket_result.send_string(data)
 			#print("WorkerProcess1")
