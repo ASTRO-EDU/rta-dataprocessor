@@ -59,8 +59,8 @@ def main():
     command_subtype = sys.argv[2].lower()
     pidtarget_processname = sys.argv[3]
 
-    if command_subtype not in ["shutdown", "cleanedshutdown", "start", "stop", "startdata", "stopdata",  "getstatus"]:
-        print("Invalid command type. Use 'shutdown', 'cleanedshutdown', 'start', 'stop', 'startdata', 'stopdata',  or 'getstatus'.")
+    if command_subtype not in ["shutdown", "cleanedshutdown", "start", "stop", "reset", "startdata", "stopdata",  "getstatus"]:
+        print("Invalid command type. Use 'shutdown', 'cleanedshutdown', 'start', 'stop', 'reset', 'startdata', 'stopdata',  or 'getstatus'.")
         sys.exit(1)
 
     command = Command(config_file_path, "CommandCenter")  # Adjust the address based on your setup

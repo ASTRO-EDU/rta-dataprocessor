@@ -209,6 +209,7 @@ class Supervisor:
     def listen_for_result(self):
         while self.continueall:
             if self.stopdata == False:
+                time.sleep(0.0001)
                 indexmanager = 0
                 for manager in self.manager_workers:
                     self.send_result(manager, indexmanager) 
@@ -230,11 +231,7 @@ class Supervisor:
         if manager.result_dataflow_type == "string" or manager.result_dataflow_type == "filename":
             try:
                 data = str(data)
-                print(data)
                 #print(manager.result_queue.qsize())
-                self.socket_result[indexmanager].send_string("I am alive")
-                #print(f"I am alive: {data}")
-                print(f"I am alive {time.time()}")
                 self.socket_result[indexmanager].send_string(data)
             except Exception as e:
                 # Handle any other unexpected exceptions
@@ -323,15 +320,29 @@ class Supervisor:
             for manager in self.manager_workers:
                 print(f"Trying to stop {manager.globalname}...")
                 manager.status = "EndingProcessing"
-                while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0:
+                while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0 and manager.result_queue.qsize() != 0:
                     time.sleep(0.1)
-                print(f"Queues of manager {manager.globalname} are empty {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize() }")
+                print(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize()} {manager.result_queue.qsize()}")
                 manager.status = "Shutdown"
         else:
             print("WARNING! Not in Processing state for a cleaned shutdown. Force the shutdown.") 
         self.status = "Shutdown"
         self.stop_all(False)
         self.continueall = False
+
+    def command_reset(self):
+        if self.status == "Processing":
+            self.status = "Reset"
+            self.command_stopdata()
+            for manager in self.manager_workers:
+                print(f"Trying to reset {manager.globalname}...")
+                manager.status = "Reset"
+                while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0 and manager.result_queue.qsize() != 0:
+                    time.sleep(0.1)
+                print(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize()} {manager.result_queue.qsize()}")
+                manager.status = "Reset"
+            self.status = "Waiting"
+
 
     def command_start(self):
         self.status = "Processing"
@@ -372,6 +383,8 @@ class Supervisor:
                     self.command_start()
             if subtype_value == "stop": #data processing
                     self.command_stop()
+            if subtype_value == "reset": #reset the data processor
+                    self.command_reset()
             if subtype_value == "stopdata": #data acquisition
                     self.command_stopdata()
             if subtype_value == "startdata": #data acquisition
