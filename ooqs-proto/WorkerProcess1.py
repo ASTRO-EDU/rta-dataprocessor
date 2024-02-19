@@ -42,7 +42,6 @@ class WorkerProcess1(WorkerProcess):
 
 	def process_data(self, data, priority):
 		super().process_data(data, priority)
-		self.processed_data_count += 1
 
 		# Custom processing logic for Worker1
 		#print("Process data...")

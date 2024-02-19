@@ -40,6 +40,12 @@ class WorkerProcess(Process):
 
         self.processdata_shared = processdata_shared
 
+        #0 initialised
+        #1 waiting
+        #2 processing
+        #3 stop
+        self.manager.worker_status_shared[self.worker_id] = 0 #initialised
+
         self.start_timer(1)
         self.timer.cancel()
 
@@ -69,11 +75,13 @@ class WorkerProcess(Process):
                             low_priority_data = self.low_priority_queue.get(timeout=1)
                             self.process_data(low_priority_data, priority="Low")
                         except queue.Empty:
+                            self.manager.worker_status_shared[self.worker_id] = 1 #waiting for new data
                             pass  # Continue if both queues are empty
         except Exception:
             pass
 
         self.timer.cancel()
+        self.manager.worker_status_shared[self.worker_id] = 100 #stop
         print(f"WorkerProcess stop {self.globalname}")
 
     def start_timer(self, interval):
@@ -97,6 +105,7 @@ class WorkerProcess(Process):
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
         # Increment the processed data count and calculate the rate
+        self.manager.worker_status_shared[self.worker_id] = 2 #processig new data
         self.processed_data_count += 1
 
         #Derive a class and put the code of analysis in this method

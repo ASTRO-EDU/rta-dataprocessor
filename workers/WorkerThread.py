@@ -36,9 +36,16 @@ class WorkerThread(threading.Thread):
 
         self.processdata = 0
 
+        #0 initialised
+        #1 waiting
+        #2 processing
+        #3 stop
+        self.status = 0 #initialised
+
         print(f"{self.globalname} started")
 
     def stop(self):
+        self.status = 3 #stop
         self._stop_event.set()  # Set the stop event
 
     def set_processdata(self, processdata1):
@@ -61,6 +68,7 @@ class WorkerThread(threading.Thread):
                         low_priority_data = self.low_priority_queue.get(timeout=1)
                         self.process_data(low_priority_data, priority="Low")
                     except queue.Empty:
+                        self.status = 1 #waiting for new data
                         pass  # Continue if both queues are empty
         
         self.timer.cancel()
@@ -85,6 +93,7 @@ class WorkerThread(threading.Thread):
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
         # Increment the processed data count and calculate the rate
+        self.status = 2 #processig new data
         self.processed_data_count += 1
 
         #Derive a class and put the code of analysis in this method

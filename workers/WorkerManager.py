@@ -60,10 +60,14 @@ class WorkerManager(threading.Thread):
         self.monitoring_thread = None
         self.processing_rates_shared = multiprocessing.Array('f', self.max_workes)
         self.total_processed_data_count_shared = multiprocessing.Array('f', self.max_workes)
+        self.worker_status_shared = multiprocessing.Array('f', self.max_workes)
 
         self.worker_threads = []
         self.worker_processes = []
         self.num_workers = 0
+
+        self.workerstatus=0
+        self.workerstatusinit=0
 
         self.status = "Initialised"
 
@@ -71,7 +75,6 @@ class WorkerManager(threading.Thread):
         self.processdata = 0
         self.processdata_shared = multiprocessing.Value('i', 0)
         self.stopdata = 0
-        self.stopdata_shared = multiprocessing.Value('i', 0)
 
         self._stop_event = threading.Event()  # Used to stop the manager
 
@@ -130,10 +133,29 @@ class WorkerManager(threading.Thread):
         try:
             while not self._stop_event.is_set():
                 time.sleep(1)  # To avoid 100 per cent of CPU comsumption
+                #check the status of the workers
+                self.workerstatus=0
+                self.workerstatusinit=0
+                worker_id = 0
+                for process in self.worker_processes:
+                    status = self.worker_status_shared[worker_id]
+                    if status == 0:
+                        self.workerstatusinit = self.workerstatusinit + 1
+                    else:
+                        self.workerstatus = self.workerstatus + status
+                    worker_id = worker_id + 1
+                for thread in self.worker_threads:
+                    if thread.status == 0:
+                        self.workerstatusinit = self.workerstatusinit + 1
+                    else:
+                        self.workerstatus = self.workerstatus + thread.status
+                if self.num_workers != self.workerstatusinit:
+                    self.workerstatus = self.workerstatus / (self.num_workers-self.workerstatusinit)
+                #print(f"Manager workers status {self.globalname} {self.workerstatusinit} {self.workerstatus}")
             print(f"Manager stop {self.globalname}")
         except KeyboardInterrupt:
             print("Keyboard interrupt received. Terminating.")
-            self.stop_processes()
+            self.stop_internalthreads()
             self.continueall = False
 
     def clean_queue(self):
@@ -157,7 +179,7 @@ class WorkerManager(threading.Thread):
         print("End cleaning queues")
 
     def stop(self, fast=False):
-        self.stop_processes()
+        self.stop_internalthreads()
         if self.processingtype == "process":
             if fast == False:
                 print("Closing queues...")
@@ -196,7 +218,7 @@ class WorkerManager(threading.Thread):
         self.status = "End"
 
 
-    def stop_processes(self):
+    def stop_internalthreads(self):
         print("Stopping Manager threads...")
         # Stop monitoring thread
         self.monitoring_thread.stop()

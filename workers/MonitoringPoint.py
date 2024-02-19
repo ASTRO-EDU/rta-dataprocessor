@@ -34,6 +34,7 @@ class MonitoringPoint:
         self.data["queue_hp_size"] = 0
         self.processing_rates = {}
         self.processing_tot_events = {}
+        self.worker_status = {}
         print("MonitoringPoint initialised")
 
     def update(self, key, value):
@@ -52,18 +53,23 @@ class MonitoringPoint:
             self.data["stopdatainput"] = self.manager.stopdata
             self.update("queue_lp_size", self.manager.low_priority_queue.qsize())
             self.update("queue_hp_size", self.manager.high_priority_queue.qsize())
-            
+            self.update("workerstatusinit", self.manager.workerstatusinit)
+            self.update("workerstatus", self.manager.workerstatus)
+
             if self.manager.processingtype == "process":
                 for worker in self.manager.worker_processes:
                     #print(f"Monitor {worker.globalname} {worker.processing_rate}")
                     self.processing_rates[worker.worker_id] = self.manager.processing_rates_shared[worker.worker_id]
                     self.processing_tot_events[worker.worker_id] = self.manager.total_processed_data_count_shared[worker.worker_id]
+                    self.worker_status[worker.worker_id] = self.manager.worker_status_shared[worker.worker_id]
             if self.manager.processingtype == "thread":
                 for worker in self.manager.worker_threads:
                     self.processing_rates[worker.worker_id] = worker.processing_rate
                     self.processing_tot_events[worker.worker_id] = worker.total_processed_data_count
-            self.data["processing_rates"] = self.processing_rates
-            self.data["processing_tot_events"] = self.processing_tot_events
+                    self.worker_status[worker.worker_id] = int(worker.status)
+            self.data["worker_rates"] = self.processing_rates
+            self.data["worker_tot_events"] = self.processing_tot_events
+            self.data["worker_status"] = self.worker_status
             return self.data
  
     def set_status(self, new_status):

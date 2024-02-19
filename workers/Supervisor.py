@@ -208,12 +208,11 @@ class Supervisor:
 
     def listen_for_result(self):
         while self.continueall:
-            if self.stopdata == False:
-                time.sleep(0.0001)
-                indexmanager = 0
-                for manager in self.manager_workers:
-                    self.send_result(manager, indexmanager) 
-                    indexmanager = indexmanager + 1
+            time.sleep(0.001)
+            indexmanager = 0
+            for manager in self.manager_workers:
+                self.send_result(manager, indexmanager) 
+                indexmanager = indexmanager + 1
 
     def send_result(self, manager, indexmanager):
         data = None
@@ -223,7 +222,8 @@ class Supervisor:
             return
         except Exception as e:
             # Handle any other unexpected exceptions
-            print(f"WARNING: {e}")
+            #print(f"WARNING: {e}")
+            return
 
         if manager.result_socket == "none":
             #print("WARNING: no socket result available to send results")
@@ -324,7 +324,7 @@ class Supervisor:
                     time.sleep(0.1)
                 print(f"Queues data of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize()}")
                 while manager.result_queue.qsize() != 0:
-                    time.sleep(0.1)
+                    time.sleep(0.1) 
                 print(f"Queues result of manager {manager.globalname} have size {manager.result_queue.qsize()}")
                 manager.status = "Shutdown"
         else:
@@ -401,6 +401,7 @@ class Supervisor:
         # self.monitoring_thread.join()
 
         self.command_stopdata()
+        self.command_stop()
         time.sleep(0.1)
 
         # Stop managers

@@ -60,5 +60,5 @@ class WorkerThread1(WorkerThread):
 			self.manager.result_queue.put(data)
 
 		if self.supervisor.dataflowtype == "string":
-			print(data)
+			#print(data)
 			self.manager.result_queue.put(data)
