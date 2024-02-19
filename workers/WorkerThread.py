@@ -57,7 +57,7 @@ class WorkerThread(threading.Thread):
         while not self._stop_event.is_set():
             time.sleep(0.00001) #must be 0
 
-            if self.manager.processdata == 1:
+            if self.processdata == 1:
                 try:
                     # Check and process high-priority queue first
                     high_priority_data = self.high_priority_queue.get_nowait()
