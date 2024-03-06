@@ -13,3 +13,5 @@ __pycache__
 workers/build
 workers/dist
 workers/workers.egg-info
+# file utilizzato durante il development da Nunzio 
+main.py
