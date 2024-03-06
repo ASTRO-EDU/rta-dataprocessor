@@ -1,0 +1,19 @@
+[
+    
+    {
+        "processname":"A",
+        "dataflow_type":"0",
+        "manager_result_socket_type":"a",
+        "manager_result_dataflow_type":"b"
+        "manager_result_socket":"c"
+        "manager_num_workers":"3"
+    
+    {
+        "processname":"B",
+        "dataflow_type":"1",
+        "manager_result_socket_type":"d",
+        "manager_result_dataflow_type":"e",
+        "manager_num_workers":"4"
+    }
+       
+]
