@@ -35,6 +35,4 @@
 	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
   }
 ]
-
-  
   
