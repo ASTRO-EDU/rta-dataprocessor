@@ -55,8 +55,8 @@ class AvroDataGenerator:
         print(self.config)
 
     def generate_avro_data(self):
-        # Generate an array of 16384 double values for the 'data' field
-        avro_data = [random.uniform(0, 100) for _ in range(16)]
+        # Generate an array of X double values for the 'data' field
+        avro_data = [random.uniform(0, 100) for _ in range(5000)]
         return avro_data
 
     def create_avro_message(self):

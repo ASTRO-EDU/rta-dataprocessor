@@ -7,8 +7,8 @@
   {
 	"processname": "OOQS1",
 	"dataflow_type": "string",
-	"processing_type": "thread",
-	"datasocket_type": "pubsub",
+	"processing_type": "process",
+	"datasocket_type": "pushpull",
 	"data_lp_socket": "tcp://localhost:5555",
 	"data_hp_socket": "tcp://localhost:5556",
 	"command_socket": "tcp://127.0.0.1:5561",
@@ -16,7 +16,7 @@
 	"manager_result_socket_type": ["pushpull", "none"],
 	"manager_result_dataflow_type": ["string", "none"],
 	"manager_result_socket": ["tcp://localhost:5563", "none"],
-	"manager_num_workers": [5, 2],
+	"manager_num_workers": [10, 2],
 	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
   },
   {
