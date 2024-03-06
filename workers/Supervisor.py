@@ -160,7 +160,7 @@ class Supervisor:
     def start_managers(self):
         #PATTERN
         indexmanager=0
-        manager = WorkerManager(self, "Generic")
+        manager = WorkerManager(indexmanager, self, "Generic")
         self.setup_result_channel(manager, indexmanager)
         manager.start()
         self.manager_workers.append(manager)
