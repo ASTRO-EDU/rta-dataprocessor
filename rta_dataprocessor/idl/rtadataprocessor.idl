@@ -45,7 +45,7 @@ interface Command : ACS::ACSComponent {
     
     void configure(in string jsonStaticConfiguration); // se un altro componente, tipo OOQSManager, passa la configurazione 
 
-    void sendCommand(in Commands command); // per chiamare comandi 
+    void sendCommand(in Commands command, in string destProcessorName); // per chiamare comandi 
 
 };
 
