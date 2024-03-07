@@ -1,0 +1,10 @@
+build
+*.jar
+*.o
+*.inl
+*.log
+
+rta_dataprocessor/object
+rta_dataprocessor/lib
+
+__pycache__
