@@ -12,7 +12,7 @@
 
 #pragma prefix "scada" // o ooqs?
 
-module rtadataprocessor
+module rtamanager
 {
 
 /*************************************
@@ -41,7 +41,7 @@ enum Commands {
         GET_STATUS
     };
 
-interface Command : ACS::ACSComponent { 
+interface Commander : ACS::ACSComponent { 
     
     void configure(in string jsonStaticConfiguration); // se un altro componente, tipo OOQSManager, passa la configurazione 
 

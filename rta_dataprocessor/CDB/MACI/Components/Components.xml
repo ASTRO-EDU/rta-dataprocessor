@@ -1,14 +1,14 @@
 <Components xmlns="urn:schemas-cosylab-com:Components:1.0" xmlns:cdb="urn:schemas-cosylab-com:CDB:1.0" xmlns:baci="urn:schemas-cosylab-com:BACI:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 <e Name="OOQS_DATAPROCESSOR_*" 
-   Code="ooqsdataprocessor.DataprocessorImpl"
-   Type="IDL:scada/rtadataprocessor/DataProcessor:1.0"
+   Code="rtamanagerImpl.DataprocessorImpl"
+   Type="IDL:scada/rtamanager/DataProcessor:1.0"
    Container="pyContainer1"
    ImplLang="py"/>
 
 <e Name="OOQS_Commander" 
-   Code="ooqsdataprocessor.CommanderImpl"
-   Type="IDL:scada/rtadataprocessor/Command:1.0"
+   Code="rtamanagerImpl.CommanderImpl"
+   Type="IDL:scada/rtamanager/Commander:1.0"
    Container="pyContainer2"
    ImplLang="py"/> 
    

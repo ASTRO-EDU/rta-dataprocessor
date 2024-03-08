@@ -1,16 +1,15 @@
-import rtadataprocessor
-import rtadataprocessor_POA
+import rtamanager
+import rtamanager__POA
 
 from Acspy.Servants.ACSComponent import ACSComponent
 from Acspy.Servants.ContainerServices import ContainerServices
 from Acspy.Servants.ComponentLifecycle import ComponentLifecycle
 
 
-class DataProcessorImpl(rtadataprocessor_POA.DataProcessor, ACSComponent, ContainerServices, ComponentLifecycle):
+class CommanderImpl(rtamanager__POA.Commander, ACSComponent, ContainerServices, ComponentLifecycle):
     def __init__(self):
         ACSComponent.__init__(self)
         ContainerServices.__init__(self)
-        self._logger = self.getLogger()
 
     def initialize(self):
         self._logger = self.getLogger()
