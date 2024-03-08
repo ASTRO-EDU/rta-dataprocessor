@@ -27,26 +27,14 @@ bootstrap container using the utility bootstrap.sh
 it will produce an image git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_dev_name
 
 start docker image mounting the root of the git repository in /home/astrisw/src
-docker run -v "$PWD:/home/astrisw/src" -dt git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_dev_name bash -l
+docker run -v "$PWD:/home/astrisw/src" -v "$PWD/.bashrc_rtadataprocessor:/home/astrisw/.bashrc" -dt git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_dev_name bash -l
 it will give the cont_id back
 enter container 
 docker exec -it <cont_id> bash -l
 
 
 Steps inside the container:
-    create a build directory
-    cd src
-    mkdir build
-
-    ACS Settings:
-    export ACSDATA=~/src/ACSDATA
-    export INTROOT=~/src/INTROOT
-    export ACS_CDB=~/src/rta_dataprocessor
-    export ACS_RETAIN=1
-    source /alma/ACS/ACSSW/config/.acs/.bash_profile.acs 
-    getTemplateForDirectory INTROOT $INTROOT
-    getTemplateForDirectory ACSDATA $ACSDATA
-
+    
     build IDL and install the code:
     cd ~/src/rta_dataprocessor/src
     cdbChecker
@@ -60,4 +48,5 @@ Steps inside the container:
 
     TBD....
 
-
+    per installare pacchetti python :
+    python -m pip install --user <package>

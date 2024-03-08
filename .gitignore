@@ -1,4 +1,4 @@
-build
+build/*
 *.jar
 *.o
 *.inl
