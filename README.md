@@ -20,33 +20,70 @@ python Command.py ../config.json start all
 python Command.py ../config.json shutdown all
 
 # ACS Steps
+docker login to gitlab inaf and:
+```
 docker pull git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest
-
+```
 bootstrap container using the utility bootstrap.sh
+```
 ./bootstrap.sh latest <dev_name>
-it will produce an image git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_dev_name
+```
+it will produce an image `git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_dev_name`
 
-start docker image mounting the root of the git repository in /home/astrisw/src
+start docker image mounting the root of the git repository in `/home/astrisw/src`
+```
 docker run -v "$PWD:/home/astrisw/src" -v "$PWD/.bashrc_rtadataprocessor:/home/astrisw/.bashrc" -dt git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_dev_name bash -l
-it will give the cont_id back
+```
+it will give the `cont_id` back
 enter container 
+```
 docker exec -it <cont_id> bash -l
+```
+shell will become like:
+```
+<cont_id> astrisw:~ >
+```
 
 
-Steps inside the container:
+# Steps inside the container:
     
-    build IDL and install the code:
-    cd ~/src/rta_dataprocessor/src
-    cdbChecker
-    make clean all install 
+build IDL and install the components code: 
+check for acs configuration database errors
+```
+cdbChecker
+```
+if no errors:
+```
+cd $RTA_DP_ROOT/rta_dataprocessor/src/
+make clean all install 
+```
 
-    to start ACS:
-    acsStart
+to start ACS in foreground:
+```
+acsStart
+``` 
+or to restart acs safely, with logs in `$RTA_DP_ROOT/logs`
+```
+cd $RTA_DP_ROOT; ./start_acs.sh
+``` 
 
-    to stop ACS 
-    acsStop
+to stop ACS 
+```
+acsStop
+```
 
-    TBD....
+to start/restart containers: (logs in `$RTA_DP_ROOT/logs`)
+```
+./start_acs_container.sh
+```
 
-    per installare pacchetti python :
-    python -m pip install --user <package>
+## To modify code and test it 
+- build code
+- restart containers
+
+
+
+to install python packages :
+```
+python -m pip install --user <package>
+```
