@@ -7,11 +7,9 @@
 #    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 #
 from WorkerManager import WorkerManager
-from WorkerThread2 import WorkerThread2
-
-import io
-import threading
-import sys
+from WorkerProcess import WorkerProcess
+from WorkerThread import WorkerThread
+from Worker2 import Worker2
 
 class WorkerManager2(WorkerManager):
 	def __init__(self, manager_id, supervisor, name = "S11"):
@@ -21,7 +19,8 @@ class WorkerManager2(WorkerManager):
 		super().start_worker_threads(num_threads)
 		#Worker threads
 		for i in range(num_threads):
-			thread = WorkerThread2(i, self, "Rate2")
+			processor = Worker2()
+			thread = WorkerThread(i, self, "Rate2", processor)
 			self.worker_threads.append(thread)
 			thread.start()
 

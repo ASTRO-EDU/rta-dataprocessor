@@ -13,12 +13,17 @@ import time
 from threading import Timer
 
 class WorkerThread(threading.Thread):
-    def __init__(self, worker_id, manager, name):
+    def __init__(self, worker_id, manager, name, worker):
         super().__init__()
+
+        self.worker = worker
         self.manager = manager
         self.supervisor = manager.supervisor
         self.worker_id = worker_id
         self.name = name
+
+        self.worker.init(self.manager, self.supervisor)
+
         self.globalname = f"WorkerThread-{self.supervisor.name}-{self.manager.name}-{self.name}-{self.worker_id}"
 
         self.low_priority_queue = self.manager.low_priority_queue
@@ -89,11 +94,11 @@ class WorkerThread(threading.Thread):
         if not self._stop_event.is_set():
             self.start_timer(10)
 
-    #to be reimplemented ###
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
         # Increment the processed data count and calculate the rate
         self.status = 2 #processig new data
         self.processed_data_count += 1
 
-        #Derive a class and put the code of analysis in this method
+        dataresult = self.worker.process_data(data)
+
