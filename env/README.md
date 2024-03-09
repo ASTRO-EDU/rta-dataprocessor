@@ -52,3 +52,16 @@ cd
 
 nohup jupyter-lab --ip="*" --port 8001 --no-browser --autoreload --NotebookApp.token='worker2024#'  --notebook-dir=/home/worker/workspace --allow-root > jupyterlab_start.log 2>&1 &
 
+SETUP ENV DEV
+------------
+
+docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name ooqs1 worker:1.0.0 /bin/bash
+
+docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name ooqs2 worker:1.0.0 /bin/bash
+
+docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name ooqs3 worker:1.0.0 /bin/bash
+
+docker exec -it ooqs1 bash
+docker exec -it ooqs2 bash
+docker exec -it ooqs3 bash
+

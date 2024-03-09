@@ -12,8 +12,8 @@ from avro.io import DatumReader
 import io
 
 class WorkerProcess1(WorkerProcess):
-	def __init__(self, thread_id, workermanager, processdata_shared, name="S22Rate"):
-		super().__init__(thread_id, workermanager, processdata_shared, name)
+	def __init__(self, thread_id, workermanager, name="S22Rate"):
+		super().__init__(thread_id, workermanager, name)
 
 		# Load Avro schema from the provided schema string
 		avro_schema_str = '''
