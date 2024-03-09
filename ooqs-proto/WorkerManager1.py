@@ -7,10 +7,9 @@
 #    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 #
 from WorkerManager import WorkerManager
-from WorkerThread1 import WorkerThread1
-from WorkerProcess1 import WorkerProcess1
-import io
-import threading
+from WorkerProcess import WorkerProcess
+from WorkerThread import WorkerThread
+from Worker1 import Worker1
 
 class WorkerManager1(WorkerManager):
 	def __init__(self, manager_id, supervisor, name = "S22"):
@@ -20,7 +19,8 @@ class WorkerManager1(WorkerManager):
 		super().start_worker_threads(num_threads)
 		#Worker threads
 		for i in range(num_threads):
-			thread = WorkerThread1(i, self, "Rate")
+			processor = Worker1()
+			thread = WorkerThread(i, self, "Rate", processor)
 			self.worker_threads.append(thread)
 			thread.start()
 
@@ -28,7 +28,8 @@ class WorkerManager1(WorkerManager):
 		super().start_worker_processes(num_processes)
 		# Worker processes
 		for i in range(num_processes):
-			process = WorkerProcess1(i, self, "Rate")
+			processor = Worker1()
+			process = WorkerProcess(i, self, "Rate", processor)
 			self.worker_processes.append(process)
 			process.start()
 			

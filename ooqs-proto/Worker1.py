@@ -6,14 +6,14 @@
 #
 #    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 #
-from WorkerProcess import WorkerProcess
+from WorkerBase import WorkerBase
 import avro.schema
 from avro.io import DatumReader
 import io
 
-class WorkerProcess1(WorkerProcess):
-	def __init__(self, thread_id, workermanager, name="S22Rate"):
-		super().__init__(thread_id, workermanager, name)
+class Worker1(WorkerBase):
+	def __init__(self):
+		super().__init__()
 
 		# Load Avro schema from the provided schema string
 		avro_schema_str = '''
@@ -40,8 +40,7 @@ class WorkerProcess1(WorkerProcess):
 		# Create Avro reader
 		self.reader = avro.io.DatumReader(avro_schema)
 
-	def process_data(self, data, priority):
-		super().process_data(data, priority)
+	def process_data(self, data):
 
 		# Custom processing logic for Worker1
 		#print("Process data...")
