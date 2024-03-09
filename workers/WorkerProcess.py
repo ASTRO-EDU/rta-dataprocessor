@@ -15,7 +15,7 @@ from threading import Timer
 import psutil
 
 class WorkerProcess(Process):
-    def __init__(self, worker_id, manager, processdata_shared, name):
+    def __init__(self, worker_id, manager, name):
         super().__init__()
         self.manager = manager
         self.supervisor = manager.supervisor
@@ -37,8 +37,6 @@ class WorkerProcess(Process):
         self.processing_rate = 0
 
         self._stop_event = Event()  # Set the stop event
-
-        self.processdata_shared = processdata_shared
 
         #0 initialised
         #1 waiting
@@ -63,7 +61,7 @@ class WorkerProcess(Process):
             while not self._stop_event.is_set():
                 time.sleep(0.0001) #must be 0
 
-                if self.processdata_shared.value == 1:
+                if self.manager.processdata_shared.value == 1:
 
                     try:
                         # Check and process high-priority queue first

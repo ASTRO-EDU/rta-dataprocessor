@@ -28,7 +28,7 @@ class WorkerManager1(WorkerManager):
 		super().start_worker_processes(num_processes)
 		# Worker processes
 		for i in range(num_processes):
-			process = WorkerProcess1(i, self, self.processdata_shared, "Rate")
+			process = WorkerProcess1(i, self, "Rate")
 			self.worker_processes.append(process)
 			process.start()
 			
