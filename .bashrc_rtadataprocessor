@@ -102,3 +102,4 @@ if [ ! -z $USE_CONDA ] ; then
   unset __conda_setup
 # <<< conda initialize <<<
 fi
+export PYTHONPATH=$PYTHONPATH/home/astrisw/src/workers
