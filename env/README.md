@@ -44,9 +44,9 @@ docker build -t worker:1.0.0 .
 
 ./bootstrap.sh worker:1.0.0 agileobs
 
-docker run -it -d -v /home/agileobs/worker/workspace:/home/worker/workspace -v /data02/:/data02/  -p 8001:8001 --name ooqs1 worker:1.0.0_agileobs /bin/bash
+docker run -it -d -v /home/agileobs/worker/workspace:/home/worker/workspace -v /data02/:/data02/  -p 8001:8001 --name rtadp1 worker:1.0.0_agileobs /bin/bash
 
-docker exec -it ooqs1 /bin/bash
+docker exec -it rtadp1 /bin/bash
 cd
 . entrypoint.sh
 
@@ -55,13 +55,13 @@ nohup jupyter-lab --ip="*" --port 8001 --no-browser --autoreload --NotebookApp.t
 SETUP ENV DEV
 ------------
 
-docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name ooqs1 worker:1.0.0 /bin/bash
+docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name rtadp1 worker:1.0.0 /bin/bash
 
-docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name ooqs2 worker:1.0.0 /bin/bash
+docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name rtadp2 worker:1.0.0 /bin/bash
 
-docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name ooqs3 worker:1.0.0 /bin/bash
+docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name rtadp3 worker:1.0.0 /bin/bash
 
-docker exec -it ooqs1 bash
-docker exec -it ooqs2 bash
-docker exec -it ooqs3 bash
+docker exec -it rtadp1 bash
+docker exec -it rtadp2 bash
+docker exec -it rtadp3 bash
 

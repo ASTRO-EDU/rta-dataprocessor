@@ -5,7 +5,7 @@
 	"monitoring_socket": "tcp://localhost:5562"
   },
   {
-	"processname": "OOQS1",
+	"processname": "RTADP1",
 	"dataflow_type": "string",
 	"processing_type": "process",
 	"datasocket_type": "pushpull",
@@ -16,11 +16,11 @@
 	"manager_result_socket_type": ["pushpull", "none"],
 	"manager_result_dataflow_type": ["string", "none"],
 	"manager_result_socket": ["tcp://localhost:5563", "none"],
-	"manager_num_workers": [10, 2],
+	"manager_num_workers": [5, 2],
 	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
   },
   {
-	"processname": "OOQS2",
+	"processname": "RTADP2",
 	"dataflow_type": "string",
 	"processing_type": "thread",
 	"datasocket_type": "pushpull",
