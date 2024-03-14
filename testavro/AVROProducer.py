@@ -1,5 +1,4 @@
 # Copyright (C) 2024 INAF
-# This software was provided as IKC to the Cherenkov Telescope Array Observatory
 # This software is distributed under the terms of the BSD-3-Clause license
 #
 # Authors:
@@ -56,7 +55,7 @@ class AvroDataGenerator:
 
     def generate_avro_data(self):
         # Generate an array of X double values for the 'data' field
-        avro_data = [random.uniform(0, 100) for _ in range(5000)]
+        avro_data = [random.uniform(0, 100) for _ in range(50)]
         return avro_data
 
     def create_avro_message(self):

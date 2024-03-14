@@ -1,5 +1,4 @@
 # Copyright (C) 2024 INAF
-# This software was provided as IKC to the Cherenkov Telescope Array Observatory
 # This software is distributed under the terms of the BSD-3-Clause license
 #
 # Authors:
@@ -79,9 +78,5 @@ class ConfigurationManager:
             return [], [], [], []
 
 
-#config_manager = ConfigurationManager(file_path)
-#ooqs1config=config_manager.get_configuration("OOQS1")
-#ooqs1config.get("data_hp_socket")
-#config_manager.get_pull_config("OOQS1", "data_hp_socket")
 
 
