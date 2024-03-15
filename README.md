@@ -47,12 +47,18 @@ shell will become like:
 
 # Steps inside the container:
     
-build IDL and install the components code: 
+To install the components code: 
 check for acs configuration database errors
 ```
 cdbChecker
 ```
 if no errors:
+build and install IDL
+```
+cd $RTA_DP_ROOT/rta_dataprocessor/idl/
+make clean all install 
+```
+build and install components implementation
 ```
 cd $RTA_DP_ROOT/rta_dataprocessor/src/
 make clean all install 
