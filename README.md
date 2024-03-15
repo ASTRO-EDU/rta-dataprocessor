@@ -32,7 +32,7 @@ it will produce an image `git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:lat
 
 start docker image mounting the root of the git repository in `/home/astrisw/src`
 ```
-docker run -v "$PWD:/home/astrisw/src" -v "$PWD/.bashrc_rtadataprocessor:/home/astrisw/.bashrc" -dt git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_dev_name bash -l
+ docker run -v "$PWD:/home/astrisw/src" -v "$PWD/.bashrc_rtadataprocessor:/home/astrisw/.bashrc" --entrypoint "/home/astrisw/src/env/entrypoint.sh" -d git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_<dev_name>
 ```
 it will give the `cont_id` back
 enter container 
@@ -42,6 +42,10 @@ docker exec -it <cont_id> bash -l
 shell will become like:
 ```
 <cont_id> astrisw:~ >
+```
+Install python deps:
+```
+python -m pip install --user /home/astrisw/src/env/venv/requirements_minimal_acs
 ```
 
 
@@ -89,7 +93,3 @@ to start/restart containers: (logs in `$RTA_DP_ROOT/logs`)
 
 
 
-to install python packages :
-```
-python -m pip install --user <package>
-```
