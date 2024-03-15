@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  ACSMANAGER:
+    image: git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_castaldini
+    command: [ "/usr/bin/tail", "-f", "/dev/null" ]
+    volumes:
+      - "$PWD:/home/astrisw/src"
+      - "$PWD/.bashrc_rtadataprocessor:/home/astrisw/.bashrc"
+
+  ACSCONTAINER1:
+    image: git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_castaldini
+    command: [ "/usr/bin/tail", "-f", "/dev/null" ]
+    volumes:
+      - "$PWD:/home/astrisw/src"
+      - "$PWD/.bashrc_rtadataprocessor:/home/astrisw/.bashrc"
+
+  ACSCONTAINER2:
+    image: git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_castaldini
+    command: [ "/usr/bin/tail", "-f", "/dev/null" ]
+    volumes:
+      - "$PWD:/home/astrisw/src"
+      - "$PWD/.bashrc_rtadataprocessor:/home/astrisw/.bashrc"

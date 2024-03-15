@@ -10,7 +10,7 @@
 #include <acscommon.idl>
 #include <acscomponent.idl>
 
-#pragma prefix "scada" // o ooqs?
+#pragma prefix "rta" // o ooqs?
 
 module rtamanager
 {

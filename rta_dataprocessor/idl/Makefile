@@ -105,7 +105,7 @@ PY_SCRIPTS_L       =
 PY_MODULES         = 
 PY_MODULES_L       =
 
-PY_PACKAGES        = rtamanagerImpl
+PY_PACKAGES        =
 PY_PACKAGES_L      =
 pppppp_MODULES	   =
 
@@ -133,7 +133,8 @@ CDB_SCHEMAS =
 # 
 # IDL Files and flags
 # 
-IDL_FILES = 
+IDL_FILES = rtamanager
+rtamanagerStubs_LIBS = acscomponentStubs acscommonStubs
 TAO_IDLFLAGS =
 USER_IDL =
 #

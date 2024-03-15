@@ -28,10 +28,3 @@ class DataProcessorImpl(rtamanager__POA.DataProcessor, ACSComponent, ContainerSe
         self._logger.logInfo("Configure Called")
         self._logger.logInfo(f"String: {jsonStaticConfiguration}")
         return
-    
-    def sendCommand( self, command,  destProcessorName):
-        self._logger.logInfo("sendCommand Called")
-        self._logger.logInfo(f"target: {destProcessorName}")
-        self._logger.logInfo(f"command:  {command}")
-        return
-        

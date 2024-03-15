@@ -24,10 +24,16 @@ class CommanderImpl(rtamanager__POA.Commander, ACSComponent, ContainerServices, 
     def aboutToAbort(self):
         self._logger.logInfo(f"[aboutToAbort]")
 
-    def configure(self, jsonStaticConfiguration, name):
+    def configure(self, jsonStaticConfiguration):
         self._logger.logInfo("Configure Called")
         self._logger.logInfo(f"String: {jsonStaticConfiguration}")
-        self._logger.logInfo(f"Name: {name}")
         return
+    
+    def sendCommand( self, command,  destProcessorName):
+        self._logger.logInfo("sendCommand Called")
+        self._logger.logInfo(f"target: {destProcessorName}")
+        self._logger.logInfo(f"command:  {command}")
+        return
+        
         
         

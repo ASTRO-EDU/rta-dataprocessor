@@ -1,14 +1,18 @@
 <Components xmlns="urn:schemas-cosylab-com:Components:1.0" xmlns:cdb="urn:schemas-cosylab-com:CDB:1.0" xmlns:baci="urn:schemas-cosylab-com:BACI:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<e Name="OOQS_DATAPROCESSOR_*" 
+<!-- client.getDynamicComponent("DATAPROCESSOR_nome_finale", "rtamanagerImpl.DataprocessorImpl", "IDL:scada/rtamanager/DataProcessor:1.0", "pyContainer1" ) -->
+
+<e Name="DATAPROCESSOR_*" 
    Code="rtamanagerImpl.DataprocessorImpl"
-   Type="IDL:scada/rtamanager/DataProcessor:1.0"
+   Type="IDL:rta/rtamanager/DataProcessor:1.0"
    Container="pyContainer1"
    ImplLang="py"/>
 
-<e Name="OOQS_Commander" 
+<!-- client.getComponent("Commander") -->
+
+<e Name="Commander" 
    Code="rtamanagerImpl.CommanderImpl"
-   Type="IDL:scada/rtamanager/Commander:1.0"
+   Type="IDL:rta/rtamanager/Commander:1.0"
    Container="pyContainer2"
    ImplLang="py"/> 
    

@@ -11,3 +11,6 @@ acsStopContainer pyContainer2 2>&1
 
 acsStartContainer -py pyContainer1 > "$logs_path/pyContainer1.log" 2>&1 &
 acsStartContainer -py pyContainer2 > "$logs_path/pyContainer2.log" 2>&1 &
+
+# nohup acsStartContainer --java --name mamlaacsJContainer --remoteHost <IP_Docker> -m corbaloc::<IP_Docker>:3000/Manager  >> $ACSDATA/logs/mamlaacs.mavpn.org/acsStartmamlaacsJContainer_`date "+%F-%T"`_acstart.log &
+
