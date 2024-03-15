@@ -3,7 +3,7 @@
 <!-- client.getDynamicComponent("DATAPROCESSOR_nome_finale", "rtamanagerImpl.DataprocessorImpl", "IDL:scada/rtamanager/DataProcessor:1.0", "pyContainer1" ) -->
 
 <e Name="DATAPROCESSOR_*" 
-   Code="rtamanagerImpl.DataprocessorImpl"
+   Code="rtamanagerImpl.DataProcessorImpl"
    Type="IDL:rta/rtamanager/DataProcessor:1.0"
    Container="pyContainer1"
    ImplLang="py"/>
