@@ -68,13 +68,14 @@ cd $RTA_DP_ROOT/rta_dataprocessor/src/
 make clean all install 
 ```
 
-to start ACS in foreground:
+to start ACS in foreground: (execute it from the defined "acs manager" docker)
 ```
 acsStart
 ``` 
 or to restart acs safely, with logs in `$RTA_DP_ROOT/logs`
 ```
 cd $RTA_DP_ROOT; ./start_acs.sh
+cd $RTA_DP_ROOT; ./start_acs_container.sh <local|distributed>
 ``` 
 
 to stop ACS 
@@ -82,9 +83,11 @@ to stop ACS
 acsStop
 ```
 
-to start/restart containers: (logs in `$RTA_DP_ROOT/logs`)
+to start/restart containers: (logs in `$ACSDATA/logs`)
+local: containers are started in the localhost
+distributed: check services/names inside the script where containers are started
 ```
-./start_acs_container.sh
+./start_acs_container.sh <local|distributed>
 ```
 
 ## To modify code and test it 
