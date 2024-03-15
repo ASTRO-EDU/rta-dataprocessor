@@ -32,7 +32,7 @@ export ACS_RETAIN=1
 # !! Contents within this block are managed by 'acs_entrypoint.py' !!
 export INTROOT=/home/astrisw/src/build/INTROOT
 export ACSDATA=/home/astrisw/src/build/ACSDATA
-export ACS_CDB=/home/astrisw/src/rta_dataprocessor
+export ACS_CDB=/home/astrisw/src/rtadp-proto/ACS
 # <<< docker container entrypoint <<<
 source /alma/ACS/ACSSW/config/.acs/.bash_profile.acs
 export PYTHONUSERBASE=$INTROOT
@@ -103,5 +103,6 @@ if [ ! -z $USE_CONDA ] ; then
 # <<< conda initialize <<<
 fi
 export PYTHONPATH=$PYTHONPATH/home/astrisw/src/workers
-export MANAGER_REFERENCE="corbaloc::acsmanager:3000/Manager"
-export MANAGER_COMPUTER_NAME="acsmanager"
+#export MANAGER_REFERENCE="corbaloc::acsmanager:3000/Manager"
+#export MANAGER_COMPUTER_NAME="acsmanager"
+alias ll="ls -la"

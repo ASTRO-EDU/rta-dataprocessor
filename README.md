@@ -3,9 +3,9 @@
 ## rtadp-proto
 - env: Dockerfile
 - rtadp-proto: a prototype with 2 data processors
-- testavro: the producers
+- rtadp-proto/testavro: the producers
 
-cd testavro
+cd rtadp-proto/testavro
 python AVROProducer.py ../config.json lp 0.5 RTADP1
 
 cd workers
@@ -45,7 +45,7 @@ shell will become like:
 ```
 Install python deps:
 ```
-python -m pip install --user /home/astrisw/src/env/venv/requirements_minimal_acs
+python -m pip install --user -r /home/astrisw/src/env/venv/requirements_minimal_acs
 ```
 
 
@@ -59,12 +59,12 @@ cdbChecker
 if no errors:
 build and install IDL
 ```
-cd $RTA_DP_ROOT/rta_dataprocessor/idl/
+cd $RTA_DP_ROOT/rtadp-proto/ACS/idl/
 make clean all install 
 ```
 build and install components implementation
 ```
-cd $RTA_DP_ROOT/rta_dataprocessor/src/
+cd $RTA_DP_ROOT/rtadp-proto/ACS/src/
 make clean all install 
 ```
 
@@ -72,10 +72,10 @@ to start ACS in foreground: (execute it from the defined "acs manager" docker)
 ```
 acsStart
 ``` 
-or to restart acs safely, with logs in `$RTA_DP_ROOT/logs`
+or to restart acs safely, with logs in `$ACSDATA/logs/`
 ```
-cd $RTA_DP_ROOT; ./start_acs.sh
-cd $RTA_DP_ROOT; ./start_acs_container.sh <local|distributed>
+cd $RTA_DP_ROOT/rtadp-proto/ACS/; ./start_acs.sh
+cd $RTA_DP_ROOT/rtadp-proto/ACS/; ./start_acs_container.sh <local|distributed>
 ``` 
 
 to stop ACS 
@@ -87,12 +87,28 @@ to start/restart containers: (logs in `$ACSDATA/logs`)
 local: containers are started in the localhost
 distributed: check services/names inside the script where containers are started
 ```
-./start_acs_container.sh <local|distributed>
+cd $RTA_DP_ROOT/rtadp-proto/ACS/; ./start_acs_container.sh <local|distributed>
 ```
 
 ## To modify code and test it 
 - build code
 - restart containers
 
+## python client 
+```
+ipython -i ~/src/rtadp-proto/ACS/python_client.py
+```
 
+get component and execute a method
+```
+commander=client.getComponent("Commander")
+import rtamanager
+commander.sendCommand(rtamanager.START,"test")
+```
+
+get a dynamyc component and execute a method
+```
+dataprocessor = client.getDynamicComponent("DATAPROCESSOR_1", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer1" )
+dataprocessor.configure("test")
+```
 
