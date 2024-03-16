@@ -4,7 +4,7 @@ build/*
 *.inl
 *.log
 
-rta_dataprocessor/object
-rta_dataprocessor/lib
+ACS/object
+ACS/lib
 
 __pycache__

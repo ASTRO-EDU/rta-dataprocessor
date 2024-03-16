@@ -25,8 +25,8 @@ if [ "$mode" = "local" ]; then
     nohup acsStartContainer -py --name pyContainer2 > "$logs_path/acscont2/pyContainer2.log" &
 elif [ "$mode" = "distributed" ]; then
     # Start containers distributed
-    nohup acsStartContainer -py --name pyContainer1 --remoteHost acscont1 -m corbaloc::acscont1:3000/Manager > "$logs_path/acscont1/pyContainer1.log" &
-    nohup acsStartContainer -py --name pyContainer2 --remoteHost acscont2 -m corbaloc::acscont2:3000/Manager > "$logs_path/acscont2/pyContainer2.log" &
+    nohup acsStartContainer -py --name pyContainer1 --remoteHost acscont1 -m corbaloc::acsmanager:3000/Manager > "$logs_path/acscont1/pyContainer1.log" &
+    nohup acsStartContainer -py --name pyContainer2 --remoteHost acscont2 -m corbaloc::acsmanager:3000/Manager > "$logs_path/acscont2/pyContainer2.log" &
 else
     echo "Invalid mode specified. Use 'local' or 'distributed'."
     exit 1
