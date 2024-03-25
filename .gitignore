@@ -4,7 +4,7 @@ build/*
 *.inl
 *.log
 
-ACS/object
-ACS/lib
+rtadp-proto/ACS/lib/
+rtadp-proto/ACS/object/
 
 __pycache__
