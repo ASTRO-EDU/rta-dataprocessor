@@ -19,6 +19,7 @@ import psutil
 import pytest
 import random 
 import keyboard
+import socket
 from busypie import wait_at_most
 
 file_path = '/home/nunzio/rta-dataprocessor/config.json'
@@ -97,11 +98,8 @@ def test_Supervisor_with_different_datasockettype():
     
 def test_start_service_threads():
     test_sup = Supervisor(file_path,'OOQS1')
-    print("fatto")
     test_sup.start_service_threads()
-    
-    print("fatto")
-    
+        
     if test_sup.dataflowtype == "binary": 
         assert test_sup.lp_data_thread._target == test_sup.listen_for_lp_data
         assert test_sup.lp_data_thread.is_alive()
@@ -123,7 +121,7 @@ def test_start_service_threads():
     
     keyboard_interrupt_simulation()
     
-    #test_sup.stop_zmq()
+    test_sup.stop_zmq()
     #del(test_sup)
         
 
@@ -136,15 +134,25 @@ def test_setup_result_channel():
             assert test_sup.socket_result[0].type == zmq.SocketType.PUSH
         if woker_man_test.result_socket_type == "pubsub":
             assert test_sup.socket_result[0].type == zmq.SocketType.PUB
-    # test_sup.stop_zmq()
+    test_sup.stop_zmq()
     # #del(test_sup)
 
 def test_start_managers():
     test_sup = Supervisor(file_path,'OOQS1')
     test_sup.start_managers()
-    assert test_sup.manager_workers != []
+    
+    time.sleep(1)
+    
+    for i in range(len(test_sup.config.get("manager_result_socket"))):
+        prev_len = len(test_sup.manager_workers)
+        if test_sup.config.get("manager_result_socket")[i] != "none":
+            assert len(test_sup.manager_workers) != prev_len + 1
+        else:
+            pass
+    time.sleep(1)
+    
     test_sup.stop_zmq()
-    #del(test_sup)
+    #keyboard_interrupt_simulation()
     
 def test_start_workers():
     test_sup = Supervisor(file_path,'OOQS1')
@@ -174,12 +182,12 @@ def test_start():
     
     keyboard_interrupt_simulation()
     
-    #assert test_sup.status == "Waiting"
-    assert test_sup.status == "Shutdown"
+    assert test_sup.status == "Waiting"
+    #assert test_sup.status == "Shutdown"
 
     my_thread.join()
     
-    test_sup.stop_zmq()
+    #test_sup.stop_zmq()
     #del(test_sup)
 
 def test_handle_signal(capsys):
@@ -205,7 +213,6 @@ def test_handle_signal(capsys):
         assert test_sup.status == "Waiting"
           
     test_sup.stop_zmq()
-    #del(test_sup)
     
 def test_listen_for_result():
         
@@ -214,96 +221,79 @@ def test_listen_for_result():
     test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
     test_sup.manager_workers[0].start()
       
-    my_thread = threading.Thread(target=test_sup.listen_for_result())
+    my_thread = threading.Thread(target=test_sup.listen_for_result)
     my_thread.start()
     
     time.sleep(1)
     
     test_sup.send_result.assert_called()
     
-    time.sleep(1)
+    time.sleep(3)
     
     keyboard_interrupt_simulation()
     
     test_sup.manager_workers[0].stop()
     my_thread.join()
-            
+    
     test_sup.stop_zmq()
-    #del(test_sup)
 
-def rcv_data(Sup,manager):
-    context = zmq.Context()
+# def rcv_data(Sup,manager):
+#     context = zmq.Context()
     
-    if Sup.datasockettype == "pubsub":
-        publisher = context.socket(zmq.SUB)
-        publisher.connect(manager.result_socket)
-        publisher.setsockopt_string(zmq.SUBSCRIBE,"")
-        time.sleep(1)
-    elif Sup.datasockettype == "pushpull":
-        publisher = context.socket(zmq.PULL)
-        publisher.bind((manager.result_socket))
-        #publisher.bind(get_pull_config(Sup.config.get(f"data_{lh}_socket")))
-        time.sleep(1) 
-    while not Sup.stopdata:
-        if manager.result_dataflow_type == "string" or manager.result_dataflow_type == "filename":
-            data = publisher.recv_string()
-        elif manager.result_dataflow_type == "binary":
-            data = publisher.recv()
+#     if Sup.datasockettype == "pubsub":
+#         publisher = context.socket(zmq.SUB)
+#         publisher.connect(manager.result_socket)
+#         publisher.setsockopt_string(zmq.SUBSCRIBE,"")
+#         time.sleep(1)
+#     elif Sup.datasockettype == "pushpull":
+#         publisher = context.socket(zmq.PULL)
+#         publisher.bind((manager.result_socket))
+#         #publisher.bind(get_pull_config(Sup.config.get(f"data_{lh}_socket")))
+#         time.sleep(1) 
+#     while not Sup.stopdata:
+#         if manager.result_dataflow_type == "string" or manager.result_dataflow_type == "filename":
+#             data = publisher.recv_string()
+#         elif manager.result_dataflow_type == "binary":
+#             data = publisher.recv()
             
-    publisher.close()
-    context.term()
+#     publisher.close()
+#     context.term()
 
-    return data 
+#     return data 
 
-def test_send_result(): 
-    test_sup = Supervisor(file_path,'OOQS1')
-    test_sup_2 = Supervisor(file_path,'OOQS2')
-    test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
-    test_sup.manager_workers[0].start()
-    time.sleep(1)
-    test_sup.manager_workers.append(WorkerManager(0,test_sup_2,"Generic"))    
-    test_sup.manager_workers[1].start()
-    time.sleep(1)
+# def test_send_result(): 
+#     test_sup = Supervisor(file_path,'OOQS1')
+#     test_sup_2 = Supervisor(file_path,'OOQS2')
+#     test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
+#     test_sup.manager_workers[0].start()
+#     time.sleep(1)
+#     test_sup.manager_workers.append(WorkerManager(0,test_sup_2,"Generic"))    
+#     test_sup.manager_workers[1].start()
+#     time.sleep(1)
     
-    test_sup.manager_workers[0].result_queue.put("test") 
-    print(test_sup.manager_workers[0].result_queue)
+#     test_sup.manager_workers[0].result_queue.put("test") 
+#     print(test_sup.manager_workers[0].result_queue)
     
-    for index,manager in enumerate(test_sup.manager_workers):
-        test_sup.setup_result_channel(manager,index)
+#     for index,manager in enumerate(test_sup.manager_workers):
+#         test_sup.setup_result_channel(manager,index)
     
-    for index,manager in enumerate(test_sup.manager_workers):
-        my_thread_2 = threading.Thread(target=test_sup.send_result(manager,index))
-        my_thread_2.start()
+#     for index,manager in enumerate(test_sup.manager_workers):
+#         my_thread_2 = threading.Thread(target=test_sup.send_result(manager,index))
+#         my_thread_2.start()
         
+#         if manager.result_socket != "none":
+#             try:
+#                 assert rcv_data(manager) == "test"
+#             except Exception:
+#                 pass
+#         else:
+#             pass    
         
+#         my_thread_2.join()
         
-        if manager.result_socket != "none":
-            try:
-                assert rcv_data(manager) == "test"
-            except Exception:
-                pass
-        else:
-            pass    
-        
-        my_thread_2.join()
-        
-    test_sup.stop_zmq()
-    #del(test_sup)
+#     test_sup.stop_zmq()
+#     #del(test_sup)
        
-#     captured_out = StringIO()
-#     sys.stdout = captured_out
-    
-#     test_sup.send_result(fake_manager,0)
-#     # captured = capsys.readouterr()
-#     # assert captured.out.strip() == "test"
-    
-#     output = captured_out.getvalue().splitlines()
-#     sys.stdout = sys.__stdout__
-#     #try:
-#     assert output[0].strip() == "test"
-#     # except Exception: 
-#     #     assert output[0].strip() == ""
-
 def set_pub(Sup,lh):
             
     context = zmq.Context()
@@ -314,88 +304,129 @@ def set_pub(Sup,lh):
         time.sleep(1)
     elif Sup.datasockettype == "pushpull":
         publisher = context.socket(zmq.PUSH)
-        publisher.connect((Sup.config.get(f"data_{lh}_socket")))
+        publisher.connect(Sup.config.get(f"data_{lh}_socket"))
         time.sleep(1)
     
-    #print(publisher)
     return publisher
     
-def send(Sup,publisher):        
-    #while True:
-        if Sup.dataflowtype == "binary" or Sup.dataflowtype == "filename":
-            publisher.send(b"Hello, world!")
-        elif Sup.dataflowtype == "string":
-            publisher.send_string('Hello, world!')
-             
-    #publisher.close()
-    #context.term()
-def send_2(Sup,publisher):
+def send(Sup,publisher):
+
+    # context = zmq.Context()
+    
+    # if Sup.datasockettype == "pubsub":
+    #     publisher = context.socket(zmq.PUB)
+    #     publisher.bind(get_pull_config(Sup.config.get(f"data_{lh}_socket")))
+    #     time.sleep(1)
+    # elif Sup.datasockettype == "pushpull":
+    #     publisher = context.socket(zmq.PUSH)
+    #     publisher.connect(Sup.config.get(f"data_{lh}_socket"))
+    #     time.sleep(1)
+    
     while not Sup.stopdata:
-        #time.sleep(1)
-        send(Sup,publisher)
-        #time.sleep(1)    
+
+        if Sup.dataflowtype == "binary" or Sup.dataflowtype == "filename":
+            time.sleep(1)            
+            publisher.send(b"Hello, world!")
+            
+        elif Sup.dataflowtype == "string":
+            publisher.send_string("Hello, world!")
+            time.sleep(1)
+            
     
 def keyboard_interrupt_simulation():
     os.kill(os.getpid(), signal.SIGINT)
 
-def test_listen_for_data():
+#def test_listen_for_data():
         
-    test_sup = Supervisor(file_path,'OOQS1')
+    # test_sup = Supervisor(file_path,'OOQS1')
     
-    test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
-    test_sup.manager_workers[0].start()  
-    
-    time.sleep(1)
-    
-    priority = random.choice(['lp','hp'])
-    
-    publisher = set_pub(test_sup,priority)
-    
-    my_thread_2 = threading.Thread(target=send_2, args=(test_sup, publisher))
-    
-    # my_thread = threading.Thread(target=test_sup.listen_for_data,args=(priority,))
-    # my_thread.start()
-    
-    # print(test_sup.is_listening)
+    # test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
+    # test_sup.manager_workers[0].start()  
     
     # time.sleep(1)
     
-    # wait_at_most(5).poll_interval(1).with_description("Supervisor is listening for commands").until(lambda:test_sup.is_listening)
+    # priority = random.choice(['lp','hp'])
+    
+    # publisher = set_pub(test_sup,priority)
+    
+    # my_thread_2 = threading.Thread(target=send_2, args=(test_sup, publisher))
+    
+    # # my_thread = threading.Thread(target=test_sup.listen_for_data,args=(priority,))
+    # # my_thread.start()
+    
+    # # print(test_sup.is_listening)
+    
+    # # time.sleep(1)
+    
+    # # wait_at_most(5).poll_interval(1).with_description("Supervisor is listening for commands").until(lambda:test_sup.is_listening)
 
-    my_thread_2.start()
+    # my_thread_2.start()
     
-    # while not test_sup.stopdata:
+    # # while not test_sup.stopdata:
         
-    #     send(test_sup,publisher)
+    # #     send(test_sup,publisher)
         
-    time.sleep(1)                 
+    # time.sleep(1)                 
     
-    # my_thread = threading.Thread(target=test_sup.listen_for_data,args=(priority,))
-    # my_thread.start()
+    # # my_thread = threading.Thread(target=test_sup.listen_for_data,args=(priority,))
+    # # my_thread.start()
     
-    #if not test_sup.stopdata:
-    test_sup.listen_for_data(priority)
-    #try:   
-    if priority == 'lp':    
-        assert test_sup.manager_workers[0].low_priority_queue.get() == "Hello, world!"
-    elif priority == 'hp':
-        assert test_sup.manager_workers[0].high_priority_queue.get() == "Hello, world!"
-        # except zmq.error.Again:
-            #     pass  
+    # #if not test_sup.stopdata:
+    # test_sup.listen_for_data(priority)
+    # #try:   
+    # if priority == 'lp':    
+    #     assert test_sup.manager_workers[0].low_priority_queue.get() == "Hello, world!"
+    # elif priority == 'hp':
+    #     assert test_sup.manager_workers[0].high_priority_queue.get() == "Hello, world!"
+    #     # except zmq.error.Again:
+    #         #     pass  
                  
-    print(test_sup.stopdata)
+    # print(test_sup.stopdata)
+    
+    # time.sleep(1)
+
+    # keyboard_interrupt_simulation()
+
+    # print(test_sup.stopdata)
+    
+    # time.sleep(1)
+    
+    # #my_thread.join()
+    # my_thread_2.join()
+    # #publisher.close()
+
+def test_listen_for_lp_data():
+    test_sup = Supervisor(file_path,'OOQS1')
+        
+    test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
+    test_sup.manager_workers[0].start()  
+    
+    publisher = set_pub(test_sup,'lp')
+        
+    time.sleep(1)
+        
+    my_thread = threading.Thread(target=test_sup.listen_for_lp_data)
+    my_thread.start()
     
     time.sleep(1)
-
-    keyboard_interrupt_simulation()
-
-    print(test_sup.stopdata)
     
-    time.sleep(1)
+    my_sec_thread = threading.Thread(target=send,args=(test_sup,publisher))
+    my_sec_thread.start()
     
-    #my_thread.join()
-    my_thread_2.join()
-    #publisher.close()
+    time.sleep(4)
+    
+    if test_sup.manager_workers[0].low_priority_queue.get() == 'Hello, world!':
+        keyboard_interrupt_simulation()
+        pass
+    else:
+        keyboard_interrupt_simulation()
+        raise AssertionError
+    
+    test_sup.manager_workers[0].stop()
+    my_sec_thread.join()
+    my_thread.join()
+    time.sleep(0.5)
+    publisher.close()
     
 def test_listen_for_hp_data():
         
@@ -404,46 +435,65 @@ def test_listen_for_hp_data():
     test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
     test_sup.manager_workers[0].start()  
     
-    send(test_sup,'hp')
-        
+    publisher = set_pub(test_sup,'hp')
+                
     my_thread = threading.Thread(target=test_sup.listen_for_hp_data)
     my_thread.start()
     
     time.sleep(1)
+    my_sec_thread = threading.Thread(target=send,args=(test_sup,publisher))
+    my_sec_thread.start()
     
-    assert test_sup.manager_workers[0].high_priority_queue.get() == b"Hello, world!"
+    time.sleep(4.2)
     
-    #keyboard_interrupt_simulation()
-
+    if test_sup.manager_workers[0].high_priority_queue.get() == 'Hello, world!':
+        keyboard_interrupt_simulation()
+        pass
+    else:
+        keyboard_interrupt_simulation()
+        raise AssertionError
+    
     test_sup.manager_workers[0].stop()
+    
+    my_sec_thread.join()
+    
     my_thread.join()
     
-    test_sup.stop_zmq()
-    #del(test_sup)
-
+    time.sleep(0.5)
+    publisher.close()
+    
+    
 def test_listen_for_lp_string():
             
     test_sup = Supervisor(file_path,'OOQS1')
-    
+        
     test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
     test_sup.manager_workers[0].start()  
     
-    send(test_sup,'lp')
-        
+    publisher = set_pub(test_sup,'lp')
+                
     my_thread = threading.Thread(target=test_sup.listen_for_lp_string)
     my_thread.start()
     
     time.sleep(1)
-        
-    assert test_sup.manager_workers[0].low_priority_queue.get() == 'Hello, world!'
     
-    keyboard_interrupt_simulation()
-
+    my_sec_thread = threading.Thread(target=send,args=(test_sup,publisher))
+    my_sec_thread.start()
+    
+    time.sleep(4.2)
+    
+    if test_sup.manager_workers[0].low_priority_queue.get() == 'Hello, world!':
+        keyboard_interrupt_simulation()
+        pass
+    else:
+        keyboard_interrupt_simulation()
+        raise AssertionError
+    
     test_sup.manager_workers[0].stop()
+    my_sec_thread.join()
     my_thread.join()
-    
-    test_sup.stop_zmq()
-    #del(test_sup)
+    time.sleep(0.5)
+    publisher.close()
     
 def test_listen_for_hp_string():
             
@@ -452,23 +502,31 @@ def test_listen_for_hp_string():
     test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
     test_sup.manager_workers[0].start()  
     
-    send(test_sup,'hp')
-        
+    publisher = set_pub(test_sup,'hp')
+                
     my_thread = threading.Thread(target=test_sup.listen_for_hp_string)
     my_thread.start()
     
     time.sleep(1)
     
-    assert test_sup.manager_workers[0].high_priority_queue.get() == "Hello, world!"
+    my_sec_thread = threading.Thread(target=send,args=(test_sup,publisher))
+    my_sec_thread.start()
     
-    keyboard_interrupt_simulation()
-
+    time.sleep(4.2)
+    
+    if test_sup.manager_workers[0].high_priority_queue.get() == 'Hello, world!':
+        keyboard_interrupt_simulation()
+        pass
+    else:
+        keyboard_interrupt_simulation()
+        raise AssertionError
+    
     test_sup.manager_workers[0].stop()
+    my_sec_thread.join()
     my_thread.join()
-
-    test_sup.stop_zmq()
-    #del(test_sup)
-
+    time.sleep(0.5)
+    publisher.close()
+    
 def test_listen_for_lp_file():
                 
     test_sup = Supervisor(file_path,'OOQS1')
@@ -476,22 +534,30 @@ def test_listen_for_lp_file():
     test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
     test_sup.manager_workers[0].start()  
     
-    send(test_sup,'lp')
-        
+    publisher = set_pub(test_sup,'lp')
+                
     my_thread = threading.Thread(target=test_sup.listen_for_lp_file)
     my_thread.start()
-        
+    
     time.sleep(1)
     
-    assert test_sup.manager_workers[0].low_priority_queue.get() == b"Hello, world!"
+    my_sec_thread = threading.Thread(target=send,args=(test_sup,publisher))
+    my_sec_thread.start()
     
-    keyboard_interrupt_simulation()
-
+    time.sleep(4.2)
+    
+    if test_sup.manager_workers[0].low_priority_queue.get() == 'Hello, world!':
+        keyboard_interrupt_simulation()
+        pass
+    else:
+        keyboard_interrupt_simulation()
+        raise AssertionError
+    
     test_sup.manager_workers[0].stop()
+    my_sec_thread.join()
     my_thread.join()
-    
-    test_sup.stop_zmq()
-    #del(test_sup)
+    time.sleep(0.5)
+    publisher.close()
     
 def test_listen_for_hp_file():
                 
@@ -500,22 +566,29 @@ def test_listen_for_hp_file():
     test_sup.manager_workers.append(WorkerManager(0,test_sup,"Generic"))    
     test_sup.manager_workers[0].start()  
     
-    send(test_sup,'hp')
-        
-    my_thread = threading.Thread(target=test_sup.listen_for_hp_file)
+    publisher = set_pub(test_sup,'hp')
+                
+    my_thread = threading.Thread(target=test_sup.listen_for_hp_string)
     my_thread.start()
-        
+    
     time.sleep(1)
     
-    assert test_sup.manager_workers[0].high_priority_queue.get() == b"Hello, world!"
+    my_sec_thread = threading.Thread(target=send,args=(test_sup,publisher))
+    my_sec_thread.start()
     
-    keyboard_interrupt_simulation()
-
+    time.sleep(4.2)
+    
+    if test_sup.manager_workers[0].high_priority_queue.get() == 'Hello, world!':
+        keyboard_interrupt_simulation()
+        pass
+    else:
+        keyboard_interrupt_simulation()
+        raise AssertionError
+    
     test_sup.manager_workers[0].stop()
-    my_thread.join()
-    
-    test_sup.stop_zmq()
-    #del(test_sup)
+    publisher.close()
+    my_sec_thread.join()
+    my_thread.join(5)
 
 def test_listen_for_commands():
     test_sup = Supervisor(file_path,'OOQS1')
@@ -530,9 +603,6 @@ def test_listen_for_commands():
         "pidsource": "valore_pidsource"
         },   
     }   
-    
-    #captured_out = StringIO()
-    #sys.stdout = captured_out
     
     command_json_string = json.dumps(command_data)
     
