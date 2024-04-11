@@ -21,8 +21,12 @@ DataProcessor IDL
 
 interface DataProcessor : ACS::ACSComponent {
 
-    void configure(in string jsonStaticConfiguration); // se un altro componente, tipo OOQSManager, passa la configurazione 
-
+    void configure(in string jsonStaticConfiguration, in string name); // se un altro componente, tipo OOQSManager, passa la configurazione 
+    
+    // oneway -> non si aspetta il ritorno della funzione
+    //void start(); // per avviare il DataProcessor
+    oneway void start(); // per avviare il DataProcessor
+    
 };
 
 
@@ -32,20 +36,28 @@ CommandAndMonitor IDL
 
 enum Commands {
         SHUTDOWN,
-        CLEANED_SHUTDOWN,
+        CLEANEDSHUTDOWN,
         START,
         STOP,
         RESET,
-        START_DATA,
-        STOP_DATA,
-        GET_STATUS
+        STARTDATA,
+        STOPDATA,
+        GETSTATUS
     };
 
 interface Commander : ACS::ACSComponent { 
     
-    void configure(in string jsonStaticConfiguration); // se un altro componente, tipo OOQSManager, passa la configurazione 
+    void configure(in string jsonStaticConfiguration, in string name); // se un altro componente, tipo OOQSManager, passa la configurazione 
 
     void sendCommand(in Commands command, in string destProcessorName); // per chiamare comandi 
+
+};
+
+interface Monitoring : ACS::ACSComponent { 
+    
+    void configure(in string jsonStaticConfiguration, in string name); // se un altro componente, tipo OOQSManager, passa la configurazione 
+
+    oneway void start(); // per avviare il Monitoring 
 
 };
 

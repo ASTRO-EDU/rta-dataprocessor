@@ -102,7 +102,8 @@ if [ ! -z $USE_CONDA ] ; then
   unset __conda_setup
 # <<< conda initialize <<<
 fi
-export PYTHONPATH=$PYTHONPATH/home/astrisw/src/workers
+# export PYTHONPATH=$PYTHONPATH/home/astrisw/src/workers
+export PYTHONPATH="$PYTHONPATH/home/astrisw/src/workers:/home/astrisw/src/rtadp-proto"
 export MANAGER_REFERENCE="corbaloc::acsmanager:3000/Manager"
 export MANAGER_COMPUTER_NAME="acsmanager"
 alias ll="ls -la"

@@ -1,21 +1,21 @@
 [
-  {
-	"processname": "CommandCenter",
-	"command_socket": "tcp://127.0.0.1:5561",
-	"monitoring_socket": "tcp://127.0.0.1:5562"
+  { 
+	"processname": "CommandCenter", 
+	"command_socket": "tcp://192.168.96.4:5561",
+	"monitoring_socket": "tcp://192.168.96.4:5562"
   },
   {
 	"processname": "RTADP1",
 	"dataflow_type": "string",
 	"processing_type": "process",
 	"datasocket_type": "pushpull",
-	"data_lp_socket": "tcp://127.0.0.1:5555",
-	"data_hp_socket": "tcp://127.0.0.1:5556",
-	"command_socket": "tcp://127.0.0.1:5561",
-	"monitoring_socket": "tcp://127.0.0.1:5562",
+	"data_lp_socket": "tcp://192.168.96.3:5555",
+	"data_hp_socket": "tcp://192.168.96.3:5556",
+	"command_socket": "tcp://192.168.96.4:5561",
+	"monitoring_socket": "tcp://192.168.96.4:5562",
 	"manager_result_socket_type": ["pushpull", "none"],
 	"manager_result_dataflow_type": ["string", "none"],
-	"manager_result_socket": ["tcp://127.0.0.1:5563", "none"],
+	"manager_result_socket": ["tcp://192.168.96.3:5563", "none"],
 	"manager_num_workers": [5, 2],
 	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
   },
@@ -24,10 +24,10 @@
 	"dataflow_type": "string",
 	"processing_type": "process",
 	"datasocket_type": "pushpull",
-	"data_lp_socket": "tcp://127.0.0.1:5563",
-	"data_hp_socket": "tcp://127.0.0.1:5564",
-	"command_socket": "tcp://127.0.0.1:5561",
-	"monitoring_socket": "tcp://127.0.0.1:5562",
+	"data_lp_socket": "tcp://192.168.96.3:5563",
+	"data_hp_socket": "tcp://192.168.96.3:5564",
+	"command_socket": "tcp://192.168.96.4:5561",
+	"monitoring_socket": "tcp://192.168.96.4:5562",
 	"manager_result_socket_type": ["none"],
 	"manager_result_dataflow_type": ["none"],
 	"manager_result_socket": ["none"],
@@ -35,6 +35,3 @@
 	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
   }
 ]
-
-  
-  

@@ -5,9 +5,9 @@ from Acspy.Servants.ACSComponent import ACSComponent
 from Acspy.Servants.ContainerServices import ContainerServices
 from Acspy.Servants.ComponentLifecycle import ComponentLifecycle
 
-from Command import Command
+from ProcessMonitoring import MonitoringConsumer
 
-class CommanderImpl(rtamanager__POA.Commander, ACSComponent, ContainerServices, ComponentLifecycle):
+class MonitoringImpl(rtamanager__POA.Monitoring, ACSComponent, ContainerServices, ComponentLifecycle):
     def __init__(self):
         ACSComponent.__init__(self)
         ContainerServices.__init__(self)
@@ -28,19 +28,16 @@ class CommanderImpl(rtamanager__POA.Commander, ACSComponent, ContainerServices, 
     def configure(self, jsonStaticConfiguration, name):
         self._logger.logInfo("Configure Called")
         self._logger.logInfo(f"String: {jsonStaticConfiguration}")
-        self.commander = Command(jsonStaticConfiguration, name)
+        self.monitoring = MonitoringConsumer(jsonStaticConfiguration, name)
         return
     
-    def sendCommand( self, command,  destProcessorName):
-        self._logger.logInfo("sendCommand Called")
-        self._logger.logInfo(f"command:  {command}")
-        self._logger.logInfo(f"target: {destProcessorName}")
-        str_command = str(command).lower()
+    def start(self):
+        self._logger.logInfo("start Called")
         try:
-            self.commander.send_command(str_command, destProcessorName)
+            self.monitoring.receive_and_decode_messages()
         except KeyboardInterrupt:
-            print("Command generation stopped.")
-        self._logger.logInfo("Command sent")
+            print("Monitoring stopped.")
+        self._logger.logInfo("Monitoring stopped")
         return
         
         

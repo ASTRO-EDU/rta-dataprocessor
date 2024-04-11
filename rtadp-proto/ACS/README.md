@@ -113,3 +113,134 @@ dataprocessor = client.getDynamicComponent("DATAPROCESSOR_1", "IDL:scada/rtamana
 dataprocessor.configure("test")
 ```
 
+# ACS rtaproto 
+
+## Local test
+1. __RTADP1__
+```
+ipython -i ~/src/rtadp-proto/ACS/python_client.py
+```
+```
+dataprocessor = client.getDynamicComponent("DATAPROCESSOR_1", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer1" )
+import os
+cwd = os.getcwd()
+json_path = os.path.join(cwd, 'src', 'config.json')
+dataprocessor.configure(json_path, 'RTADP1')
+dataprocessor.start()
+```
+
+2. __RTADP2__
+```
+ipython -i ~/src/rtadp-proto/ACS/python_client.py
+```
+```
+dataprocessor = client.getDynamicComponent("DATAPROCESSOR_2", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer2" )
+import os
+cwd = os.getcwd()
+json_path = os.path.join(cwd, 'src', 'config.json')
+dataprocessor.configure(json_path, 'RTADP2')
+dataprocessor.start()
+```
+
+3. __COMMANDER__
+```
+ipython -i ~/src/rtadp-proto/ACS/python_client.py
+```
+```
+commander=client.getComponent("Commander")
+import rtamanager
+import os
+cwd = os.getcwd()
+json_path = os.path.join(cwd, 'src', 'config.json')
+commander.configure(json_path, 'CommandCenter')
+commander.sendCommand(rtamanager.START,'all')
+```
+
+4. __Monitoring__
+```
+cd src/worker
+python ProcessMonitoring.py ../config.json 
+```
+otherwise in ACS container
+```
+ipython -i ~/src/rtadp-proto/ACS/python_client.py
+```
+```
+monitoring=client.getComponent("Monitoring")
+import os
+cwd = os.getcwd()
+json_path = os.path.join(cwd, 'src', 'config.json')
+monitoring.configure(json_path, 'CommandCenter')
+monitoring.start()
+```
+
+5. __Producer__
+```
+cd src/rtadp-proto/testavro/
+python AVROProducer.py ../../config.json lp 3 RTADP1
+```
+
+## Distributed test
+1. __RTADP1__
+```
+ipython -i ~/src/rtadp-proto/ACS/python_client.py
+```
+```
+dataprocessor = client.getDynamicComponent("DATAPROCESSOR_1", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer1" )
+import os
+cwd = os.getcwd()
+json_path = os.path.join(cwd, 'src', 'config_distributed.json')
+dataprocessor.configure(json_path, 'RTADP1')
+dataprocessor.start()
+```
+
+2. __RTADP2__
+```
+ipython -i ~/src/rtadp-proto/ACS/python_client.py
+```
+```
+dataprocessor = client.getDynamicComponent("DATAPROCESSOR_2", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer1" )
+import os
+cwd = os.getcwd()
+json_path = os.path.join(cwd, 'src', 'config_distributed.json')
+dataprocessor.configure(json_path, 'RTADP2')
+dataprocessor.start()
+```
+
+3. __COMMANDER__
+```
+ipython -i ~/src/rtadp-proto/ACS/python_client.py
+```
+```
+commander=client.getComponent("Commander")
+import rtamanager
+import os
+cwd = os.getcwd()
+json_path = os.path.join(cwd, 'src', 'config_distributed.json')
+commander.configure(json_path, 'CommandCenter')
+commander.sendCommand(rtamanager.START,'all')
+```
+
+4. __Monitoring__
+```
+cd src/worker
+python ProcessMonitoring.py ../config_distributed.json 
+```
+otherwise in ACS container
+```
+ipython -i ~/src/rtadp-proto/ACS/python_client.py
+```
+```
+monitoring=client.getComponent("Monitoring")
+import os
+cwd = os.getcwd()
+json_path = os.path.join(cwd, 'src', 'config_distributed.json')
+monitoring.configure(json_path, 'CommandCenter')
+monitoring.start()
+```
+
+5. __Producer__
+```
+cd src/rtadp-proto/testavro/
+python AVROProducer.py ../../config_distributed.json lp 3 RTADP1
+```

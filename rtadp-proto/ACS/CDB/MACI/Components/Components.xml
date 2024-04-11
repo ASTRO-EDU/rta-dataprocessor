@@ -15,5 +15,13 @@
    Type="IDL:rta/rtamanager/Commander:1.0"
    Container="pyContainer2"
    ImplLang="py"/> 
+
+<!-- client.getComponent("Monitoring") -->
+
+<e Name="Monitoring" 
+   Code="rtamanagerImpl.MonitoringImpl"
+   Type="IDL:rta/rtamanager/Monitoring:1.0"
+   Container="pyContainer2"
+   ImplLang="py"/> 
    
 </Components>

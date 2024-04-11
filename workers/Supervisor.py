@@ -81,21 +81,21 @@ class Supervisor:
            print(f"ERROR: An unexpected error occurred: {e}")
            sys.exit(1)
 
-        else:
+        # else:
+        self.manager_workers = []
 
-            self.manager_workers = []
+        #process data based on Supervisor state
+        self.processdata = 0
+        self.stopdata = False
 
-            #process data based on Supervisor state
-            self.processdata = 0
-            self.stopdata = False
-
+        try:
             # Set up signal handlers
             signal.signal(signal.SIGTERM, self.handle_signals)
             signal.signal(signal.SIGINT, self.handle_signals)
-
-            self.status = "Initialised"
-
-            print(f"{self.globalname} started")
+        except ValueError:
+            print("WARNING! Signal only works in main thread. It is not possible to set up signal handlers!")
+        self.status = "Initialised"
+        print(f"{self.globalname} started")
 
     def load_configuration(self, config_file, name):
         self.config_manager = ConfigurationManager(config_file)
