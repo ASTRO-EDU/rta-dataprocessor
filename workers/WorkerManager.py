@@ -115,14 +115,16 @@ class WorkerManager(threading.Thread):
 
     # to be reimplemented ###
     def start_worker_processes(self, num_processes):
+        print("codice del workermanager base")
         # Worker processes
         if num_processes > self.max_workes:
             print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
         self.num_workers = num_processes
-        for i in range(num_processes):
-            process = WorkerProcess(i, self, self.processdata_shared, "name")
-            self.worker_processes.append(process)
-            process.start()
+        print(num_processes)
+        # for i in range(num_processes):
+        #     process = WorkerProcess(i, self, self.processdata_shared, "name")
+        #     self.worker_processes.append(process)
+        #     process.start()
 
 
     def run(self):
