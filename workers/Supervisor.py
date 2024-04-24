@@ -28,6 +28,8 @@ class Supervisor:
         self.name = name
         self.config_manager = None
 
+        self.act_threads={}
+
         #workers manager config
         self.manager_num_workers = None
         self.manager_result_sockets = None 
@@ -135,25 +137,31 @@ class Supervisor:
         if self.dataflowtype == "binary":
             #Data receiving on two queues: high and low priority
             self.lp_data_thread = threading.Thread(target=self.listen_for_lp_data, daemon=True)
+            self.act_threads['lp_data'] = self.lp_data_thread
             self.lp_data_thread.start()
 
             self.hp_data_thread = threading.Thread(target=self.listen_for_hp_data, daemon=True)
+            self.act_threads['hp_data'] = self.hp_data_thread
             self.hp_data_thread.start()
         
         if self.dataflowtype == "filename":
             #Data receiving on two queues: high and low priority
             self.lp_data_thread = threading.Thread(target=self.listen_for_lp_file, daemon=True)
+            self.act_threads['lp_file'] = self.lp_data_thread
             self.lp_data_thread.start()
 
             self.hp_data_thread = threading.Thread(target=self.listen_for_hp_file, daemon=True)
+            self.act_threads['hp_file'] = self.hp_data_thread
             self.hp_data_thread.start()
 
         if self.dataflowtype == "string":
             #Data receiving on two queues: high and low priority
             self.lp_data_thread = threading.Thread(target=self.listen_for_lp_string, daemon=True)
+            self.act_threads['lp_string'] = self.lp_data_thread
             self.lp_data_thread.start()
 
             self.hp_data_thread = threading.Thread(target=self.listen_for_hp_string, daemon=True)
+            self.act_threads['hp_string'] = self.hp_data_thread
             self.hp_data_thread.start()  
 
         self.result_thread = threading.Thread(target=self.listen_for_result, daemon=True)
@@ -181,7 +189,7 @@ class Supervisor:
         #PATTERN
         for i in range(len(self.config.get("manager_result_socket"))):
             if self.config.get("manager_result_socket")[i] != "none":
-                print(f"manager result socket: {self.config.get("manager_result_socket")[i]}")
+                print(f"manager result socket: {self.config.get('manager_result_socket')[i]}")
                 manager_id = i
                 indexmanager=0
                 manager = WorkerManager(manager_id,self,"Generic")
@@ -191,6 +199,7 @@ class Supervisor:
         
 
     def start_workers(self):
+        print("starting workers")
         indexmanager=0
         for manager in self.manager_workers: 
             if self.processingtype == "thread":
@@ -199,6 +208,8 @@ class Supervisor:
                 manager.start_worker_processes(self.manager_num_workers[indexmanager])
             indexmanager = indexmanager + 1
 
+        print("starting workers done", flush=True)
+
     def start(self):
         self.start_service_threads()
         self.start_managers()
@@ -206,13 +217,10 @@ class Supervisor:
 
         self.status = "Waiting"
 
-        try:
-            while self.continueall:
-                self.listen_for_commands()
-                time.sleep(1)  # To avoid 100 per cent CPU
-        except KeyboardInterrupt:
-            print("Keyboard interrupt received. Terminating.")
-            self.command_shutdown()
+        self.listen_command_thread=threading.Thread(target=self.listen_for_commands, daemon=True)
+        self.act_threads['command'] = self.listen_command_thread
+        self.listen_command_thread.start()
+
 
     def handle_signals(self, signum, frame):
         # Handle different signals
@@ -403,7 +411,7 @@ class Supervisor:
                 for manager in self.manager_workers: 
                     manager.low_priority_queue.put(data.decode()) 
             except zmq.error.Again as e: 
-                print("No message received within the timeout period.")
+                print("[LP-DATA] No message received within the timeout period.")
         print("listen for lp string stopped! ")
 
 
@@ -415,7 +423,7 @@ class Supervisor:
                 for manager in self.manager_workers: 
                     manager.high_priority_queue.put(data.decode()) 
             except zmq.error.Again as e: 
-                print("No message received within the timeout period.")
+                print("[HP-DATA] No message received within the timeout period.")
         print("listen for lp string stopped! ")
 
     def listen_for_lp_string(self):
@@ -426,7 +434,7 @@ class Supervisor:
                 for manager in self.manager_workers: 
                     manager.low_priority_queue.put(data) 
             except zmq.error.Again as e: 
-                print("No message received within the timeout period.")
+                print("[LP-STRING] No message received within the timeout period.")
         print("listen for lp string stopped! ")
             
     def listen_for_hp_string(self):
@@ -437,7 +445,7 @@ class Supervisor:
                 for manager in self.manager_workers: 
                     manager.high_priority_queue.put(data) 
             except zmq.error.Again as e: 
-                print("No message received within the timeout period.")
+                print("[HP-STRING] No message received within the timeout period.")
         print("listen for hp string stopped! ")
     #to be reimplemented ####
     #Open the file before load it into the queue. For "dataflowtype": "file"
@@ -456,7 +464,7 @@ class Supervisor:
                     for i in range(size):
                         manager.low_priority_queue.put(data[i]) 
             except zmq.error.Again as e: 
-                    print("No message received within the timeout period.")
+                    print("[LP-FILE] No message received within the timeout period.")
         print("listen for lp file stopped! ")
         
     def listen_for_hp_file(self):
@@ -468,21 +476,30 @@ class Supervisor:
                     for i in range(size):
                         manager.high_priority_queue.put(data[i]) 
             except zmq.error.Again as e: 
-                    print("No message received within the timeout period.")
+                    print("[HP-FILE] No message received within the timeout period.")
         print("listen for hp file stopped! ")
 
     def listen_for_commands(self):
-        # while True:
-        F_esc = True
-        while F_esc:
-            print("Waiting for commands...")
-            try:
-                command = json.loads(self.socket_command.recv_string())
-                #command = self.socket_command.recv_string()
-                F_esc = self.process_command(command)
-            except zmq.error.Again as e: 
-                print("No message received within the timeout period.")
-                #self.command_cleanedshutdown()
+        try:
+            while self.continueall:
+                F_esc = True
+                while F_esc:
+                    print("Waiting for commands...")
+                    
+                    try:
+                        command = json.loads(self.socket_command.recv_string())
+                        #command = self.socket_command.recv_string()
+                        F_esc = self.process_command(command)
+                        
+                    except zmq.error.Again as e: 
+                        print("[COMM] No message received within the timeout period.")
+                        #self.command_cleanedshutdown()
+                time.sleep(1)  # To avoid 100 per cent CPU
+        except KeyboardInterrupt:
+            print("Keyboard interrupt received. Terminating.")
+            self.command_shutdown()
+        finally:
+            print("listen for commands thread terminated")
 
     def command_shutdown(self):
         print("------- SHUTDOWN CALLED ------- ")
@@ -506,12 +523,12 @@ class Supervisor:
             for manager in self.manager_workers:
                 print(f"Trying to stop {manager.globalname}...")
                 manager.status = "EndingProcessing"
-                while manager.low_priority_queue.qsize() != 0 and manager.low_priority_queue.qsize() != 0:
+                while manager.low_priority_queue.qsize() != 0 and manager.high_priority_queue.qsize() != 0:
                     time.sleep(0.1)
-                print(f"Queues data of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize()}")
+                    print(f"Queues data of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()}")
                 while manager.result_queue.qsize() != 0:
                     time.sleep(0.1) 
-                print(f"Queues result of manager {manager.globalname} have size {manager.result_queue.qsize()}")
+                    print(f"Queues result of manager {manager.globalname} have size {manager.result_queue.qsize()}")
                 manager.status = "Shutdown"
         else:
             print("WARNING! Not in Processing state for a cleaned shutdown. Force the shutdown.") 
@@ -609,10 +626,10 @@ class Supervisor:
         # sys.exit(0)
         
         print("Stopping actives threads...")
-        attribute = vars(self)
-        for nome, value in attribute.items():
-            if type(value) == threading.Thread:
+        
+        for nome, value in self.act_threads.items():
                 if value.is_alive():
+                    print(f"Joining {nome}")
                     value.join()
                     print(value)
         
