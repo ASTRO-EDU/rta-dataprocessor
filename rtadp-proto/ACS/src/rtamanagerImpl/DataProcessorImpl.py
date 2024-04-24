@@ -23,6 +23,8 @@ class DataProcessorImpl(rtamanager__POA.DataProcessor, ACSComponent, ContainerSe
 
     def cleanUp(self):
         self._logger.logInfo(f"[cleanUp]")
+        if self.supervisor_instance is not None:
+            self.supervisor_instance.command_shutdown()
 
     def aboutToAbort(self):
         self._logger.logInfo(f"[aboutToAbort]")
@@ -42,9 +44,8 @@ class DataProcessorImpl(rtamanager__POA.DataProcessor, ACSComponent, ContainerSe
     def start(self):
         self._logger.logInfo("Start Called")
         # TODO: o lo risolvi lanciando thread python oppure aggiornare idle
-        try:
-            self.supervisor_instance.start()
-        except Exception as e:
-            print(e)
+        
+        self.supervisor_instance.start()
+        
         self._logger.logInfo("Start exit")
         return
