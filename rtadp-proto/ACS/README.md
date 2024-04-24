@@ -123,7 +123,7 @@ ipython -i ~/src/rtadp-proto/ACS/python_client.py
 ```
 ```
 import os
-cwd = os.getcwd()
+cwd = os.environ['HOME']
 json_path = os.path.join(cwd, 'src', 'config.json')
 
 dataprocessor1 = client.getDynamicComponent("DATAPROCESSOR_1", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer1" )
@@ -144,7 +144,7 @@ ipython -i ~/src/rtadp-proto/ACS/python_client.py
 commander=client.getComponent("Commander")
 import rtamanager
 import os
-cwd = os.getcwd()
+cwd = os.environ['HOME']
 json_path = os.path.join(cwd, 'src', 'config.json')
 commander.configure(json_path, 'CommandCenter')
 commander.sendCommand(rtamanager.START,'all')
@@ -162,7 +162,7 @@ ipython -i ~/src/rtadp-proto/ACS/python_client.py
 ```
 monitoring=client.getComponent("Monitoring")
 import os
-cwd = os.getcwd()
+cwd = os.environ['HOME']
 json_path = os.path.join(cwd, 'src', 'config.json')
 monitoring.configure(json_path, 'CommandCenter')
 monitoring.start()
@@ -182,7 +182,7 @@ ipython -i ~/src/rtadp-proto/ACS/python_client.py
 ```
 dataprocessor = client.getDynamicComponent("DATAPROCESSOR_1", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer1" )
 import os
-cwd = os.getcwd()
+cwd = os.environ['HOME']
 json_path = os.path.join(cwd, 'src', 'config_distributed.json')
 dataprocessor.configure(json_path, 'RTADP1')
 dataprocessor.start()
@@ -195,7 +195,7 @@ ipython -i ~/src/rtadp-proto/ACS/python_client.py
 ```
 dataprocessor = client.getDynamicComponent("DATAPROCESSOR_2", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer1" )
 import os
-cwd = os.getcwd()
+cwd = os.environ['HOME']
 json_path = os.path.join(cwd, 'src', 'config_distributed.json')
 dataprocessor.configure(json_path, 'RTADP2')
 dataprocessor.start()
@@ -209,7 +209,7 @@ ipython -i ~/src/rtadp-proto/ACS/python_client.py
 commander=client.getComponent("Commander")
 import rtamanager
 import os
-cwd = os.getcwd()
+cwd = os.environ['HOME']
 json_path = os.path.join(cwd, 'src', 'config_distributed.json')
 commander.configure(json_path, 'CommandCenter')
 commander.sendCommand(rtamanager.START,'all')
@@ -227,7 +227,7 @@ ipython -i ~/src/rtadp-proto/ACS/python_client.py
 ```
 monitoring=client.getComponent("Monitoring")
 import os
-cwd = os.getcwd()
+cwd = os.environ['HOME']
 json_path = os.path.join(cwd, 'src', 'config_distributed.json')
 monitoring.configure(json_path, 'CommandCenter')
 monitoring.start()
