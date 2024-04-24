@@ -134,10 +134,12 @@ class Supervisor:
 
         if self.dataflowtype == "binary":
             #Data receiving on two queues: high and low priority
-            self.lp_data_thread = threading.Thread(target=self.listen_for_lp_data,  daemon=True)
+            self.lp_data_thread = threading.Thread(target=self.listen_for_lp_data, daemon=True)
             self.lp_data_thread.start()
+
             self.hp_data_thread = threading.Thread(target=self.listen_for_hp_data, daemon=True)
             self.hp_data_thread.start()
+        
         if self.dataflowtype == "filename":
             #Data receiving on two queues: high and low priority
             self.lp_data_thread = threading.Thread(target=self.listen_for_lp_file, daemon=True)
@@ -172,12 +174,14 @@ class Supervisor:
                 self.socket_result[indexmanager] = self.context.socket(zmq.PUB)
                 self.socket_result[indexmanager].bind(manager.result_socket)
                 print(f"---result socket pushpull {manager.globalname} {manager.result_socket}")
-            
+
+
     #to be reimplemented ####
     def start_managers(self):
         #PATTERN
         for i in range(len(self.config.get("manager_result_socket"))):
             if self.config.get("manager_result_socket")[i] != "none":
+                print(f"manager result socket: {self.config.get("manager_result_socket")[i]}")
                 manager_id = i
                 indexmanager=0
                 manager = WorkerManager(manager_id,self,"Generic")
@@ -194,13 +198,11 @@ class Supervisor:
             if self.processingtype == "process":
                 manager.start_worker_processes(self.manager_num_workers[indexmanager])
             indexmanager = indexmanager + 1
-            
+
     def start(self):
         self.start_service_threads()
         self.start_managers()
         self.start_workers()
-        
-        #print(self.socket_command)
 
         self.status = "Waiting"
 
@@ -443,17 +445,6 @@ class Supervisor:
     def open_file(self, filename):
         f = [filename]
         return f, 1
-    
-    # def open_file(self,nome_file):
-    #     try:
-    #         with open(nome_file, 'r') as file:
-    #             contenuto = file.read()
-    #             lunghezza_contenuto = len(contenuto)
-    #         return contenuto, lunghezza_contenuto
-    #     except FileNotFoundError:
-    #         print("Il file non esiste.")
-    #     except Exception as e:
-    #         print("Si è verificato un errore durante la lettura del file:", e)
 
     def listen_for_lp_file(self):
         while not self.stopdata:
@@ -499,6 +490,7 @@ class Supervisor:
         #self.command_stopdata() 
         #self.command_stop() 
         self.continueall = False
+        self.stop_all(True)
         print("------- SHUTDOWN exit -------")
     
     def command_cleanedshutdown(self):
@@ -565,7 +557,7 @@ class Supervisor:
 
     def process_command(self, command):
         print(f"Received command: {command}")
-        subtype_value = command['header']['subtypeNone']
+        subtype_value = command['header']['subtype']
         pidtarget = command['header']['pidtarget']
         pidsource = command['header']['pidsource']
         if pidtarget == self.name or pidtarget == "all".lower() or pidtarget == "*":
