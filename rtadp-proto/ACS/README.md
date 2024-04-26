@@ -75,6 +75,7 @@ cd $RTA_DP_ROOT/rtadp-proto/ACS/; ./start_acs_container.sh <local|distributed>
 Start containers using docker compose
 ```
 cd $RTA_DP_ROOT/rtadp-proto/ACS/;
+export COMPOSE_PROJECT_NAME=user_$USER
 docker-compose up -d
 docker-compose ps
 ```
@@ -121,25 +122,18 @@ dataprocessor.configure("test")
 ipython -i ~/src/rtadp-proto/ACS/python_client.py
 ```
 ```
-dataprocessor = client.getDynamicComponent("DATAPROCESSOR_1", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer1" )
 import os
 cwd = os.getcwd()
 json_path = os.path.join(cwd, 'src', 'config.json')
-dataprocessor.configure(json_path, 'RTADP1')
-dataprocessor.start()
-```
 
-2. __RTADP2__
-```
-ipython -i ~/src/rtadp-proto/ACS/python_client.py
-```
-```
-dataprocessor = client.getDynamicComponent("DATAPROCESSOR_2", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer2" )
-import os
-cwd = os.getcwd()
-json_path = os.path.join(cwd, 'src', 'config.json')
-dataprocessor.configure(json_path, 'RTADP2')
-dataprocessor.start()
+dataprocessor1 = client.getDynamicComponent("DATAPROCESSOR_1", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer1" )
+dataprocessor1.configure(json_path, 'RTADP1')
+dataprocessor1.start()
+
+dataprocessor2 = client.getDynamicComponent("DATAPROCESSOR_2", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer2" )
+
+dataprocessor2.configure(json_path, 'RTADP2')
+dataprocessor2.start()
 ```
 
 3. __COMMANDER__

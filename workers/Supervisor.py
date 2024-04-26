@@ -300,19 +300,24 @@ class Supervisor:
                         manager.high_priority_queue.put(data[i]) 
 
     def listen_for_commands(self):
-        while True:
+        # while True:
+        F_esc = True
+        while F_esc:
             print("Waiting for commands...")
             command = json.loads(self.socket_command.recv_string())
-            self.process_command(command)
+            F_esc = self.process_command(command)
 
     def command_shutdown(self):
+        print("------- SHUTDOWN CALLED ------- ")
         self.status = "Shutdown"
         self.command_stopdata()
         self.command_stop()
         self.stop_all(True)
         self.continueall = False
+        print("------- SHUTDOWN exit -------")
     
     def command_cleanedshutdown(self):
+        print("------- CLEANEDSHUTDOWN CALLED ------- ")
         if self.status == "Processing":
             self.status = "EndingProcessing"
             self.command_stopdata()
@@ -332,6 +337,7 @@ class Supervisor:
         self.stop_all(False)
         self.continueall = False
         self.status = "Shutdown"
+        print("------- CLEANEDSHUTDOWN exit ------- ")
 
     def command_reset(self):
         if self.status == "Processing" or self.status == "Waiting":
@@ -374,8 +380,10 @@ class Supervisor:
         if pidtarget == self.name or pidtarget == "all".lower() or pidtarget == "*":
             if subtype_value == "shutdown":
                 self.command_shutdown()  
+                return False
             if subtype_value == "cleanedshutdown":
                 self.command_cleanedshutdown()
+                return False
             if subtype_value == "getstatus":
                 for manager in self.manager_workers:
                     manager.monitoring_thread.sendto(pidsource)
@@ -389,6 +397,7 @@ class Supervisor:
                     self.command_stopdata()
             if subtype_value == "startdata": #data acquisition
                     self.command_startdata()
+            return True
   
         # monitoringpoint_data = self.monitoringpoint.get_data()
         # print(f"MonitoringPoint data: {monitoringpoint_data}")
@@ -398,7 +407,7 @@ class Supervisor:
         # Stop monitoring thread
         # self.monitoring_thread.stop()
         # self.monitoring_thread.join()
-
+        
         self.command_stopdata()
         self.command_stop()
         time.sleep(0.1)
@@ -407,10 +416,13 @@ class Supervisor:
         for manager in self.manager_workers: 
             if manager.processingtype == "process":
                 manager.stop(False)
+                # NOTE: sleep necessaria
+                time.sleep(0.1)
             else:
                 manager.stop(fast)
             manager.join()
 
         print("All workers and managers terminated.")
-        sys.exit(0)
+        return 0
+        # sys.exit(0)
 
