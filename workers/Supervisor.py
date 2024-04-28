@@ -625,16 +625,16 @@ class Supervisor:
         print("All workers and managers terminated.")
         # sys.exit(0)
         
-        print("Stopping actives threads...")
+        # print("Stopping actives threads...")
         
-        for nome, value in self.act_threads.items():
-                if value.is_alive():
-                    print(f"Joining {nome}")
-                    value.join()
-                    print(value)
+        # for nome, value in self.act_threads.items():
+        #         if value.is_alive():
+        #             print(f"Joining {nome}")
+        #             value.join()
+        #             print(value)
         
-        print("Stopping actives sockets...")
         self.stop_zmq()
+        print("Activity sockets stopped...")
 
 
         #sys.exit(0)

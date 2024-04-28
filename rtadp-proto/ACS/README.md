@@ -123,6 +123,7 @@ ipython -i ~/src/rtadp-proto/ACS/python_client.py
 ```
 ```
 import os
+import rtamanager
 cwd = os.environ['HOME']
 json_path = os.path.join(cwd, 'src', 'config.json')
 
@@ -131,21 +132,10 @@ dataprocessor1.configure(json_path, 'RTADP1')
 dataprocessor1.start()
 
 dataprocessor2 = client.getDynamicComponent("DATAPROCESSOR_2", "IDL:scada/rtamanager/DataProcessor:1.0","rtamanagerImpl.DataProcessorImpl", "pyContainer2" )
-
 dataprocessor2.configure(json_path, 'RTADP2')
 dataprocessor2.start()
-```
 
-3. __COMMANDER__
-```
-ipython -i ~/src/rtadp-proto/ACS/python_client.py
-```
-```
 commander=client.getComponent("Commander")
-import rtamanager
-import os
-cwd = os.environ['HOME']
-json_path = os.path.join(cwd, 'src', 'config.json')
 commander.configure(json_path, 'CommandCenter')
 commander.sendCommand(rtamanager.START,'all')
 ```
