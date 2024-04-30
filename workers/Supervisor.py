@@ -90,9 +90,11 @@ class Supervisor:
             self.stopdata = True
 
             # Set up signal handlers
-            signal.signal(signal.SIGTERM, self.handle_signals)
-            signal.signal(signal.SIGINT, self.handle_signals)
-
+            try:
+                signal.signal(signal.SIGTERM, self.handle_signals)
+                signal.signal(signal.SIGINT, self.handle_signals)
+            except ValueError:
+                print("WARNING! Signal only works in main thread. It is not possible to set up signal handlers!")
             self.status = "Initialised"
 
             print(f"{self.globalname} started")
@@ -303,8 +305,13 @@ class Supervisor:
     def listen_for_commands(self):
         while self.continueall:
             print("Waiting for commands...")
-            command = json.loads(self.socket_command.recv_string())
-            self.process_command(command)
+            try:
+                command = json.loads(self.socket_command.recv_string())
+                self.process_command(command)
+            except zmq.error.ZMQError:
+                print("WARNING! zmq.error.ZMQError")
+ 
+
         print("End listen_for_commands")
 
     def command_shutdown(self):
@@ -420,6 +427,13 @@ class Supervisor:
 
         # Stop all internal thread
         self.continueall = False
+        
+        #self.socket_lp_data.close()
+        #self.socket_hp_data.close()
+        #self.socket_monitoring.close()
+        #self.socket_command.close()
+        #self.socket_result[0].close()
+
         #self.lp_data_thread.join()
         #print("self.lp_data_thread.join()")
         #self.hp_data_thread.join()

@@ -9,6 +9,7 @@ from WorkerBase import WorkerBase
 import avro.schema
 from avro.io import DatumReader
 import io
+import time
 
 class Worker1(WorkerBase):
 	def __init__(self):
@@ -64,6 +65,7 @@ class Worker1(WorkerBase):
 			#self.manager.result_queue.put(data)
 			#self.socket_result.send_string(data)
 			#print("WorkerProcess1")
+			time.sleep(0.1)
 			self.manager.result_queue.put(str(data))
 			
 
