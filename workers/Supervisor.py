@@ -305,11 +305,11 @@ class Supervisor:
     def listen_for_commands(self):
         while self.continueall:
             print("Waiting for commands...")
-            try:
-                command = json.loads(self.socket_command.recv_string())
-                self.process_command(command)
-            except zmq.error.ZMQError:
-                print("WARNING! zmq.error.ZMQError")
+            #try:
+            command = json.loads(self.socket_command.recv_string())
+            self.process_command(command)
+            #except zmq.error.ZMQError:
+            #    print("WARNING! zmq.error.ZMQError")
  
 
         print("End listen_for_commands")
@@ -348,7 +348,7 @@ class Supervisor:
             for manager in self.manager_workers:
                 print(f"Trying to reset {manager.globalname}...")
                 manager.clean_queue()
-                print(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.low_priority_queue.qsize()} {manager.result_queue.qsize()}")
+                print(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()} {manager.result_queue.qsize()}")
             self.status = "Waiting"
 
     def command_start(self):

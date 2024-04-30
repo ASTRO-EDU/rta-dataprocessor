@@ -87,7 +87,7 @@ class WorkerThread(threading.Thread):
         self.next_time = time.time()
         self.processing_rate = self.processed_data_count / elapsed_time
         self.total_processed_data_count += self.processed_data_count
-        print(f"{self.globalname} rate Hz {self.processing_rate:.1f} total events {self.total_processed_data_count}")
+        print(f"{self.globalname} Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_queue.qsize()}")
         self.processed_data_count = 0
 
         if not self._stop_event.is_set():

@@ -13,5 +13,6 @@ class Worker2(WorkerBase):
 		super().__init__()
 
 	def process_data(self, data):
-		time.sleep(0.1)
-		print(data)
+		#time.sleep(0.1)
+		#print(data)
+		pass
