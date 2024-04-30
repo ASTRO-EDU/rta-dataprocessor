@@ -178,31 +178,42 @@ class WorkerManager(threading.Thread):
         print("End cleaning queues")
 
     def stop(self, fast=False):
-        self.stop_internalthreads()
         if self.processingtype == "process":
             if fast == False:
                 print("Closing queues...")
 
-                print(f"   - low_priority_queue size {self.low_priority_queue.qsize()}")
-                while not self.low_priority_queue.empty():
-                    item = self.low_priority_queue.get_nowait()
-                self.low_priority_queue.close()
-                self.low_priority_queue.cancel_join_thread() 
-                print(f"   - low_priority_queue empty")
+                try:
+                    print(f"   - low_priority_queue size {self.low_priority_queue.qsize()}")
+                    while not self.low_priority_queue.empty():
+                        item = self.low_priority_queue.get_nowait()
+                    self.low_priority_queue.close()
+                    self.low_priority_queue.cancel_join_thread() 
+                    print(f"   - low_priority_queue empty")
+                except Exception as e:
+                    # Handle any other unexpected exceptions
+                    print(f"ERROR in worker stop low_priority_queue cleaning: {e}")
 
-                print(f"   - high_priority_queue size {self.high_priority_queue.qsize()}")
-                while not self.high_priority_queue.empty():
-                    item = self.high_priority_queue.get_nowait()
-                self.high_priority_queue.close()
-                self.high_priority_queue.cancel_join_thread() 
-                print(f"   - high_priority_queue empty")
+                try:
+                    print(f"   - high_priority_queue size {self.high_priority_queue.qsize()}")
+                    while not self.high_priority_queue.empty():
+                        item = self.high_priority_queue.get_nowait()
+                    self.high_priority_queue.close()
+                    self.high_priority_queue.cancel_join_thread() 
+                    print(f"   - high_priority_queue empty")
+                except Exception as e:
+                    # Handle any other unexpected exceptions
+                    print(f"ERROR in worker stop high_priority_queue cleaning: {e}")
 
-                print(f"   - result_queue size {self.result_queue.qsize()}")
-                while not self.result_queue.empty():
-                    item = self.result_queue.get_nowait()
-                self.result_queue.close()
-                self.result_queue.cancel_join_thread() 
-                print(f"   - result_queue empty")
+                try:
+                    print(f"   - result_queue size {self.result_queue.qsize()}")
+                    while not self.result_queue.empty():
+                        item = self.result_queue.get_nowait()
+                    self.result_queue.close()
+                    self.result_queue.cancel_join_thread() 
+                    print(f"   - result_queue empty")
+                except Exception as e:
+                    # Handle any other unexpected exceptions
+                    print(f"ERROR in worker stop result_queue cleaning: {e}")
 
                 print("End closing queues")
 
@@ -214,14 +225,15 @@ class WorkerManager(threading.Thread):
             thread.stop()
             thread.join()       
         self._stop_event.set()  # Set the stop event to exit from this thread
+        self.stop_internalthreads()
         self.status = "End"
 
 
     def stop_internalthreads(self):
-        print("Stopping Manager threads...")
+        print("Stopping Manager internal threads...")
         # Stop monitoring thread
         self.monitoring_thread.stop()
         self.monitoring_thread.join()
-        print("All Manager threads terminated.")
+        print("All Manager internal threads terminated.")
 
 

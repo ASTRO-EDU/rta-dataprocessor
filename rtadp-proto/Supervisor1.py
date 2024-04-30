@@ -34,7 +34,7 @@ class Supervisor1(Supervisor):
 
 	def start_managers(self):
 		indexmanager=0
-		manager1 = WorkerManager1(indexmanager, self, "S22Rate")
+		manager1 = WorkerManager1(indexmanager, self, "Rate")
 		self.setup_result_channel(manager1, indexmanager)
 		manager1.start()
 		self.manager_workers.append(manager1)
