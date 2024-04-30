@@ -318,7 +318,7 @@ class Supervisor:
         self.status = "Shutdown"
         #self.command_stopdata()
         #self.command_stop()
-        self.stop_all(True)
+        self.stop_all(False)
         #self.continueall = False
     
     def command_cleanedshutdown(self):
@@ -328,7 +328,7 @@ class Supervisor:
             for manager in self.manager_workers:
                 print(f"Trying to stop {manager.globalname}...")
                 manager.status = "EndingProcessing"
-                while manager.low_priority_queue.qsize() != 0 and manager.high_priority_queue.qsize() != 0:
+                while manager.low_priority_queue.qsize() != 0 or manager.high_priority_queue.qsize() != 0:
                     print(f"Queues data of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()}")
                     time.sleep(0.2)            
                 while manager.result_queue.qsize() != 0:
@@ -440,6 +440,11 @@ class Supervisor:
         #print("self.hp_data_thread.join()")
         #self.result_thread.join()
         #print("self.result_thread.join()")
+        
+        # Clear any remaining items in the queue
+        #for manager in self.manager_workers:
+        #    manager.clean_queue()
+
         print("All Supervisor workers and managers and internal threads terminated.")
         #sys.exit(0)
 

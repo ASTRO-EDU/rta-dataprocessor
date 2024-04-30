@@ -160,20 +160,23 @@ class WorkerManager(threading.Thread):
     def clean_queue(self):
         print("Cleaning queues...")
 
-        print(f"   - low_priority_queue size {self.low_priority_queue.qsize()}")
-        while not self.low_priority_queue.empty():
-            item = self.low_priority_queue.get_nowait()
-        print(f"   - low_priority_queue empty")
- 
-        print(f"   - high_priority_queue size {self.high_priority_queue.qsize()}")
-        while not self.high_priority_queue.empty():
-            item = self.high_priority_queue.get_nowait()
-        print(f"   - high_priority_queue empty")
+        if not self.low_priority_queue.empty():
+            print(f"   - low_priority_queue size {self.low_priority_queue.qsize()}")
+            while not self.low_priority_queue.empty():
+                item = self.low_priority_queue.get_nowait()
+            print(f"   - low_priority_queue empty")
 
-        print(f"   - result_queue size {self.result_queue.qsize()}")
-        while not self.result_queue.empty():
-            item = self.result_queue.get_nowait()
-        print(f"   - result_queue empty")
+        if not self.high_priority_queue.empty():
+            print(f"   - high_priority_queue size {self.high_priority_queue.qsize()}")
+            while not self.high_priority_queue.empty():
+                item = self.high_priority_queue.get_nowait()
+            print(f"   - high_priority_queue empty")
+
+        if not self.result_queue.empty():
+            print(f"   - result_queue size {self.result_queue.qsize()}")
+            while not self.result_queue.empty():
+                item = self.result_queue.get_nowait()
+            print(f"   - result_queue empty")
 
         print("End cleaning queues")
 
