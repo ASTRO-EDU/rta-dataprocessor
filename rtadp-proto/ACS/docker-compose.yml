@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  acsmanager:
+    container_name: acsmanager_${USER}
+    image: git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_${USER}
+    volumes:
+      - ${PWD}/../../:/home/astrisw/src
+      - ${PWD}/.bashrc:/home/astrisw/.bashrc
+    entrypoint: "/home/astrisw/src/env/entrypoint.sh"
+
+  acscont1:
+    container_name: acscont1_${USER}
+    image:  git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_${USER}
+    volumes:
+      - ${PWD}/../../:/home/astrisw/src
+      - ${PWD}/.bashrc:/home/astrisw/.bashrc
+    entrypoint: "/home/astrisw/src/env/entrypoint.sh"
+
+  acscont2:
+    container_name: acscont2_${USER}
+    image:  git.ia2.inaf.it:5050/astri/scada/scada/acs_aug2023:latest_${USER}
+    volumes:
+      - ${PWD}/../../:/home/astrisw/src
+      - ${PWD}/.bashrc:/home/astrisw/.bashrc
+    entrypoint: "/home/astrisw/src/env/entrypoint.sh"
