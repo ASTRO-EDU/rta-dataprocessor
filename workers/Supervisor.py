@@ -11,6 +11,7 @@ from MonitoringThread import MonitoringThread
 from WorkerManager import WorkerManager
 from WorkerProcess import WorkerProcess
 from ConfigurationManager import ConfigurationManager, get_pull_config
+import multiprocessing
 import zmq
 import json
 import queue
@@ -19,6 +20,7 @@ import signal
 import time
 import sys
 import psutil
+import os
 
 class Supervisor:
     def __init__(self, config_file="config.json", name = "None"):
@@ -74,7 +76,8 @@ class Supervisor:
             # self.monitoring_thread = None
 
             #results
-            self.socket_result = [None] * 100
+            self.socket_lp_result = [None] * 100
+            self.socket_hp_result = [None] * 100
 
         except Exception as e:
            # Handle any other unexpected exceptions
@@ -103,7 +106,7 @@ class Supervisor:
         self.config_manager = ConfigurationManager(config_file)
         self.config=self.config_manager.get_configuration(name)
         print(self.config)
-        self.manager_result_sockets_type, self.manager_result_dataflow_type, self.manager_result_sockets, self.manager_num_workers = self.config_manager.get_workers_config(name)
+        self.manager_result_sockets_type, self.manager_result_dataflow_type, self.manager_result_lp_sockets, self.manager_result_hp_sockets, self.manager_num_workers = self.config_manager.get_workers_config(name)
 
     def start_service_threads(self):
 
@@ -132,23 +135,38 @@ class Supervisor:
             self.hp_data_thread.start()  
 
         self.result_thread = threading.Thread(target=self.listen_for_result, daemon=True)
-        self.result_thread.start()       
+        self.result_thread.start()      
+
+        self.command_thread = threading.Thread(target=self.listen_for_result, daemon=True)
+        self.command_thread.start()   
 
     def setup_result_channel(self, manager, indexmanager):
         #output sockert
-        self.socket_result[indexmanager] = None
+        self.socket_lp_result[indexmanager] = None
+        self.socket_hp_result[indexmanager] = None
         self.context = zmq.Context()
 
-        if manager.result_socket != "none":
+        if manager.result_lp_socket != "none":
             if manager.result_socket_type == "pushpull":
-                self.socket_result[indexmanager] = self.context.socket(zmq.PUSH)
-                self.socket_result[indexmanager].connect(manager.result_socket)
-                print(f"---result socket pushpull {manager.globalname} {manager.result_socket}")
+                self.socket_lp_result[indexmanager] = self.context.socket(zmq.PUSH)
+                self.socket_lp_result[indexmanager].connect(manager.result_lp_socket)
+                print(f"---result lp socket pushpull {manager.globalname} {manager.result_lp_socket}")
 
             if manager.result_socket_type == "pubsub":
-                self.socket_result[indexmanager] = self.context.socket(zmq.PUB)
-                self.socket_result[indexmanager].bind(manager.result_socket)
-                print(f"---result socket pushpull {manager.globalname} {manager.result_socket}")
+                self.socket_lp_result[indexmanager] = self.context.socket(zmq.PUB)
+                self.socket_lp_result[indexmanager].bind(manager.result_lp_socket)
+                print(f"---result lp socket pushpull {manager.globalname} {manager.result_lp_socket}")
+
+        if manager.result_hp_socket != "none":
+            if manager.result_socket_type == "pushpull":
+                self.socket_hp_result[indexmanager] = self.context.socket(zmq.PUSH)
+                self.socket_hp_result[indexmanager].connect(manager.result_hp_socket)
+                print(f"---result hp socket pushpull {manager.globalname} {manager.result_hp_socket}")
+
+            if manager.result_socket_type == "pubsub":
+                self.socket_hp_result[indexmanager] = self.context.socket(zmq.PUB)
+                self.socket_hp_result[indexmanager].bind(manager.result_hp_socket)
+                print(f"---result hp socket pushpull {manager.globalname} {manager.result_hp_socket}")
 
 
     #to be reimplemented ####
@@ -211,35 +229,57 @@ class Supervisor:
         print("End listen_for_result")
 
     def send_result(self, manager, indexmanager):
-        data = None
-        try:
-            data = manager.result_queue.get_nowait()
-        except queue.Empty:
-            return
-        except Exception as e:
-            # Handle any other unexpected exceptions
-            #print(f"WARNING: {e}")
+        if manager.result_lp_queue.qsize() == 0 and manager.result_hp_queue.qsize() == 0:
             return
 
-        if manager.result_socket == "none":
-            #print("WARNING: no socket result available to send results")
-            return
-        if manager.result_dataflow_type == "string" or manager.result_dataflow_type == "filename":
+        data = None
+        channel = -1
+        try:
+            channel = 1
+            data = manager.result_hp_queue.get_nowait()
+        except Exception as e:
             try:
-                data = str(data)
-                #print(manager.result_queue.qsize())
-                self.socket_result[indexmanager].send_string(data)
+                channel = 0
+                data = manager.result_lp_queue.get_nowait()
+            except queue.Empty:
+                return
             except Exception as e:
-                # Handle any other unexpected exceptions
-                print(f"ERROR: data not in string format to be send to : {e}")
-        if manager.result_dataflow_type == "binary":
-            try:
-                data = str(manager.result_queue.get_nowait())
-                self.socket_result[indexmanager].send(data)
-                return 
-            except Exception as e:
-                # Handle any other unexpected exceptions
-                print(f"ERROR: data not in binary format to be send to socket_result: {e}")
+                print(f"WARNING: {e}")
+                return
+
+        if channel == 0:
+            if manager.result_lp_socket == "none":
+                #print("WARNING: no lp socket result available to send results")
+                return
+            if manager.result_dataflow_type == "string" or manager.result_dataflow_type == "filename":
+                try:
+                    data = str(data)
+                    self.socket_lp_result[indexmanager].send_string(data)
+                except Exception as e:
+                    print(f"ERROR: data not in string format to be send to : {e}")
+            if manager.result_dataflow_type == "binary":
+                try:
+                    #data = str(data)
+                    self.socket_lp_result[indexmanager].send(data)
+                except Exception as e:
+                    print(f"ERROR: data not in binary format to be send to socket_result: {e}")
+
+        if channel == 1:
+            if manager.result_hp_socket == "none":
+                print("WARNING: no socket hp result available to send results")
+                return
+            if manager.result_dataflow_type == "string" or manager.result_dataflow_type == "filename":
+                try:
+                    data = str(data)
+                    self.socket_hp_result[indexmanager].send_string(data)
+                except Exception as e:
+                    print(f"ERROR: data not in string format to be send to : {e}")
+            if manager.result_dataflow_type == "binary":
+                try:
+                    #data = str(data)
+                    self.socket_hp_result[indexmanager].send(data)
+                except Exception as e:
+                    print(f"ERROR: data not in binary format to be send to socket_result: {e}")
 
     def listen_for_lp_data(self):
         while self.continueall:
@@ -316,10 +356,7 @@ class Supervisor:
 
     def command_shutdown(self):
         self.status = "Shutdown"
-        #self.command_stopdata()
-        #self.command_stop()
         self.stop_all(False)
-        #self.continueall = False
     
     def command_cleanedshutdown(self):
         if self.status == "Processing":
@@ -331,8 +368,8 @@ class Supervisor:
                 while manager.low_priority_queue.qsize() != 0 or manager.high_priority_queue.qsize() != 0:
                     print(f"Queues data of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()}")
                     time.sleep(0.2)            
-                while manager.result_queue.qsize() != 0:
-                    print(f"Queues result of manager {manager.globalname} have size {manager.result_queue.qsize()}")
+                while manager.result_lp_queue.qsize() != 0 or manager.result_hp_queue.qsize() != 0:
+                    print(f"Queues result of manager {manager.globalname} have size {manager.result_lp_queue.qsize()} {manager.result_hp_queue.qsize()}")
                     time.sleep(0.2) 
                 manager.status = "Shutdown"
         else:
@@ -348,7 +385,7 @@ class Supervisor:
             for manager in self.manager_workers:
                 print(f"Trying to reset {manager.globalname}...")
                 manager.clean_queue()
-                print(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()} {manager.result_queue.qsize()}")
+                print(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()} {manager.result_lp_queue.qsize()} {manager.result_hp_queue.qsize()}")
             self.status = "Waiting"
 
     def command_start(self):

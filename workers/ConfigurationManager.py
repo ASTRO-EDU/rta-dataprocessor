@@ -25,7 +25,8 @@ class ConfigurationManager:
         "data_hp_socket",
         "command_socket",
         "monitoring_socket",
-        "manager_result_socket",
+        "manager_result_lp_socket",
+        "manager_result_hp_socket",
         "manager_result_dataflow_type",
         "manager_result_socket_type",
         "manager_num_workers",
@@ -71,9 +72,10 @@ class ConfigurationManager:
         if config:
             result_socket_type = config.get("manager_result_socket_type", [])
             result_dataflow_type = config.get("manager_result_dataflow_type", [])
-            result_sockets = config.get("manager_result_socket", [])
+            result_lp_sockets = config.get("manager_result_lp_socket", [])
+            result_hp_sockets = config.get("manager_result_hp_socket", [])
             num_workers = config.get("manager_num_workers", [])
-            return result_socket_type, result_dataflow_type, result_sockets, num_workers
+            return result_socket_type, result_dataflow_type, result_lp_sockets, result_hp_sockets, num_workers
         else:
             return [], [], [], []
 
