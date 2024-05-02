@@ -419,11 +419,12 @@ class Supervisor:
             manager.stopdata = True
 
     def process_command(self, command):
-        print(f"Received command: {command}")
+        
         subtype_value = command['header']['subtype']
         pidtarget = command['header']['pidtarget']
         pidsource = command['header']['pidsource']
         if pidtarget == self.name or pidtarget == "all".lower() or pidtarget == "*":
+            print(f"Received command: {command}")
             if subtype_value == "shutdown":
                 self.command_shutdown()  
             if subtype_value == "cleanedshutdown":
