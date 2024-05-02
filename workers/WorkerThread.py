@@ -65,12 +65,12 @@ class WorkerThread(threading.Thread):
                 try:
                     # Check and process high-priority queue first
                     high_priority_data = self.high_priority_queue.get_nowait()
-                    self.process_data(high_priority_data, priority="High")
+                    self.process_data(high_priority_data, priority=1)
                 except queue.Empty:
                     try:
                         # Process low-priority queue if high-priority queue is empty
                         low_priority_data = self.low_priority_queue.get(timeout=1)
-                        self.process_data(low_priority_data, priority="Low")
+                        self.process_data(low_priority_data, priority=0)
                     except queue.Empty:
                         self.status = 1 #waiting for new data
                         pass  # Continue if both queues are empty
@@ -87,7 +87,7 @@ class WorkerThread(threading.Thread):
         self.next_time = time.time()
         self.processing_rate = self.processed_data_count / elapsed_time
         self.total_processed_data_count += self.processed_data_count
-        print(f"{self.globalname} Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_queue.qsize()}")
+        print(f"{self.globalname} Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_lp_queue.qsize()} {self.manager.result_hp_queue.qsize()}")
         self.processed_data_count = 0
 
         if not self._stop_event.is_set():
@@ -101,3 +101,8 @@ class WorkerThread(threading.Thread):
 
         dataresult = self.worker.process_data(data)
 
+        if dataresults != None:
+            if priority == 0:
+                self.manager.result_lp_queue.put(dataresult)
+            else:
+                self.manager.result_hp_queue.put(dataresult)
