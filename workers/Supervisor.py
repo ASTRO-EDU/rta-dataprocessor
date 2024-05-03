@@ -266,7 +266,7 @@ class Supervisor:
 
         if channel == 1:
             if manager.result_hp_socket == "none":
-                print("WARNING: no socket hp result available to send results")
+                #print("WARNING: no socket hp result available to send results")
                 return
             if manager.result_dataflow_type == "string" or manager.result_dataflow_type == "filename":
                 try:
