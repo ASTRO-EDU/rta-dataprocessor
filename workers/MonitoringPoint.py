@@ -52,7 +52,8 @@ class MonitoringPoint:
             self.data["stopdatainput"] = self.manager.stopdata
             self.update("queue_lp_size", self.manager.low_priority_queue.qsize())
             self.update("queue_hp_size", self.manager.high_priority_queue.qsize())
-            self.update("queue_result_size", self.manager.result_queue.qsize())
+            self.update("queue_lp_result_size", self.manager.result_lp_queue.qsize())
+            self.update("queue_hp_result_size", self.manager.result_hp_queue.qsize())
             self.update("workerstatusinit", self.manager.workerstatusinit)
             self.update("workerstatus", self.manager.workerstatus)
 

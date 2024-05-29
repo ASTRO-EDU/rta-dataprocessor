@@ -54,19 +54,16 @@ class Worker1(WorkerBase):
 			#print(self.globalname)
 			#print(avro_message)
 			#print(data)
-			self.manager.result_queue.put(data)
+			return data
 			
 		if self.supervisor.dataflowtype == "filename":
+			time.sleep(0.1) #simulate processing
 			print(data)
-			self.manager.result_queue.put(str(data))
+			return str(data)
 
 		if self.supervisor.dataflowtype == "string":
-			#print(data)
-			#self.manager.result_queue.put(data)
-			#self.socket_result.send_string(data)
-			#print("WorkerProcess1")
-			time.sleep(0.1)
-			self.manager.result_queue.put(str(data))
+			time.sleep(0.1) #simulate processing
+			return str(data)
 			
 
 

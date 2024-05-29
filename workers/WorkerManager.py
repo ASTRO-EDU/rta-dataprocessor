@@ -30,11 +30,13 @@ class WorkerManager(threading.Thread):
         #number max of workers
         self.max_workes = 100
         self.result_socket_type = self.supervisor.manager_result_sockets_type[manager_id]
-        self.result_socket = self.supervisor.manager_result_sockets[manager_id]
+        self.result_lp_socket = self.supervisor.manager_result_lp_sockets[manager_id]
+        self.result_hp_socket = self.supervisor.manager_result_hp_sockets[manager_id]
         self.result_dataflow_type = self.supervisor.manager_result_dataflow_type[manager_id]
 
         #results
-        self.socket_result = self.supervisor.socket_result
+        self.socket_lp_result = self.supervisor.socket_lp_result
+        self.socket_hp_result = self.supervisor.socket_hp_result
 
         self.pid = psutil.Process().pid
 
@@ -46,13 +48,15 @@ class WorkerManager(threading.Thread):
         if self.processingtype == "thread":
             self.low_priority_queue = queue.Queue()
             self.high_priority_queue = queue.Queue()
-            self.result_queue = queue.Queue()
+            self.result_lp_queue = queue.Queue()
+            self.result_hp_queue = queue.Queue()
 
         #input queue for processes
         if self.processingtype == "process":
             self.low_priority_queue = multiprocessing.Queue()
             self.high_priority_queue = multiprocessing.Queue()
-            self.result_queue = multiprocessing.Queue()
+            self.result_lp_queue = multiprocessing.Queue()
+            self.result_hp_queue = multiprocessing.Queue()
 
 
         self.monitoringpoint = None
@@ -78,7 +82,7 @@ class WorkerManager(threading.Thread):
         self._stop_event = threading.Event()  # Used to stop the manager
 
         print(f"{self.globalname} started")
-        print(f"Socket result parameters: {self.result_socket_type} / {self.result_socket} / {self.result_dataflow_type}")
+        print(f"Socket result parameters: {self.result_socket_type} / {self.result_lp_socket} / {self.result_hp_socket} / {self.result_dataflow_type}")
 
     def set_processdata(self, processdata):
         self.processdata = processdata
@@ -172,11 +176,17 @@ class WorkerManager(threading.Thread):
                 item = self.high_priority_queue.get_nowait()
             print(f"   - high_priority_queue empty")
 
-        if not self.result_queue.empty():
-            print(f"   - result_queue size {self.result_queue.qsize()}")
-            while not self.result_queue.empty():
-                item = self.result_queue.get_nowait()
-            print(f"   - result_queue empty")
+        if not self.result_lp_queue.empty():
+            print(f"   - result_lp_queue size {self.result_lp_queue.qsize()}")
+            while not self.result_lp_queue.empty():
+                item = self.result_lp_queue.get_nowait()
+            print(f"   - result_lp_queue empty")
+
+        if not self.result_hp_queue.empty():
+            print(f"   - result_hp_queue size {self.result_hp_queue.qsize()}")
+            while not self.result_hp_queue.empty():
+                item = self.result_hp_queue.get_nowait()
+            print(f"   - result_hp_queue empty")
 
         print("End cleaning queues")
 
@@ -208,15 +218,26 @@ class WorkerManager(threading.Thread):
                     print(f"ERROR in worker stop high_priority_queue cleaning: {e}")
 
                 try:
-                    print(f"   - result_queue size {self.result_queue.qsize()}")
-                    while not self.result_queue.empty():
-                        item = self.result_queue.get_nowait()
-                    self.result_queue.close()
-                    self.result_queue.cancel_join_thread() 
-                    print(f"   - result_queue empty")
+                    print(f"   - result_lp_queue size {self.result_lp_queue.qsize()}")
+                    while not self.result_lp_queue.empty():
+                        item = self.result_lp_queue.get_nowait()
+                    self.result_lp_queue.close()
+                    self.result_lp_queue.cancel_join_thread() 
+                    print(f"   - result_lp_queue empty")
                 except Exception as e:
                     # Handle any other unexpected exceptions
-                    print(f"ERROR in worker stop result_queue cleaning: {e}")
+                    print(f"ERROR in worker stop result_lp_queue cleaning: {e}")
+
+                try:
+                    print(f"   - result_hp_queue size {self.result_hp_queue.qsize()}")
+                    while not self.result_hp_queue.empty():
+                        item = self.result_hp_queue.get_nowait()
+                    self.result_hp_queue.close()
+                    self.result_hp_queue.cancel_join_thread() 
+                    print(f"   - result_hp_queue empty")
+                except Exception as e:
+                    # Handle any other unexpected exceptions
+                    print(f"ERROR in worker stop result_hp_queue cleaning: {e}")
 
                 print("End closing queues")
 

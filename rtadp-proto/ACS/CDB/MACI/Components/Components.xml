@@ -1,0 +1,27 @@
+<Components xmlns="urn:schemas-cosylab-com:Components:1.0" xmlns:cdb="urn:schemas-cosylab-com:CDB:1.0" xmlns:baci="urn:schemas-cosylab-com:BACI:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+<!-- client.getDynamicComponent("DATAPROCESSOR_nome_finale", "rtamanagerImpl.DataProcessorImpl", "IDL:scada/rtamanager/DataProcessor:1.0", "pyContainer1" ) -->
+
+<e Name="DATAPROCESSOR_*" 
+   Code="rtamanagerImpl.DataProcessorImpl"
+   Type="IDL:rta/rtamanager/DataProcessor:1.0"
+   Container="pyContainer1"
+   ImplLang="py"/>
+
+<!-- client.getComponent("Commander") -->
+
+<e Name="Commander" 
+   Code="rtamanagerImpl.CommanderImpl"
+   Type="IDL:rta/rtamanager/Commander:1.0"
+   Container="pyContainer2"
+   ImplLang="py"/> 
+
+<!-- client.getComponent("Monitoring") -->
+
+<e Name="Monitoring" 
+   Code="rtamanagerImpl.MonitoringImpl"
+   Type="IDL:rta/rtamanager/Monitoring:1.0"
+   Container="pyContainer2"
+   ImplLang="py"/> 
+   
+</Components>
