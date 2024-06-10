@@ -13,3 +13,5 @@ __pycache__
 workers/build
 workers/dist
 workers/workers.egg-info
+
+.vscode

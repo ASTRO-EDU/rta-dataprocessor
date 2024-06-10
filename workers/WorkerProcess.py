@@ -11,6 +11,7 @@ import time
 from multiprocessing import Event, Queue, Process
 from threading import Timer
 import psutil
+import traceback
 
 class WorkerProcess(Process):
     def __init__(self, worker_id, manager, name, worker):
@@ -23,9 +24,9 @@ class WorkerProcess(Process):
         self.name = name
         self.pidprocess = psutil.Process().pid
 
-        self.worker.init(self.manager, self.supervisor)
-
         self.globalname = f"WorkerProcess-{self.supervisor.name}-{self.manager.name}-{self.name}-{self.worker_id}"
+        self.logger = self.supervisor.logger
+        self.worker.init(self.manager, self.supervisor, self.globalname)
 
         self.low_priority_queue = self.manager.low_priority_queue
         self.high_priority_queue = self.manager.high_priority_queue
@@ -51,6 +52,7 @@ class WorkerProcess(Process):
         self.timer.cancel()
 
         print(f"{self.globalname} started {self.pidprocess}")
+        self.logger.system(f"WorkerProcess started", extra=self.globalname)
 
     def stop(self):
         self.timer.cancel()
@@ -84,6 +86,7 @@ class WorkerProcess(Process):
         self.timer.cancel()
         self.manager.worker_status_shared[self.worker_id] = 100 #stop
         print(f"WorkerProcess stop {self.globalname}")
+        self.logger.system(f"WorkerProcess stop", extra=self.globalname)
 
     def start_timer(self, interval):
         self.timer = Timer(interval, self.calcdatarate)
@@ -97,6 +100,7 @@ class WorkerProcess(Process):
         self.total_processed_data_count += self.processed_data_count
         self.manager.total_processed_data_count_shared[self.worker_id] = self.total_processed_data_count
         print(f"{self.globalname} Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_lp_queue.qsize()} {self.manager.result_hp_queue.qsize()}")
+        self.logger.system(f"Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_lp_queue.qsize()} {self.manager.result_hp_queue.qsize()}", extra=self.globalname)
         self.processed_data_count = 0
 
         if not self._stop_event.is_set():
@@ -107,8 +111,10 @@ class WorkerProcess(Process):
         # Increment the processed data count and calculate the rate
         self.manager.worker_status_shared[self.worker_id] = 2 #processig new data
         self.processed_data_count += 1
-
-        dataresult = self.worker.process_data(data)
+        try:
+            dataresult = self.worker.process_data(data, priority)
+        except Exception:
+            self.logger.critical(traceback.format_exc(), extra=self.globalname)
 
         if priority == 0:
             self.manager.result_lp_queue.put(dataresult)

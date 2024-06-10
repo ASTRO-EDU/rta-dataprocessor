@@ -21,9 +21,9 @@ class WorkerThread(threading.Thread):
         self.worker_id = worker_id
         self.name = name
 
-        self.worker.init(self.manager, self.supervisor)
-
         self.globalname = f"WorkerThread-{self.supervisor.name}-{self.manager.name}-{self.name}-{self.worker_id}"
+        self.logger = self.supervisor.logger
+        self.worker.init(self.manager, self.supervisor, self.globalname)
 
         self.low_priority_queue = self.manager.low_priority_queue
         self.high_priority_queue = self.manager.high_priority_queue
@@ -47,6 +47,7 @@ class WorkerThread(threading.Thread):
         self.status = 0 #initialised
 
         print(f"{self.globalname} started")
+        self.logger.system(f"WorkerThread started", extra=self.globalname)
 
     def stop(self):
         self.status = 3 #stop
@@ -77,6 +78,7 @@ class WorkerThread(threading.Thread):
         
         self.timer.cancel()
         print(f"WorkerThread stop {self.globalname}")
+        self.logger.system(f"WorkerThread stop", extra=self.globalname)
 
     def start_timer(self, interval):
         self.timer = Timer(interval, self.calcdatarate)
@@ -88,6 +90,7 @@ class WorkerThread(threading.Thread):
         self.processing_rate = self.processed_data_count / elapsed_time
         self.total_processed_data_count += self.processed_data_count
         print(f"{self.globalname} Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_lp_queue.qsize()} {self.manager.result_hp_queue.qsize()}")
+        self.logger.system(f"Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_lp_queue.qsize()} {self.manager.result_hp_queue.qsize()}", extra=self.globalname)
         self.processed_data_count = 0
 
         if not self._stop_event.is_set():
@@ -101,7 +104,7 @@ class WorkerThread(threading.Thread):
 
         dataresult = self.worker.process_data(data)
 
-        if dataresults != None:
+        if dataresult != None:
             if priority == 0:
                 self.manager.result_lp_queue.put(dataresult)
             else:

@@ -23,6 +23,7 @@ class WorkerManager(threading.Thread):
         self.manager_id = manager_id
         self.supervisor = supervisor
         self.config = self.supervisor.config
+        self.logger = self.supervisor.logger
         self.name = name
         self.globalname = "WorkerManager-"+self.supervisor.name + "-" + name
         self.continueall = True
@@ -82,7 +83,9 @@ class WorkerManager(threading.Thread):
         self._stop_event = threading.Event()  # Used to stop the manager
 
         print(f"{self.globalname} started")
+        self.logger.system("Started", extra=self.globalname)
         print(f"Socket result parameters: {self.result_socket_type} / {self.result_lp_socket} / {self.result_hp_socket} / {self.result_dataflow_type}")
+        self.logger.system(f"Socket result parameters: {self.result_socket_type} / {self.result_lp_socket} / {self.result_hp_socket} / {self.result_dataflow_type}", extra=self.globalname)
 
     def set_processdata(self, processdata):
         self.processdata = processdata
@@ -110,6 +113,7 @@ class WorkerManager(threading.Thread):
         #Worker threads
         if num_threads > self.max_workes:
             print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
+            self.logger.warning(f"WARNING! It is not possible to create more than {self.max_workes} threads", extra=self.globalname)
         self.num_workers = num_threads
         # for i in range(num_threads):
         #     thread = WorkerThread(i, self, "name")
@@ -120,7 +124,8 @@ class WorkerManager(threading.Thread):
     def start_worker_processes(self, num_processes):
         # Worker processes
         if num_processes > self.max_workes:
-            print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
+            print(f"WARNING! It is not possible to create more than {self.max_workes} process")
+            self.logger.warning(f"WARNING! It is not possible to create more than {self.max_workes} process", extra=self.globalname)
         self.num_workers = num_processes
         # for i in range(num_processes):
         #     process = WorkerProcess(i, self, self.processdata_shared, "name")
@@ -156,90 +161,116 @@ class WorkerManager(threading.Thread):
                     self.workerstatus = self.workerstatus / (self.num_workers-self.workerstatusinit)
                 #print(f"Manager workers status {self.globalname} {self.workerstatusinit} {self.workerstatus}")
             print(f"Manager stop {self.globalname}")
+            self.logger.system("Manager stop", extra=self.globalname)
         except KeyboardInterrupt:
             print("Keyboard interrupt received. Terminating.")
+            self.logger.system("Keyboard interrupt received. Terminating.", extra=self.globalname)
             self.stop_internalthreads()
             self.continueall = False
 
     def clean_queue(self):
         print("Cleaning queues...")
+        self.logger.system("Cleaning queues...", extra=self.globalname)
 
         if not self.low_priority_queue.empty():
             print(f"   - low_priority_queue size {self.low_priority_queue.qsize()}")
+            self.logger.system(f"   - low_priority_queue size {self.low_priority_queue.qsize()}", extra=self.globalname)
             while not self.low_priority_queue.empty():
                 item = self.low_priority_queue.get_nowait()
             print(f"   - low_priority_queue empty")
+            self.logger.system(f"   - low_priority_queue empty", extra=self.globalname)
 
         if not self.high_priority_queue.empty():
             print(f"   - high_priority_queue size {self.high_priority_queue.qsize()}")
+            self.logger.system(f"   - high_priority_queue size {self.high_priority_queue.qsize()}", extra=self.globalname)
             while not self.high_priority_queue.empty():
                 item = self.high_priority_queue.get_nowait()
             print(f"   - high_priority_queue empty")
+            self.logger.system(f"   - high_priority_queue empty", extra=self.globalname)
 
         if not self.result_lp_queue.empty():
             print(f"   - result_lp_queue size {self.result_lp_queue.qsize()}")
+            self.logger.system(f"   - result_lp_queue size {self.result_lp_queue.qsize()}", extra=self.globalname)
             while not self.result_lp_queue.empty():
                 item = self.result_lp_queue.get_nowait()
             print(f"   - result_lp_queue empty")
+            self.logger.system(f"   - result_lp_queue empty", extra=self.globalname)
 
         if not self.result_hp_queue.empty():
             print(f"   - result_hp_queue size {self.result_hp_queue.qsize()}")
+            self.logger.system(f"   - result_hp_queue size {self.result_hp_queue.qsize()}", extra=self.globalname)
             while not self.result_hp_queue.empty():
                 item = self.result_hp_queue.get_nowait()
             print(f"   - result_hp_queue empty")
+            self.logger.system(f"   - result_hp_queue empty", extra=self.globalname)
 
         print("End cleaning queues")
+        self.logger.system("End cleaning queues", extra=self.globalname)
 
     def stop(self, fast=False):
         if self.processingtype == "process":
             if fast == False:
                 print("Closing queues...")
+                self.logger.system("Closing queues...", extra=self.globalname)
 
                 try:
                     print(f"   - low_priority_queue size {self.low_priority_queue.qsize()}")
+                    self.logger.system(f"   - low_priority_queue size {self.low_priority_queue.qsize()}", extra=self.globalname)
                     while not self.low_priority_queue.empty():
                         item = self.low_priority_queue.get_nowait()
                     self.low_priority_queue.close()
                     self.low_priority_queue.cancel_join_thread() 
                     print(f"   - low_priority_queue empty")
+                    self.logger.system(f"   - low_priority_queue empty", extra=self.globalname)
                 except Exception as e:
                     # Handle any other unexpected exceptions
                     print(f"ERROR in worker stop low_priority_queue cleaning: {e}")
+                    self.logger.error(f"ERROR in worker stop low_priority_queue cleaning: {e}", extra=self.globalname)
 
                 try:
                     print(f"   - high_priority_queue size {self.high_priority_queue.qsize()}")
+                    self.logger.system(f"   - high_priority_queue size {self.high_priority_queue.qsize()}", extra=self.globalname)
                     while not self.high_priority_queue.empty():
                         item = self.high_priority_queue.get_nowait()
                     self.high_priority_queue.close()
                     self.high_priority_queue.cancel_join_thread() 
                     print(f"   - high_priority_queue empty")
+                    self.logger.system(f"   - high_priority_queue empty", extra=self.globalname)
                 except Exception as e:
                     # Handle any other unexpected exceptions
                     print(f"ERROR in worker stop high_priority_queue cleaning: {e}")
+                    self.logger.error(f"ERROR in worker stop high_priority_queue cleaning: {e}", extra=self.globalname)
 
                 try:
                     print(f"   - result_lp_queue size {self.result_lp_queue.qsize()}")
+                    self.logger.system(f"   - result_lp_queue size {self.result_lp_queue.qsize()}", extra=self.globalname)
                     while not self.result_lp_queue.empty():
                         item = self.result_lp_queue.get_nowait()
                     self.result_lp_queue.close()
                     self.result_lp_queue.cancel_join_thread() 
                     print(f"   - result_lp_queue empty")
+                    self.logger.system(f"   - result_lp_queue empty", extra=self.globalname)
                 except Exception as e:
                     # Handle any other unexpected exceptions
                     print(f"ERROR in worker stop result_lp_queue cleaning: {e}")
+                    self.logger.error(f"ERROR in worker stop result_lp_queue cleaning: {e}", extra=self.globalname)
 
                 try:
                     print(f"   - result_hp_queue size {self.result_hp_queue.qsize()}")
+                    self.logger.system(f"   - result_hp_queue size {self.result_hp_queue.qsize()}", extra=self.globalname)
                     while not self.result_hp_queue.empty():
                         item = self.result_hp_queue.get_nowait()
                     self.result_hp_queue.close()
                     self.result_hp_queue.cancel_join_thread() 
                     print(f"   - result_hp_queue empty")
+                    self.logger.system(f"   - result_hp_queue empty", extra=self.globalname)
                 except Exception as e:
                     # Handle any other unexpected exceptions
                     print(f"ERROR in worker stop result_hp_queue cleaning: {e}")
+                    self.logger.error(f"ERROR in worker stop result_hp_queue cleaning: {e}", extra=self.globalname)
 
                 print("End closing queues")
+                self.logger.system("End closing queues", extra=self.globalname)
 
         for process in self.worker_processes:
             process.stop()
@@ -255,9 +286,11 @@ class WorkerManager(threading.Thread):
 
     def stop_internalthreads(self):
         print("Stopping Manager internal threads...")
+        self.logger.system("Stopping Manager internal threads...", extra=self.globalname)
         # Stop monitoring thread
         self.monitoring_thread.stop()
         self.monitoring_thread.join()
         print("All Manager internal threads terminated.")
+        self.logger.system("All Manager internal threads terminated.", extra=self.globalname)
 
 

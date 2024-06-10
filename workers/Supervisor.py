@@ -21,6 +21,7 @@ import time
 import sys
 import psutil
 import os
+from WorkerLogger import WorkerLogger
 
 class Supervisor:
     def __init__(self, config_file="config.json", name = "None"):
@@ -35,6 +36,10 @@ class Supervisor:
 
         self.load_configuration(config_file, name)
         self.globalname = "Supervisor-"+name
+
+        log_file = os.path.join(self.config.get("logs_path"), self.globalname+'.log')
+        self.logger = WorkerLogger('worker_logger', log_file, 10)
+        #
         self.continueall = True
         self.pid = psutil.Process().pid
 
@@ -46,6 +51,7 @@ class Supervisor:
             self.datasockettype = self.config.get("datasocket_type")
      
             print(f"Supervisor: {self.globalname} / {self.dataflowtype} / {self.processingtype} / {self.datasockettype}")   
+            self.logger.system(f"Supervisor: {self.globalname} / {self.dataflowtype} / {self.processingtype} / {self.datasockettype}", extra=self.globalname)   
 
             if self.datasockettype == "pushpull":
                 #low priority data stream connection
@@ -80,9 +86,10 @@ class Supervisor:
             self.socket_hp_result = [None] * 100
 
         except Exception as e:
-           # Handle any other unexpected exceptions
-           print(f"ERROR: An unexpected error occurred: {e}")
-           sys.exit(1)
+            # Handle any other unexpected exceptions
+            print(f"ERROR: An unexpected error occurred: {e}")
+            self.logger.warning(f"ERROR: An unexpected error occurred: {e}", extra=self.globalname)
+            sys.exit(1)
 
         else:
 
@@ -98,9 +105,11 @@ class Supervisor:
                 signal.signal(signal.SIGINT, self.handle_signals)
             except ValueError:
                 print("WARNING! Signal only works in main thread. It is not possible to set up signal handlers!")
+                self.logger.warning("WARNING! Signal only works in main thread. It is not possible to set up signal handlers!", extra=self.globalname)
             self.status = "Initialised"
 
             print(f"{self.globalname} started")
+            self.logger.system(f"{self.globalname} started", extra=self.globalname)
 
     def load_configuration(self, config_file, name):
         self.config_manager = ConfigurationManager(config_file)
@@ -151,22 +160,26 @@ class Supervisor:
                 self.socket_lp_result[indexmanager] = self.context.socket(zmq.PUSH)
                 self.socket_lp_result[indexmanager].connect(manager.result_lp_socket)
                 print(f"---result lp socket pushpull {manager.globalname} {manager.result_lp_socket}")
+                self.logger.system(f"---result lp socket pushpull {manager.globalname} {manager.result_lp_socket}", extra=self.globalname)
 
             if manager.result_socket_type == "pubsub":
                 self.socket_lp_result[indexmanager] = self.context.socket(zmq.PUB)
                 self.socket_lp_result[indexmanager].bind(manager.result_lp_socket)
                 print(f"---result lp socket pushpull {manager.globalname} {manager.result_lp_socket}")
+                self.logger.system(f"---result lp socket pushpull {manager.globalname} {manager.result_lp_socket}", extra=self.globalname)
 
         if manager.result_hp_socket != "none":
             if manager.result_socket_type == "pushpull":
                 self.socket_hp_result[indexmanager] = self.context.socket(zmq.PUSH)
                 self.socket_hp_result[indexmanager].connect(manager.result_hp_socket)
                 print(f"---result hp socket pushpull {manager.globalname} {manager.result_hp_socket}")
+                self.logger.system(f"---result lp socket pushpull {manager.globalname} {manager.result_lp_socket}", extra=self.globalname)
 
             if manager.result_socket_type == "pubsub":
                 self.socket_hp_result[indexmanager] = self.context.socket(zmq.PUB)
                 self.socket_hp_result[indexmanager].bind(manager.result_hp_socket)
                 print(f"---result hp socket pushpull {manager.globalname} {manager.result_hp_socket}")
+                self.logger.system(f"---result lp socket pushpull {manager.globalname} {manager.result_lp_socket}", extra=self.globalname)
 
 
     #to be reimplemented ####
@@ -206,12 +219,15 @@ class Supervisor:
         # Handle different signals
         if signum == signal.SIGTERM:
             print("SIGTERM received. Terminating with cleanedshutdown.")
+            self.logger.system("SIGTERM received. Terminating with cleanedshutdown", extra=self.globalname)
             self.command_cleanedshutdown()
         elif signum == signal.SIGINT:
             print("SIGINT received. Terminating with shutdown.")
+            self.logger.system("SIGINT received. Terminating with shutdown", extra=self.globalname)
             self.command_shutdown()
         else:
             print(f"Received signal {signum}. Terminating.")
+            self.logger.system(f"Received signal {signum}. Terminating", extra=self.globalname)
             self.command_shutdown()
 
     #to be reimplemented ####
@@ -227,6 +243,7 @@ class Supervisor:
                 self.send_result(manager, indexmanager) 
                 indexmanager = indexmanager + 1
         print("End listen_for_result")
+        self.logger.system("End listen_for_result", extra=self.globalname)
 
     def send_result(self, manager, indexmanager):
         if manager.result_lp_queue.qsize() == 0 and manager.result_hp_queue.qsize() == 0:
@@ -245,6 +262,7 @@ class Supervisor:
                 return
             except Exception as e:
                 print(f"WARNING: {e}")
+                self.logger.warning(f"WARNING: {e}", extra=self.globalname)
                 return
 
         if channel == 0:
@@ -257,12 +275,14 @@ class Supervisor:
                     self.socket_lp_result[indexmanager].send_string(data)
                 except Exception as e:
                     print(f"ERROR: data not in string format to be send to : {e}")
+                    self.logger.error(f"ERROR: data not in string format to be send to : {e}", extra=self.globalname)
             if manager.result_dataflow_type == "binary":
                 try:
                     #data = str(data)
                     self.socket_lp_result[indexmanager].send(data)
                 except Exception as e:
                     print(f"ERROR: data not in binary format to be send to socket_result: {e}")
+                    self.logger.error(f"ERROR: data not in binary format to be send to socket_result: {e}", extra=self.globalname)
 
         if channel == 1:
             if manager.result_hp_socket == "none":
@@ -274,12 +294,14 @@ class Supervisor:
                     self.socket_hp_result[indexmanager].send_string(data)
                 except Exception as e:
                     print(f"ERROR: data not in string format to be send to : {e}")
+                    self.logger.error(f"ERROR: data not in string format to be send to : {e}", extra=self.globalname)
             if manager.result_dataflow_type == "binary":
                 try:
                     #data = str(data)
                     self.socket_hp_result[indexmanager].send(data)
                 except Exception as e:
                     print(f"ERROR: data not in binary format to be send to socket_result: {e}")
+                    self.logger.error(f"ERROR: data not in binary format to be send to socket_result: {e}", extra=self.globalname)
 
     def listen_for_lp_data(self):
         while self.continueall:
@@ -289,6 +311,7 @@ class Supervisor:
                     decodeddata = self.decode_data(data)  
                     manager.low_priority_queue.put(decodeddata) 
         print("End listen_for_lp_data")
+        self.logger.system("End listen_for_lp_data", extra=self.globalname)
 
     def listen_for_hp_data(self):
         while self.continueall:
@@ -298,6 +321,7 @@ class Supervisor:
                     decodeddata = self.decode_data(data)
                     manager.high_priority_queue.put(decodeddata) 
         print("End listen_for_hp_data")
+        self.logger.system("End listen_for_hp_data", extra=self.globalname)
 
     def listen_for_lp_string(self):
         while self.continueall:
@@ -306,6 +330,7 @@ class Supervisor:
                 for manager in self.manager_workers: 
                     manager.low_priority_queue.put(data) 
         print("End listen_for_lp_string")
+        self.logger.system("End listen_for_lp_string", extra=self.globalname)
 
     def listen_for_hp_string(self):
         while self.continueall:
@@ -314,6 +339,7 @@ class Supervisor:
                 for manager in self.manager_workers: 
                     manager.high_priority_queue.put(data) 
         print("End listen_for_hp_string")
+        self.logger.system("End listen_for_hp_string", extra=self.globalname)
 
     #to be reimplemented ####
     #Open the file before load it into the queue. For "dataflowtype": "file"
@@ -331,6 +357,7 @@ class Supervisor:
                     for i in range(size):
                         manager.low_priority_queue.put(data[i]) 
         print("End listen_for_lp_file")
+        self.logger.system("End listen_for_lp_file", extra=self.globalname)
 
     def listen_for_hp_file(self):
         while self.continueall:
@@ -341,10 +368,12 @@ class Supervisor:
                     for i in range(size):
                         manager.high_priority_queue.put(data[i])
         print("End listen_for_hp_file")
+        self.logger.system("End listen_for_hp_file", extra=self.globalname)
 
     def listen_for_commands(self):
         while self.continueall:
             print("Waiting for commands...")
+            self.logger.system("Waiting for commands...", extra=self.globalname)
             #try:
             command = json.loads(self.socket_command.recv_string())
             self.process_command(command)
@@ -353,6 +382,7 @@ class Supervisor:
  
 
         print("End listen_for_commands")
+        self.logger.system("End listen_for_commands", extra=self.globalname)
 
     def command_shutdown(self):
         self.status = "Shutdown"
@@ -364,16 +394,20 @@ class Supervisor:
             self.command_stopdata()
             for manager in self.manager_workers:
                 print(f"Trying to stop {manager.globalname}...")
+                self.logger.system(f"Trying to stop {manager.globalname}...", extra=self.globalname)
                 manager.status = "EndingProcessing"
                 while manager.low_priority_queue.qsize() != 0 or manager.high_priority_queue.qsize() != 0:
                     print(f"Queues data of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()}")
+                    self.logger.system(f"Queues data of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()}", extra=self.globalname)
                     time.sleep(0.2)            
                 while manager.result_lp_queue.qsize() != 0 or manager.result_hp_queue.qsize() != 0:
                     print(f"Queues result of manager {manager.globalname} have size {manager.result_lp_queue.qsize()} {manager.result_hp_queue.qsize()}")
+                    self.logger.system(f"Queues result of manager {manager.globalname} have size {manager.result_lp_queue.qsize()} {manager.result_hp_queue.qsize()}", extra=self.globalname)
                     time.sleep(0.2) 
                 manager.status = "Shutdown"
         else:
             print("WARNING! Not in Processing state for a cleaned shutdown. Force the shutdown.") 
+            self.logger.warning("WARNING! Not in Processing state for a cleaned shutdown. Force the shutdown.", extra=self.globalname)
         
         self.status = "Shutdown"
         self.stop_all(False)
@@ -384,8 +418,10 @@ class Supervisor:
             self.command_stop()
             for manager in self.manager_workers:
                 print(f"Trying to reset {manager.globalname}...")
+                self.logger.system(f"Trying to reset {manager.globalname}...", extra=self.globalname)
                 manager.clean_queue()
                 print(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()} {manager.result_lp_queue.qsize()} {manager.result_hp_queue.qsize()}")
+                self.logger.system(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()} {manager.result_lp_queue.qsize()} {manager.result_hp_queue.qsize()}", extra=self.globalname)
             self.status = "Waiting"
 
     def command_start(self):
@@ -450,6 +486,7 @@ class Supervisor:
 
     def stop_all(self, fast=False):
         print("Stopping all workers and managers...")
+        self.logger.system("Stopping all workers and managers...", extra=self.globalname)
 
         #self.command_stopdata()
         self.command_stop()
@@ -484,5 +521,6 @@ class Supervisor:
         #    manager.clean_queue()
 
         print("All Supervisor workers and managers and internal threads terminated.")
+        self.logger.system("All Supervisor workers and managers and internal threads terminated.", extra=self.globalname)
         #sys.exit(0)
 

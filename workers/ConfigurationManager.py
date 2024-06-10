@@ -29,6 +29,8 @@ class ConfigurationManager:
         "manager_result_hp_socket",
         "manager_result_dataflow_type",
         "manager_result_socket_type",
+        "logs_path",
+        "logs_level",
         "manager_num_workers",
         "comment"
     ]
