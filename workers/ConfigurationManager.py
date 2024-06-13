@@ -6,6 +6,7 @@
 #    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 #
 import json
+import sys
 
 def get_pull_config(address):
     # Split the string based on the colon
@@ -43,25 +44,25 @@ class ConfigurationManager:
         try:
             with open(file_path, "r") as file:
                 configurations = json.load(file)
-                #print(configurations)
-            #self.validate_configurations(configurations)
             return configurations
-        except FileNotFoundError:
-            print(f"Error: File '{config_file}' not found.")
-            return
-        except json.JSONDecodeError:
-            print(f"Error: Invalid JSON format in file '{config_file}'.")
-            return
-
+        except FileNotFoundError as e:
+            print(f"[ConfigurationManager] Error during opening file '{file_path}': {e}")
+            raise e
+        except json.JSONDecodeError as e:
+            print(f"[ConfigurationManager] Error: Invalid JSON format in file '{file_path}': {e}")
+            raise e
+    
     def validate_configurations(self, configurations):
         for config in configurations:
+            # if config["datasocket_type"] in [ "", "" ] :
+            #     raise ValueError(f"Field 'datasocket_type' in invalid.")
             for field in self.REQUIRED_FIELDS:
                 if field not in config or not config[field]:
                     raise ValueError(f"Field '{field}' is missing or not well-formed in one or more configurations.")
 
     def create_memory_structure(self):
         structure = {}
-        for config in self.configurations:
+        for config in self.configurations: 
             processorname = config["processname"]
             structure[processorname] = config
         return structure

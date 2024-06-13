@@ -109,24 +109,27 @@ class WorkerManager(threading.Thread):
         self.monitoring_thread.start()
 
     #to be reimplemented ###
-    def start_worker_threads(self, num_threads):
+    def start_worker_threads(self, num_threads): #num_threads = enumerate(self.worker_threads)
         #Worker threads
         if num_threads > self.max_workes:
             print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
             self.logger.warning(f"WARNING! It is not possible to create more than {self.max_workes} threads", extra=self.globalname)
         self.num_workers = num_threads
-        # for i in range(num_threads):
-        #     thread = WorkerThread(i, self, "name")
-        #     self.worker_threads.append(thread)
-        #     thread.start()
+        for i in range(num_threads):
+            thread = WorkerThread(i, self, "name")
+            self.worker_threads.append(thread)
+            #self.worker_threads.insert(i,thread)
+            thread.start()
 
     # to be reimplemented ###
     def start_worker_processes(self, num_processes):
+        print("codice del workermanager base")
         # Worker processes
         if num_processes > self.max_workes:
             print(f"WARNING! It is not possible to create more than {self.max_workes} process")
             self.logger.warning(f"WARNING! It is not possible to create more than {self.max_workes} process", extra=self.globalname)
         self.num_workers = num_processes
+        print(num_processes)
         # for i in range(num_processes):
         #     process = WorkerProcess(i, self, self.processdata_shared, "name")
         #     self.worker_processes.append(process)

@@ -1,0 +1,9 @@
+{
+    "header": {
+        "subtypeNone": "shutdown",
+        "pidtarget": "NomeDestinatario",
+        "pidsource": "NomeSorgente"
+    }
+}
+
+    

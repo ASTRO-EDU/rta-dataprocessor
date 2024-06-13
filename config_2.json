@@ -1,0 +1,62 @@
+[
+    {
+        "processname": "OOQS0",
+        "dataflow_type": "binary",
+        "processing_type": "thread",
+        "datasocket_type": "pubsub",
+        "data_lp_socket": "tcp://localhost:5559",
+        "data_hp_socket": "tcp://localhost:5560",
+        "command_socket": "tcp://127.0.0.1:5561",
+        "monitoring_socket": "tcp://localhost:5562",
+        "manager_result_socket_type": ["pushpull", "none"],
+        "manager_result_dataflow_type": ["string", "none"],
+        "manager_result_socket": ["tcp://localhost:5563", "none"],
+        "manager_num_workers": [5, 2],
+        "comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+    },
+    {
+        "processname": "OOQS1",
+        "dataflow_type": "filename",
+        "processing_type": "thread",
+        "datasocket_type": "pubsub",
+        "data_lp_socket": "tcp://localhost:5555",
+        "data_hp_socket": "tcp://localhost:5556",
+        "command_socket": "tcp://127.0.0.1:5561",
+        "monitoring_socket": "tcp://localhost:5562",
+        "manager_result_socket_type": ["pushpull", "none"],
+        "manager_result_dataflow_type": ["string", "none"],
+        "manager_result_socket": ["tcp://localhost:5563", "none"],
+        "manager_num_workers": [5, 2],
+        "comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+    },
+    {
+        "processname": "OOQS2",
+        "dataflow_type": "string",
+        "processing_type": "thread",
+        "datasocket_type": "pushpull",
+        "data_lp_socket": "tcp://localhost:5557",
+        "data_hp_socket": "tcp://localhost:5558",
+        "command_socket": "tcp://127.0.0.1:5561",
+        "monitoring_socket": "tcp://localhost:5562",
+        "manager_result_socket_type": ["none"],
+        "manager_result_dataflow_type": ["none"],
+        "manager_result_socket": ["none"],
+        "manager_num_workers": [2],
+        "comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+    },
+    {
+        "processname": "OOQS3",
+        "dataflow_type": "string",
+        "processing_type": "thread",
+        "datasocket_type": "no",
+        "data_lp_socket": "tcp://localhost:5563",
+        "data_hp_socket": "tcp://localhost:5564",
+        "command_socket": "tcp://127.0.0.1:5561",
+        "monitoring_socket": "tcp://localhost:5562",
+        "manager_result_socket_type": ["none"],
+        "manager_result_dataflow_type": ["none"],
+        "manager_result_socket": ["none"],
+        "manager_num_workers": [2],
+        "comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+    }
+]

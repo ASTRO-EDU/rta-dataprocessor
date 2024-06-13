@@ -5,6 +5,7 @@ def thread_function(thread_id):
     while True:
         #print(f"Thread-{thread_id} is running")
         #time.sleep(1)
+        #print("ciao")
         pass
 
 if __name__ == "__main__":

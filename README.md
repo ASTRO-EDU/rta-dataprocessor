@@ -3,9 +3,9 @@
 ## rtadp-proto
 - env: Dockerfile
 - rtadp-proto: a prototype with 2 data processors
-- testavro: the producers
+- rtadp-proto/testavro: the producers
 
-cd testavro
+cd rtadp-proto/testavro
 python AVROProducer.py ../config.json lp 0.5 RTADP1
 
 cd workers
@@ -18,3 +18,4 @@ python ProcessDataConsumer2.py ../config.json
 cd workers
 python Command.py ../config.json start all
 python Command.py ../config.json shutdown all
+

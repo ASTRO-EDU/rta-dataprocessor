@@ -15,3 +15,5 @@ workers/dist
 workers/workers.egg-info
 
 .vscode
+# file utilizzato durante il development da Nunzio 
+main.py
