@@ -5,7 +5,8 @@ services:
   worker:
     image: worker:1.0.0_nicoloparmiggiani
     stdin_open: true
-    volumes: ["/Users/nicoloparmiggiani/Documents/ASTRIMiniArray/SCADA/OOQS:/home/worker/workspace"]
+    volumes: ["../:/home/worker/workspace"]
+    working_dir: /home/worker/workspace
     restart: always
     depends_on:
       - zookeeper
