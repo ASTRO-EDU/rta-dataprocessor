@@ -8,12 +8,14 @@ docker compose up -d
 ## install kafka python package
 - The first time you enter in the worker container 
 - it is required the installation of the confluent kafka package 
+
 docker compose exec worker bash
 source activate worker
 pip install confluent_kafka
 
 ## test the pipeline
 - activate the environment in each shell
+
 source activate worker
 export PYTHONPATH="/home/worker/workspace/workers/"
 
@@ -43,9 +45,13 @@ docker compose exec worker bash
 cd workers
 source activate worker
 export PYTHONPATH="/home/worker/workspace/workers/"
+
 - start the pipeline
+
 python Command.py ../config_kafka.json start all
+
 - stop the pipeline
+
 python Command.py ../config_kafka.json shutdown all
 
 ## stop the containers
