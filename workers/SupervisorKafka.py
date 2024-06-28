@@ -66,29 +66,8 @@ class SupervisorKafka(Supervisor):
         print(self.config)
         self.manager_result_sockets_type, self.manager_result_dataflow_type, self.manager_result_lp_sockets, self.manager_result_hp_sockets, self.manager_num_workers = self.config_manager.get_workers_config(name)
 
-    def start_service_threads(self):
 
-        try:
-            if self.dataflowtype == "binary":
-                #Data receiving on two queues: high and low priority
-                self.lp_data_thread = threading.Thread(target=self.listen_for_lp_kafka_data, daemon=True)
-                self.lp_data_thread.start()
-
-                self.hp_data_thread = threading.Thread(target=self.listen_for_hp_kafka_data, daemon=True)
-                self.hp_data_thread.start()
-            
-            else:
-                raise ValueError("Config file: dataflowtype must be binary")
-        
-        except Exception as e:
-            # Handle any other unexpected exceptions
-            print(f"ERROR: An unexpected error occurred: {e}")
-            self.logger.warning(f"ERROR: An unexpected error occurred: {e}", extra=self.globalname)
-            sys.exit(1)
-
-   
-   
-    def listen_for_lp_kafka_data(self):
+    def listen_for_lp_data(self):
         try:
             while self.continueall:
 
@@ -119,7 +98,7 @@ class SupervisorKafka(Supervisor):
         print("End listen_for_lp_data")
         self.logger.system("End listen_for_lp_data", extra=self.globalname)
 
-    def listen_for_hp_kafka_data(self):
+    def listen_for_hp_data(self):
         try:
             while self.continueall:
 
