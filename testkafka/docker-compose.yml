@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+
+  worker:
+    image: worker:1.0.0_nicoloparmiggiani
+    stdin_open: true
+    volumes: ["/Users/nicoloparmiggiani/Documents/ASTRIMiniArray/SCADA/OOQS:/home/worker/workspace"]
+    restart: always
+    depends_on:
+      - zookeeper
+      - broker
+
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.1
+    ports:
+      - "2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    volumes: [
+        "zookeeper_logs:/var/lib/zookeeper/log",
+        "zookeeper_data:/var/lib/zookeeper/data",
+        "zookeeper_secrets:/etc/zookeeper/secrets"
+    ]
+    restart: always
+
+  broker:
+    image: confluentinc/cp-kafka:7.2.1
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://10.10.1.10:11192
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 # must be set to 1 when running with a single-node cluster
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1 # cannot be larger than the number of brokers
+      KAFKA_NUM_PARTITIONS: 3 # default number of partitions per topic
+    volumes: [
+        "broker_data:/var/lib/kafka/data",
+        "broker_secrets:/etc/kafka/secrets"
+    ]
+    restart: always
+
+  # adas_simulator: # build from from BIAS
+  #   image: centos7_adas:latest
+  #   depends_on:
+  #     - broker
+  #   volumes:
+  #     - :/root/bias/config/RawTestFiles/  # map path to bias repository
+    
+    
+
+volumes:
+  broker_data:
+  broker_secrets:
+  zookeeper_logs:
+  zookeeper_data:
+  zookeeper_secrets:
+
