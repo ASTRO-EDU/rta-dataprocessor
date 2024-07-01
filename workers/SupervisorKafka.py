@@ -25,7 +25,7 @@ class SupervisorKafka(Supervisor):
     def __init__(self, config_file="config.json", name = "None"):
         super().__init__(config_file,name)  
         try:
-            if self.datasockettype == "kafka":
+            if self.datasockettype == "custom":
                 #low priority data stream connection
                 kafka_config = get_kafka_config(self.config.get("data_lp_socket"))
                 consumer_config = {

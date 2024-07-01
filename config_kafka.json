@@ -8,7 +8,7 @@
 	"processname": "RTADP1",
 	"dataflow_type": "binary",
 	"processing_type": "process",
-	"datasocket_type": "kafka",
+	"datasocket_type": "custom",
 	"data_lp_socket": "broker:29092:test_topic",
 	"data_hp_socket": "broker:29092:test_topic",
 	"command_socket": "tcp://127.0.0.1:5561",
