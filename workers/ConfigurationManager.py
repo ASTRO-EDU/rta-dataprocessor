@@ -7,7 +7,7 @@
 #
 import json
 
-def get_kafka_config(address):
+def get_custom_config(address):
     parts = address.split(":")
 
     if len(parts) == 3:
