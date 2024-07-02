@@ -7,6 +7,12 @@
 #
 import json
 
+def get_custom_config(address):
+    parts = address.split(":")
+
+    if len(parts) == 3:
+        return [f"{parts[0]}:{parts[1]}",parts[2]]
+
 def get_pull_config(address):
     # Split the string based on the colon
     parts = address.split(":")

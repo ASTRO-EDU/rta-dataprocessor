@@ -67,6 +67,8 @@ class Supervisor:
                 self.socket_hp_data = self.context.socket(zmq.SUB)
                 self.socket_hp_data.connect(self.config.get("data_hp_socket"))
                 self.socket_hp_data.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
+            elif self.datasockettype == "custom":
+                self.logger.system(f"Supervisor started with custom data receiver")   
             else:
                 raise ValueError("Config file: datasockettype must be pushpull or pubsub")
             
