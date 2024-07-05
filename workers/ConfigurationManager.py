@@ -28,6 +28,7 @@ class ConfigurationManager:
         "processing_type",
         "datasocket_type",
         "data_lp_socket",
+        "config_socket",
         "data_hp_socket",
         "command_socket",
         "monitoring_socket",
