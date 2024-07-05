@@ -9,6 +9,7 @@ import threading
 import queue
 import json
 import time
+import zmq
 from threading import Timer
 
 class WorkerThread(threading.Thread):
@@ -18,12 +19,15 @@ class WorkerThread(threading.Thread):
         self.worker = worker
         self.manager = manager
         self.supervisor = manager.supervisor
+
         self.worker_id = worker_id
         self.name = name
-
-        self.globalname = f"WorkerThread-{self.supervisor.name}-{self.manager.name}-{self.name}-{self.worker_id}"
+        self.workersname = f"{self.supervisor.name}-{self.manager.name}-{self.name}"
+        self.fullname = f"{self.workersname}-{self.worker_id}"
+        self.globalname = f"WorkerProcess-{self.fullname}"
+        
         self.logger = self.supervisor.logger
-        self.worker.init(self.manager, self.supervisor, self.globalname)
+        self.worker.init(self.manager, self.supervisor, self.workersname, self.fullname)
 
         self.low_priority_queue = self.manager.low_priority_queue
         self.high_priority_queue = self.manager.high_priority_queue
@@ -53,11 +57,14 @@ class WorkerThread(threading.Thread):
         self.status = 3 #stop
         self._stop_event.set()  # Set the stop event
 
+    def config(self, configuration):
+        self.worker.config(configuration)
+
     def set_processdata(self, processdata1):
         self.processdata=processdata1
 
     def run(self):
-        self.start_timer(10)
+        self.start_timer(1)
 
         while not self._stop_event.is_set():
             time.sleep(0.00001) #must be 0
@@ -81,10 +88,10 @@ class WorkerThread(threading.Thread):
         self.logger.system(f"WorkerThread stop", extra=self.globalname)
 
     def start_timer(self, interval):
-        self.timer = Timer(interval, self.calcdatarate)
+        self.timer = Timer(interval, self.workerop)
         self.timer.start()
 
-    def calcdatarate(self):    
+    def workerop(self):    
         elapsed_time = time.time() - self.next_time
         self.next_time = time.time()
         self.processing_rate = self.processed_data_count / elapsed_time
@@ -94,7 +101,7 @@ class WorkerThread(threading.Thread):
         self.processed_data_count = 0
 
         if not self._stop_event.is_set():
-            self.start_timer(10)
+            self.start_timer(1)
 
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
