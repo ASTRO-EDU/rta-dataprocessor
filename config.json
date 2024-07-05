@@ -18,7 +18,7 @@
 	"manager_result_lp_socket": ["tcp://127.0.0.1:5563", "none"],
 	"manager_result_hp_socket": ["tcp://127.0.0.1:5564", "none"],
 	"manager_num_workers": [5, 2],
-	"logs_path": "/path/to/logs/folder",
+	"logs_path": "/tmp/",
 	"logs_level": 5,
 	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
   },
@@ -36,7 +36,7 @@
 	"manager_result_lp_socket": ["none"],
 	"manager_result_hp_socket": ["none"],
 	"manager_num_workers": [2],
-	"logs_path": "/path/to/logs/folder",
+	"logs_path": "/tmp/",
 	"logs_level": 5,
 	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
   }
