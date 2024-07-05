@@ -488,6 +488,60 @@ class Supervisor:
                 manager.configworkers(command)
 
 
+    def send_alarm(self, level, message, pidsource, code=0, priority="Low"):
+        header = {
+            "type": 2,
+            "subtype": "alarm",
+			"time": time.time(),
+            "pidsource": pidsource,
+            "pidtarget": "*",
+            "priority": priority
+        }
+        body = {
+            "level": level,
+            "code": code,
+            "message": message
+        }
+        msg = {"header": header, "body": body}
+        msg_str = json.dumps(msg)
+        self.socket_monitoring.send_string(msg_str)
+
+    def send_log(self, level, message, pidsource, code=0, priority="Low"):
+        header = {
+            "type": 4,
+            "subtype": "log",
+			"time": time.time(),
+            "pidsource": pidsource,
+            "pidtarget": "*",
+            "priority": priority
+        }
+        body = {
+            "level": level,
+            "code": code,
+            "message": message
+        }
+        msg = {"header": header, "body": body}
+        msg_str = json.dumps(msg)
+        self.socket_monitoring.send_string(msg_str)   
+
+    def send_info(self, level, message, pidsource, code=0, priority="Low"):
+        header = {
+            "type": 5,
+            "subtype": "info",
+			"time": time.time(),
+            "pidsource": pidsource,
+            "pidtarget": "*",
+            "priority": priority
+        }
+        body = {
+            "level": level,
+            "code": code,
+            "message": message
+        }
+        msg = {"header": header, "body": body}
+        msg_str = json.dumps(msg)
+        self.socket_monitoring.send_string(msg_str)   
+
     def stop_all(self, fast=False):
         print("Stopping all workers and managers...")
         self.logger.system("Stopping all workers and managers...", extra=self.globalname)
