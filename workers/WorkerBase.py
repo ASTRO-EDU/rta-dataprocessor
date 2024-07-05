@@ -31,7 +31,9 @@ class WorkerBase():
 		pidtarget = configuration['header']['pidtarget']
 
 		if pidtarget == self.workersname or pidtarget == self.fullname:
-			print(f"Received2 config: {configuration}")
+			print(f"Received config: {configuration}")
+		else: 
+			return
 
 
 	

@@ -40,6 +40,13 @@ class Worker1(WorkerBase):
 		# Create Avro reader
 		self.reader = avro.io.DatumReader(avro_schema)
 
+	def config(self, configuration):
+		super().config(configuration)
+
+		#self.supervisor.send_alarm(0, "alarm", self.fullname)
+		#self.supervisor.send_log(0, "log message", self.fullname)
+		#self.supervisor.send_info(0, "information message", self.fullname)
+
 	def process_data(self, data):
 
 		# Custom processing logic for Worker1
