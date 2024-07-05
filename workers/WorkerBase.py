@@ -25,12 +25,13 @@ class WorkerBase():
 		#config
 		self.context = zmq.Context()
 		self.socket_config = self.context.socket(zmq.SUB)
+		print(self.supervisor.config.get("config_socket"))
 		self.socket_config.connect(self.supervisor.config.get("config_socket"))
 		self.socket_config.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
 
 	#to be reimplemented ####
 	def config(configuration):
-		print(f"Received config: {config}")
+		print(f"Received config: {configuration}")
 		pass
 	
 

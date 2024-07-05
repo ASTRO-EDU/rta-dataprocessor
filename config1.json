@@ -3,7 +3,7 @@
 	"processname": "CommandCenter",
 	"command_socket": "tcp://127.0.0.1:5561",
 	"monitoring_socket": "tcp://127.0.0.1:5562",
-	"config_socket": "tcp://127.0.0.1:5563"
+	"config_socket": "tcp://127.0.0.1:5600"
   },
   {
 	"processname": "RTADP1",
@@ -13,13 +13,14 @@
 	"data_lp_socket": "tcp://127.0.0.1:5555",
 	"data_hp_socket": "tcp://127.0.0.1:5556",
 	"command_socket": "tcp://127.0.0.1:5561",
+	"config_socket": "tcp://127.0.0.1:5600",
 	"monitoring_socket": "tcp://127.0.0.1:5562",
 	"manager_result_socket_type": ["pubsub", "none"],
 	"manager_result_dataflow_type": ["string", "none"],
 	"manager_result_lp_socket": ["tcp://127.0.0.1:5563", "none"],
 	"manager_result_hp_socket": ["tcp://127.0.0.1:5564", "none"],
 	"manager_num_workers": [2, 2],
-	"logs_path": "/path/to/logs/folder",
+	"logs_path": "/tmp/",
 	"logs_level": 5,
 	"comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
   },
@@ -31,13 +32,14 @@
 	"data_lp_socket": "tcp://127.0.0.1:5563",
 	"data_hp_socket": "tcp://127.0.0.1:5564",
 	"command_socket": "tcp://127.0.0.1:5561",
+	"config_socket": "tcp://127.0.0.1:5600",
 	"monitoring_socket": "tcp://127.0.0.1:5562",
 	"manager_result_socket_type": ["none"],
 	"manager_result_dataflow_type": ["none"],
 	"manager_result_lp_socket": ["none"],
 	"manager_result_hp_socket": ["none"],
 	"manager_num_workers": [2],
-	"logs_path": "/path/to/logs/folder",
+	"logs_path": "/tmp/",
 	"logs_level": 5,
 	"comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
   }

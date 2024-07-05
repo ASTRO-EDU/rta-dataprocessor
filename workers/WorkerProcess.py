@@ -8,6 +8,7 @@
 import queue
 import multiprocessing
 import time
+import zmq
 from multiprocessing import Event, Queue, Process
 from threading import Timer
 import psutil
@@ -23,8 +24,8 @@ class WorkerProcess(Process):
 
         self.worker_id = worker_id
         self.name = name
-        self.workertypename = f"{self.supervisor.name}-{self.manager.name}-{self.name}"
-        self.fullname = f"{self.supervisor.name}-{self.manager.name}-{self.name}-{self.worker_id}"
+        self.workersname = f"{self.supervisor.name}-{self.manager.name}-{self.name}"
+        self.fullname = f"{self.workersname}-{self.worker_id}"
         self.globalname = f"WorkerProcess-{self.fullname}"
 
         self.pidprocess = psutil.Process().pid
@@ -106,13 +107,15 @@ class WorkerProcess(Process):
         self.logger.system(f"Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_lp_queue.qsize()} {self.manager.result_hp_queue.qsize()}", extra=self.globalname)
         self.processed_data_count = 0
 
-        try:
-            configrcv = self.worker.socket_config.recv_string(flags=zmq.NOBLOCK)
-            configuration = json.loads(configrcv)
-            self.worker.config(configuration)
-        except zmq.Again:
-            # No message was ready
-            pass
+        # try:
+        #     configrcv = self.worker.socket_config.recv_string()
+        #     configuration = json.loads(configrcv)
+        #     self.worker.config(configuration)
+        # except Exception:
+        #     # No message was ready
+        #     if not self._stop_event.is_set():
+        #         self.start_timer(1)
+        #     pass
 
         if not self._stop_event.is_set():
             self.start_timer(1)

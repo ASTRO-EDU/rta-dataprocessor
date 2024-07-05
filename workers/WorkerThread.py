@@ -9,6 +9,7 @@ import threading
 import queue
 import json
 import time
+import zmq
 from threading import Timer
 
 class WorkerThread(threading.Thread):
@@ -21,9 +22,9 @@ class WorkerThread(threading.Thread):
 
         self.worker_id = worker_id
         self.name = name
-        self.workertypename = f"{self.supervisor.name}-{self.manager.name}-{self.name}"
-        self.fullname = f"{self.supervisor.name}-{self.manager.name}-{self.name}-{self.worker_id}"
-        self.globalname = f"WorkerThread-{self.fullname}"
+        self.workersname = f"{self.supervisor.name}-{self.manager.name}-{self.name}"
+        self.fullname = f"{self.workersname}-{self.worker_id}"
+        self.globalname = f"WorkerProcess-{self.fullname}"
         
         self.logger = self.supervisor.logger
         self.worker.init(self.manager, self.supervisor, self.globalname)
