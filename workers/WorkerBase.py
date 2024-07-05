@@ -7,6 +7,7 @@
 #
 
 import json
+import zmq
 from logging import Logger
 from Supervisor import Supervisor
 from WorkerManager import WorkerManager
@@ -20,6 +21,18 @@ class WorkerBase():
 		self.supervisor = supervisor
 		self.logger = supervisor.logger
 		self.globalname = globalname
+
+		#config
+		self.context = zmq.Context()
+		self.socket_config = self.context.socket(zmq.SUB)
+		self.socket_config.connect(self.supervisor.config.get("config_socket"))
+		self.socket_config.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
+
+	#to be reimplemented ####
+	def config(configuration):
+		print(f"Received config: {config}")
+		pass
+	
 
 	#to be reimplemented ####
 	def process_data(self, data, priority):

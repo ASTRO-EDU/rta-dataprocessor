@@ -25,7 +25,8 @@ class WorkerManager(threading.Thread):
         self.config = self.supervisor.config
         self.logger = self.supervisor.logger
         self.name = name
-        self.globalname = "WorkerManager-"+self.supervisor.name + "-" + name
+        self.fullname = self.supervisor.name + "-" + name
+        self.globalname = "WorkerManager-"+self.fullname
         self.continueall = True
         self.processingtype = self.supervisor.processingtype
         #number max of workers

@@ -2,7 +2,8 @@
 	{
 	  "processname": "CommandCenter",
 	  "command_socket": "tcp://172.17.0.2:5561",
-	  "monitoring_socket": "tcp://172.17.0.2:5562"
+	  "monitoring_socket": "tcp://172.17.0.2:5562",
+	  "config_socket": "tcp://172.17.0.2:5563"
 	},
 	{
 	  "processname": "RTADP1",
@@ -17,7 +18,9 @@
 	  "manager_result_dataflow_type": ["string", "none"],
 	  "manager_result_socket": ["tcp://172.17.0.3:5563", "none"],
 	  "manager_num_workers": [5, 2],
-	  "comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+	  "logs_path": "/path/to/logs/folder",
+	  "logs_level": 5,
+	  "comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
 	},
 	{
 	  "processname": "RTADP2",
@@ -32,7 +35,9 @@
 	  "manager_result_dataflow_type": ["none"],
 	  "manager_result_socket": ["none"],
 	  "manager_num_workers": [2],
-	  "comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+	  "logs_path": "/path/to/logs/folder",
+	  "logs_level": 5,
+	  "comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
 	}
   ]
   

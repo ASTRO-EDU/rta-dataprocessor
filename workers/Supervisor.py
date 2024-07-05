@@ -35,6 +35,7 @@ class Supervisor:
         self.manager_result_dataflow_type = None
 
         self.load_configuration(config_file, name)
+        self.fullname = name
         self.globalname = "Supervisor-"+name
 
         log_file = os.path.join(self.config.get("logs_path"), self.globalname+'.log')
@@ -146,10 +147,7 @@ class Supervisor:
             self.hp_data_thread.start()  
 
         self.result_thread = threading.Thread(target=self.listen_for_result, daemon=True)
-        self.result_thread.start()      
-
-        self.command_thread = threading.Thread(target=self.listen_for_result, daemon=True)
-        self.command_thread.start()   
+        self.result_thread.start()       
 
     def setup_result_channel(self, manager, indexmanager):
         #output sockert

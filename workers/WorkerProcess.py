@@ -20,17 +20,20 @@ class WorkerProcess(Process):
         self.worker = worker
         self.manager = manager
         self.supervisor = manager.supervisor
+
         self.worker_id = worker_id
         self.name = name
+        self.workertypename = f"{self.supervisor.name}-{self.manager.name}-{self.name}"
+        self.fullname = f"{self.supervisor.name}-{self.manager.name}-{self.name}-{self.worker_id}"
+        self.globalname = f"WorkerProcess-{self.fullname}"
+
         self.pidprocess = psutil.Process().pid
 
-        self.globalname = f"WorkerProcess-{self.supervisor.name}-{self.manager.name}-{self.name}-{self.worker_id}"
         self.logger = self.supervisor.logger
         self.worker.init(self.manager, self.supervisor, self.globalname)
 
         self.low_priority_queue = self.manager.low_priority_queue
         self.high_priority_queue = self.manager.high_priority_queue
-        self.result_lp_queue = self.manager.result_lp_queue
         self.monitoringpoint = self.manager.monitoringpoint
 
         #monitoring
@@ -60,7 +63,7 @@ class WorkerProcess(Process):
         self._stop_event.set()  # Set the stop event
 
     def run(self):
-        self.start_timer(10)
+        self.start_timer(1)
 
         try:
             while not self._stop_event.is_set():
@@ -89,10 +92,10 @@ class WorkerProcess(Process):
         self.logger.system(f"WorkerProcess stop", extra=self.globalname)
 
     def start_timer(self, interval):
-        self.timer = Timer(interval, self.calcdatarate)
+        self.timer = Timer(interval, self.workerop)
         self.timer.start()
 
-    def calcdatarate(self):
+    def workerop(self):
         elapsed_time = time.time() - self.next_time
         self.next_time = time.time()
         self.processing_rate = self.processed_data_count / elapsed_time
@@ -103,8 +106,16 @@ class WorkerProcess(Process):
         self.logger.system(f"Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_lp_queue.qsize()} {self.manager.result_hp_queue.qsize()}", extra=self.globalname)
         self.processed_data_count = 0
 
+        try:
+            configrcv = self.worker.socket_config.recv_string(flags=zmq.NOBLOCK)
+            configuration = json.loads(configrcv)
+            self.worker.config(configuration)
+        except zmq.Again:
+            # No message was ready
+            pass
+
         if not self._stop_event.is_set():
-            self.start_timer(10)
+            self.start_timer(1)
 
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
