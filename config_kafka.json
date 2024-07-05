@@ -2,8 +2,7 @@
   {
 	"processname": "CommandCenter",
 	"command_socket": "tcp://127.0.0.1:5561",
-	"monitoring_socket": "tcp://localhost:5562",
-	"config_socket": "tcp://localhost:5600"
+	"monitoring_socket": "tcp://localhost:5562"
   },
   {
 	"processname": "RTADP1",
@@ -13,7 +12,6 @@
 	"data_lp_socket": "broker:29092:test_topic",
 	"data_hp_socket": "broker:29092:test_topic",
 	"command_socket": "tcp://127.0.0.1:5561",
-	"config_socket": "tcp://localhost:5600",
 	"monitoring_socket": "tcp://localhost:5562",
 	"manager_result_socket_type": ["pubsub", "none"],
 	"manager_result_dataflow_type": ["string", "none"],
@@ -32,7 +30,6 @@
 	"data_lp_socket": "tcp://localhost:5563",
 	"data_hp_socket": "tcp://localhost:5564",
 	"command_socket": "tcp://127.0.0.1:5561",
-	"config_socket": "tcp://localhost:5600",
 	"monitoring_socket": "tcp://localhost:5562",
 	"manager_result_socket_type": ["none"],
 	"manager_result_dataflow_type": ["none"],

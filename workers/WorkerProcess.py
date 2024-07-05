@@ -31,7 +31,7 @@ class WorkerProcess(Process):
         self.pidprocess = psutil.Process().pid
 
         self.logger = self.supervisor.logger
-        self.worker.init(self.manager, self.supervisor, self.globalname)
+        self.worker.init(self.manager, self.supervisor, self.workersname, self.fullname)
 
         self.low_priority_queue = self.manager.low_priority_queue
         self.high_priority_queue = self.manager.high_priority_queue
@@ -62,6 +62,9 @@ class WorkerProcess(Process):
         self.timer.cancel()
         time.sleep(0.1)
         self._stop_event.set()  # Set the stop event
+
+    def config(self, configuration):
+        self.worker.config(configuration)
 
     def run(self):
         self.start_timer(1)
@@ -106,16 +109,6 @@ class WorkerProcess(Process):
         print(f"{self.globalname} Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_lp_queue.qsize()} {self.manager.result_hp_queue.qsize()}")
         self.logger.system(f"Rate Hz {self.processing_rate:.1f} Current events {self.processed_data_count} Total events {self.total_processed_data_count} Queues {self.manager.low_priority_queue.qsize()} {self.manager.high_priority_queue.qsize()} {self.manager.result_lp_queue.qsize()} {self.manager.result_hp_queue.qsize()}", extra=self.globalname)
         self.processed_data_count = 0
-
-        # try:
-        #     configrcv = self.worker.socket_config.recv_string()
-        #     configuration = json.loads(configrcv)
-        #     self.worker.config(configuration)
-        # except Exception:
-        #     # No message was ready
-        #     if not self._stop_event.is_set():
-        #         self.start_timer(1)
-        #     pass
 
         if not self._stop_event.is_set():
             self.start_timer(1)

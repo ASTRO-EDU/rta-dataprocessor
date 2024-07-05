@@ -19,13 +19,14 @@ class WorkerConfig:
 
         # PUB socket for sending commands
         self.socket_config = self.context.socket(zmq.PUB)
-        self.socket_config.bind(self.config.get("config_socket"))
-        print("Send commands to " + self.config.get("config_socket"))
+        self.socket_config.bind(self.config.get("command_socket"))
+        print("Send commands to " + self.config.get("command_socket"))
 
     def send_config(self, workerconfigfile, wname, priority="Low"):
         time.sleep(0.3) #wait otherwise the first message is not received
         header = {
             "type": 3,
+            "subtype": "config",
             #"time": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
 			"time": time.time(),
             "pidsource": self.processname,

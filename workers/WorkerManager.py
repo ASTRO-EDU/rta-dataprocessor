@@ -294,4 +294,12 @@ class WorkerManager(threading.Thread):
         print("All Manager internal threads terminated.")
         self.logger.system("All Manager internal threads terminated.", extra=self.globalname)
 
+    def configworkers(self, configuration):
+        if self.processingtype == "process":
+            for worker in self.worker_processes:
+                worker.config(configuration)   
+        
+        if self.processingtype == "thread":
+            for worker in self.worker_threads:
+                worker.config(configuration)        
 
