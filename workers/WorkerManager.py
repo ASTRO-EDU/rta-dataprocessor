@@ -83,10 +83,73 @@ class WorkerManager(threading.Thread):
 
         self._stop_event = threading.Event()  # Used to stop the manager
 
+        #multiprocessing and multithreading locks to write results in order
+        if self.processingtype == "thread":
+            self.tokenresultslock = threading.Lock()
+            self.tokenreadinglock = threading.Lock()
+        # if self.processingtype == "process":
+        #     self.tokenresultslock_proc = multiprocessing.Lock()
+        #     self.tokenreadinglock_proc = multiprocessing.Lock()
+
         print(f"{self.globalname} started")
         self.logger.system("Started", extra=self.globalname)
         print(f"Socket result parameters: {self.result_socket_type} / {self.result_lp_socket} / {self.result_hp_socket} / {self.result_dataflow_type}")
         self.logger.system(f"Socket result parameters: {self.result_socket_type} / {self.result_lp_socket} / {self.result_hp_socket} / {self.result_dataflow_type}", extra=self.globalname)
+
+    def change_token_results(self):
+
+        if self.processingtype == "thread":
+
+            self.tokenresultslock.acquire()
+
+            for worker in self.worker_threads:
+                worker.tokenresult = worker.tokenresult - 1
+                if worker.tokenresult < 0:
+                    worker.tokenresult = self.num_workers - 1   
+                #print(f"W{worker.tokenresult}")
+            
+            self.tokenresultslock.release() 
+            return
+
+        # if self.processingtype == "process":
+        #     print("! called W")
+        #     with self.tokenresultslock_proc:
+        #         for worker in self.worker_processes:
+        #             worker.tokenresult = worker.tokenresult - 1
+        #             if worker.tokenresult < 0:
+        #                 worker.tokenresult = self.num_workers - 1 
+        #             print(f"W{worker.tokenresult}")
+        #         return
+
+    def change_token_reading(self):
+        
+        if self.processingtype == "thread":
+            self.tokenreadinglock.acquire()
+           
+            for worker in self.worker_threads:
+                worker.tokenreading = worker.tokenreading - 1
+                if worker.tokenreading < 0:
+                    worker.tokenreading = self.num_workers - 1
+                #print(f"R{worker.tokenreading}")
+
+            self.tokenreadinglock.release()
+            return
+
+        # if self.processingtype == "process":
+        #     print("! to be implemented")
+        #     try:
+        #         with self.tokenreadinglock_proc:
+        #             print("Acquired lock")
+        #             for worker in self.worker_processes:
+        #                 print(f"Processing worker {worker}")
+        #                 worker.tokenreading = worker.tokenreading - 1
+        #                 if worker.tokenreading < 0:
+        #                     worker.tokenreading = self.num_workers - 1 
+        #                 print(f"R{worker.tokenreading}")
+        #             print("Released lock")
+        #             return
+        #     except Exception as e:
+        #         print(f"An error occurred: {e}")
 
     def set_processdata(self, processdata):
         self.processdata = processdata
@@ -116,10 +179,6 @@ class WorkerManager(threading.Thread):
             print(f"WARNING! It is not possible to create more than {self.max_workes} threads")
             self.logger.warning(f"WARNING! It is not possible to create more than {self.max_workes} threads", extra=self.globalname)
         self.num_workers = num_threads
-        # for i in range(num_threads):
-        #     thread = WorkerThread(i, self, "name")
-        #     self.worker_threads.append(thread)
-        #     thread.start()
 
     # to be reimplemented ###
     def start_worker_processes(self, num_processes):
@@ -128,10 +187,6 @@ class WorkerManager(threading.Thread):
             print(f"WARNING! It is not possible to create more than {self.max_workes} process")
             self.logger.warning(f"WARNING! It is not possible to create more than {self.max_workes} process", extra=self.globalname)
         self.num_workers = num_processes
-        # for i in range(num_processes):
-        #     process = WorkerProcess(i, self, self.processdata_shared, "name")
-        #     self.worker_processes.append(process)
-        #     process.start()
 
 
     def run(self):

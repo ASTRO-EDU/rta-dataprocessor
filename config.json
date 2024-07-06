@@ -7,7 +7,7 @@
   {
 	"processname": "RTADP1",
 	"dataflow_type": "string",
-	"processing_type": "process",
+	"processing_type": "thread",
 	"datasocket_type": "pubsub",
 	"data_lp_socket": "tcp://localhost:5555",
 	"data_hp_socket": "tcp://localhost:5556",
@@ -25,7 +25,7 @@
   {
 	"processname": "RTADP2",
 	"dataflow_type": "string",
-	"processing_type": "process",
+	"processing_type": "thread",
 	"datasocket_type": "pubsub",
 	"data_lp_socket": "tcp://localhost:5563",
 	"data_hp_socket": "tcp://localhost:5564",
@@ -35,7 +35,7 @@
 	"manager_result_dataflow_type": ["none"],
 	"manager_result_lp_socket": ["none"],
 	"manager_result_hp_socket": ["none"],
-	"manager_num_workers": [2],
+	"manager_num_workers": [1],
 	"logs_path": "/tmp/",
 	"logs_level": 5,
 	"comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
