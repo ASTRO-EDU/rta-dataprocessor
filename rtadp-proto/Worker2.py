@@ -7,11 +7,14 @@
 #
 from WorkerBase import WorkerBase
 import time
+import json
 
 class Worker2(WorkerBase):
 	def __init__(self):
 		super().__init__()
 
 	def process_data(self, data):
-		time.sleep(0.1)
+		datadict = json.loads(data)
+		print(datadict["timestamp"])
+		#time.sleep(0.1)
 		return None

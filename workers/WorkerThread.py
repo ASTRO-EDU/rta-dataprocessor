@@ -24,7 +24,7 @@ class WorkerThread(threading.Thread):
         self.name = name
         self.workersname = f"{self.supervisor.name}-{self.manager.name}-{self.name}"
         self.fullname = f"{self.workersname}-{self.worker_id}"
-        self.globalname = f"WorkerProcess-{self.fullname}"
+        self.globalname = f"WorkerThread-{self.fullname}"
         
         self.logger = self.supervisor.logger
         self.worker.init(self.manager, self.supervisor, self.workersname, self.fullname)
@@ -50,6 +50,10 @@ class WorkerThread(threading.Thread):
         #3 stop
         self.status = 0 #initialised
 
+        #order of priority to read and write data to  queues
+        self.tokenresult = self.worker_id
+        self.tokenreading = self.worker_id
+
         print(f"{self.globalname} started")
         self.logger.system(f"WorkerThread started", extra=self.globalname)
 
@@ -69,16 +73,21 @@ class WorkerThread(threading.Thread):
         while not self._stop_event.is_set():
             time.sleep(0.00001) #must be 0
 
-            if self.processdata == 1:
+            #if self.processdata == 1: 
+            if self.processdata == 1 and self.tokenreading == 0:           
                 try:
                     # Check and process high-priority queue first
                     high_priority_data = self.high_priority_queue.get_nowait()
+                    self.manager.change_token_reading()
                     self.process_data(high_priority_data, priority=1)
+
                 except queue.Empty:
                     try:
                         # Process low-priority queue if high-priority queue is empty
                         low_priority_data = self.low_priority_queue.get(timeout=1)
+                        self.manager.change_token_reading()
                         self.process_data(low_priority_data, priority=0)
+
                     except queue.Empty:
                         self.status = 1 #waiting for new data
                         pass  # Continue if both queues are empty
@@ -111,8 +120,12 @@ class WorkerThread(threading.Thread):
 
         dataresult = self.worker.process_data(data)
 
-        if dataresult != None:
+        #if dataresult != None: 
+        if dataresult != None and self.tokenresult == 0:            
             if priority == 0:
                 self.manager.result_lp_queue.put(dataresult)
             else:
                 self.manager.result_hp_queue.put(dataresult)
+
+            self.manager.change_token_results()
+

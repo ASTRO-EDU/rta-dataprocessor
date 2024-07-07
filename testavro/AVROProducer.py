@@ -87,7 +87,7 @@ class AvroDataGenerator:
             "assembly": "YourAssemblyName",
             "name": "YourDisplayName",
             "serial_number": "YourSerialNumber",
-            "timestamp": int(time.time()),
+            "timestamp": float(time.time()),
             "source_timestamp": None,
             "units": "YourUnits",
             "archive_suppress": False,
