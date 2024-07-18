@@ -80,7 +80,7 @@ class Supervisor:
             
             #monitoring
             self.socket_monitoring = self.context.socket(zmq.PUSH)
-            self.socket_monitoring.connect(self.config.get("monitoring_socket"))
+            self.socket_monitoring.bind(self.config.get("monitoring_socket"))
             # self.monitoringpoint = MonitoringPoint(self)
             # self.monitoring_thread = None
 
