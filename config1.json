@@ -18,7 +18,9 @@
 	"manager_result_lp_socket": ["tcp://127.0.0.1:5563", "none"],
 	"manager_result_hp_socket": ["tcp://127.0.0.1:5564", "none"],
 	"manager_num_workers": [2, 2],
-	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+	"logs_path": "/tmp/",
+	"logs_level": 5,
+	"comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
   },
   {
 	"processname": "RTADP2",
@@ -34,6 +36,8 @@
 	"manager_result_lp_socket": ["none"],
 	"manager_result_hp_socket": ["none"],
 	"manager_num_workers": [2],
-	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+	"logs_path": "/tmp/",
+	"logs_level": 5,
+	"comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
   }
 ]

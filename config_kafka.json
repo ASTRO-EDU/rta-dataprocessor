@@ -38,7 +38,7 @@
 	"manager_num_workers": [2],
 	"logs_path": "/path/to/logs/folder",
 	"logs_level": 5,
-	"comment": "datasockettype=pushpull|pubsub dataflowtype=binary|filename|string processingtype=process|thread"
+	"comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
   }
 ]
 

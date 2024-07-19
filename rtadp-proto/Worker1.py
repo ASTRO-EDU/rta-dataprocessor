@@ -10,6 +10,7 @@ import avro.schema
 from avro.io import DatumReader
 import io
 import time
+import random
 
 class Worker1(WorkerBase):
 	def __init__(self):
@@ -40,6 +41,10 @@ class Worker1(WorkerBase):
 		# Create Avro reader
 		self.reader = avro.io.DatumReader(avro_schema)
 
+	def config(self, configuration):
+		super().config(configuration)
+
+
 	def process_data(self, data):
 
 		# Custom processing logic for Worker1
@@ -49,6 +54,7 @@ class Worker1(WorkerBase):
 			bytes_io = io.BytesIO(data)
 			decoder = avro.io.BinaryDecoder(bytes_io)
 			avro_message = self.reader.read(decoder)
+			time.sleep(random.uniform(0, 0.1)) #simulate processing
 
 			# Process the decoded Avro message as needed
 			#print(self.globalname)
@@ -57,13 +63,19 @@ class Worker1(WorkerBase):
 			return data
 			
 		if self.supervisor.dataflowtype == "filename":
-			time.sleep(0.1) #simulate processing
+			time.sleep(random.uniform(0, 0.1)) #simulate processing
 			print(data)
 			return str(data)
 
 		if self.supervisor.dataflowtype == "string":
-			time.sleep(0.1) #simulate processing
+			#time.sleep(random.uniform(0, 0.1)) #simulate processing
 			return str(data)
+
+		#example of generation of alarm, log, info
+		#self.supervisor.send_alarm(0, "alarm", self.fullname)
+		#self.supervisor.send_log(0, "log message", self.fullname)
+		#self.supervisor.send_info(0, "information message", self.fullname)
+
 			
 
 

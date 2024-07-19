@@ -35,6 +35,7 @@ class Supervisor:
         self.manager_result_dataflow_type = None
 
         self.load_configuration(config_file, name)
+        self.fullname = name
         self.globalname = "Supervisor-"+name
 
         log_file = os.path.join(self.config.get("logs_path"), self.globalname+'.log')
@@ -146,10 +147,7 @@ class Supervisor:
             self.hp_data_thread.start()  
 
         self.result_thread = threading.Thread(target=self.listen_for_result, daemon=True)
-        self.result_thread.start()      
-
-        self.command_thread = threading.Thread(target=self.listen_for_result, daemon=True)
-        self.command_thread.start()   
+        self.result_thread.start()       
 
     def setup_result_channel(self, manager, indexmanager):
         #output sockert
@@ -457,34 +455,92 @@ class Supervisor:
             manager.stopdata = True
 
     def process_command(self, command):
-        
+        type_value = command['header']['type']
         subtype_value = command['header']['subtype']
         pidtarget = command['header']['pidtarget']
         pidsource = command['header']['pidsource']
-        if pidtarget == self.name or pidtarget == "all".lower() or pidtarget == "*":
-            print(f"Received command: {command}")
-            if subtype_value == "shutdown":
-                self.command_shutdown()  
-            if subtype_value == "cleanedshutdown":
-                self.command_cleanedshutdown()
-            if subtype_value == "getstatus":
-                for manager in self.manager_workers:
-                    manager.monitoring_thread.sendto(pidsource)
-            if subtype_value == "start": #data processing + data
-                    self.command_start()
-            if subtype_value == "stop": #data processing + data
-                    self.command_stop()
-            if subtype_value == "startprocessing": #data processing
-                    self.command_startprocessing()
-            if subtype_value == "stopprocessing": #data processing
-                    self.command_stopprocessing()
-            if subtype_value == "reset": #reset the data processor
-                    self.command_reset()
-            if subtype_value == "stopdata": #data acquisition
-                    self.command_stopdata()
-            if subtype_value == "startdata": #data acquisition
-                    self.command_startdata()
+        if type_value == 0: #command
+            if pidtarget == self.name or pidtarget == "all".lower() or pidtarget == "*":
+                print(f"Received command: {command}")
+                if subtype_value == "shutdown":
+                    self.command_shutdown()  
+                if subtype_value == "cleanedshutdown":
+                    self.command_cleanedshutdown()
+                if subtype_value == "getstatus":
+                    for manager in self.manager_workers:
+                        manager.monitoring_thread.sendto(pidsource)
+                if subtype_value == "start": #data processing + data
+                        self.command_start()
+                if subtype_value == "stop": #data processing + data
+                        self.command_stop()
+                if subtype_value == "startprocessing": #data processing
+                        self.command_startprocessing()
+                if subtype_value == "stopprocessing": #data processing
+                        self.command_stopprocessing()
+                if subtype_value == "reset": #reset the data processor
+                        self.command_reset()
+                if subtype_value == "stopdata": #data acquisition
+                        self.command_stopdata()
+                if subtype_value == "startdata": #data acquisition
+                        self.command_startdata()
+        if type_value == 3: #config
+            for manager in self.manager_workers:
+                manager.configworkers(command)
 
+
+    def send_alarm(self, level, message, pidsource, code=0, priority="Low"):
+        header = {
+            "type": 2,
+            "subtype": "alarm",
+			"time": time.time(),
+            "pidsource": pidsource,
+            "pidtarget": "*",
+            "priority": priority
+        }
+        body = {
+            "level": level,
+            "code": code,
+            "message": message
+        }
+        msg = {"header": header, "body": body}
+        msg_str = json.dumps(msg)
+        self.socket_monitoring.send_string(msg_str)
+
+    def send_log(self, level, message, pidsource, code=0, priority="Low"):
+        header = {
+            "type": 4,
+            "subtype": "log",
+			"time": time.time(),
+            "pidsource": pidsource,
+            "pidtarget": "*",
+            "priority": priority
+        }
+        body = {
+            "level": level,
+            "code": code,
+            "message": message
+        }
+        msg = {"header": header, "body": body}
+        msg_str = json.dumps(msg)
+        self.socket_monitoring.send_string(msg_str)   
+
+    def send_info(self, level, message, pidsource, code=0, priority="Low"):
+        header = {
+            "type": 5,
+            "subtype": "info",
+			"time": time.time(),
+            "pidsource": pidsource,
+            "pidtarget": "*",
+            "priority": priority
+        }
+        body = {
+            "level": level,
+            "code": code,
+            "message": message
+        }
+        msg = {"header": header, "body": body}
+        msg_str = json.dumps(msg)
+        self.socket_monitoring.send_string(msg_str)   
 
     def stop_all(self, fast=False):
         print("Stopping all workers and managers...")
