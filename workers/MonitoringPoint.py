@@ -18,11 +18,11 @@ class MonitoringPoint:
         header = {
                 "type": 1,
                 "time": 0,  # Replace with actual timestamp if needed
-                "pidsource": self.manager.globalname,
+                "pidsource": self.manager.fullname,
                 "pidtarget": "*"
         }
         self.data["header"] = header
-        self.data["status"] = "Initialised"  # Append the "status" key to the data dictionary
+        self.data["workermanagerstatus"] = "Initialised"  # Append the "status" key to the data dictionary
         procinfo = {
             "cpu_percent": 0,
             "memory_usage": 0
@@ -54,15 +54,15 @@ class MonitoringPoint:
             self.update("queue_hp_size", self.manager.high_priority_queue.qsize())
             self.update("queue_lp_result_size", self.manager.result_lp_queue.qsize())
             self.update("queue_hp_result_size", self.manager.result_hp_queue.qsize())
-            self.update("workerstatusinit", self.manager.workerstatusinit)
-            self.update("workerstatus", self.manager.workerstatus)
+            self.update("workersstatusinit", self.manager.workersstatusinit)
+            self.update("workersstatus", self.manager.workersstatus)
 
             if self.manager.processingtype == "process":
                 for worker in self.manager.worker_processes:
                     #print(f"Monitor {worker.globalname} {worker.processing_rate}")
                     self.processing_rates[worker.worker_id] = self.manager.processing_rates_shared[worker.worker_id]
                     self.processing_tot_events[worker.worker_id] = self.manager.total_processed_data_count_shared[worker.worker_id]
-                    self.worker_status[worker.worker_id] = self.manager.worker_status_shared[worker.worker_id]
+                    self.worker_status[worker.worker_id] = int(self.manager.worker_status_shared[worker.worker_id])
             if self.manager.processingtype == "thread":
                 for worker in self.manager.worker_threads:
                     self.processing_rates[worker.worker_id] = worker.processing_rate
@@ -75,11 +75,11 @@ class MonitoringPoint:
  
     def set_status(self, new_status):
         #with self.lock:
-            self.data["status"] = new_status
+            self.data["workermanagerstatus"] = new_status
 
     def get_status(self):
         #with self.lock:
-            return self.data["status"]
+            return self.data["workermanagerstatus"]
 
     def resource_monitor(self):
         
