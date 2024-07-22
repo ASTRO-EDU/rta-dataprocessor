@@ -358,7 +358,7 @@ class WorkerManager(threading.Thread):
         self._stop_event.set()  # Set the stop event to exit from this thread
         self.stop_internalthreads()
         self.status = "End"
-        self.supervisor.send_info(1, self.status, self.fullname, code=1, priority="Low")
+        #self.supervisor.send_info(1, self.status, self.fullname, code=1, priority="Low")
 
 
     def stop_internalthreads(self):

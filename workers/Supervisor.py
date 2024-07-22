@@ -388,13 +388,13 @@ class Supervisor:
 
     def command_shutdown(self):
         self.status = "Shutdown"
-        self.send_info(1, self.status, self.fullname, code=1, priority="Low")
+        #self.send_info(1, self.status, self.fullname, code=1, priority="Low")
         self.stop_all(False)
     
     def command_cleanedshutdown(self):
         if self.status == "Processing":
             self.status = "EndingProcessing"
-            self.send_info(1, self.status, self.fullname, code=1, priority="Low")
+            #self.send_info(1, self.status, self.fullname, code=1, priority="Low")
             self.command_stopdata()
             for manager in self.manager_workers:
                 print(f"Trying to stop {manager.globalname}...")
@@ -412,7 +412,7 @@ class Supervisor:
             self.logger.warning("WARNING! Not in Processing state for a cleaned shutdown. Force the shutdown.", extra=self.globalname)
         
         self.status = "Shutdown"
-        self.send_info(1, self.status, self.fullname, code=1, priority="Low")
+        #self.send_info(1, self.status, self.fullname, code=1, priority="Low")
         self.stop_all(False)
 
 
