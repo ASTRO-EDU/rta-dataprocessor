@@ -91,7 +91,6 @@ class WorkerProcess(Process):
                         try:
                             # Process low-priority queue if high-priority queue is empty
                             low_priority_data = self.low_priority_queue.get(timeout=1)
-                            self.manager.change_token_reading()
                             self.process_data(low_priority_data, priority=0)
                         except queue.Empty:
                             self.manager.worker_status_shared[self.worker_id] = 2 #waiting for new data
