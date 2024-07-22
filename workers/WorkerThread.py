@@ -119,6 +119,7 @@ class WorkerThread(threading.Thread):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
         # Increment the processed data count and calculate the rate
         self.status = 8 #processig new data
+        self.supervisor.send_info(1, str(self.status), self.fullname, code=1, priority="Low")
         self.processed_data_count += 1
 
         dataresult = self.worker.process_data(data)
