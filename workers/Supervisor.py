@@ -110,6 +110,7 @@ class Supervisor:
                 print("WARNING! Signal only works in main thread. It is not possible to set up signal handlers!")
                 self.logger.warning("WARNING! Signal only works in main thread. It is not possible to set up signal handlers!", extra=self.globalname)
             self.status = "Initialised"
+            self.send_info(1, self.status, self.fullname, code=1, priority="Low")
 
             print(f"{self.globalname} started")
             self.logger.system(f"{self.globalname} started", extra=self.globalname)
@@ -206,6 +207,7 @@ class Supervisor:
         self.start_workers()
 
         self.status = "Waiting"
+        self.send_info(1, self.status, self.fullname, code=1, priority="Low")
 
         try:
             while self.continueall:
@@ -386,16 +388,17 @@ class Supervisor:
 
     def command_shutdown(self):
         self.status = "Shutdown"
+        self.send_info(1, self.status, self.fullname, code=1, priority="Low")
         self.stop_all(False)
     
     def command_cleanedshutdown(self):
         if self.status == "Processing":
             self.status = "EndingProcessing"
+            self.send_info(1, self.status, self.fullname, code=1, priority="Low")
             self.command_stopdata()
             for manager in self.manager_workers:
                 print(f"Trying to stop {manager.globalname}...")
                 self.logger.system(f"Trying to stop {manager.globalname}...", extra=self.globalname)
-                manager.status = "EndingProcessing"
                 while manager.low_priority_queue.qsize() != 0 or manager.high_priority_queue.qsize() != 0:
                     print(f"Queues data of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()}")
                     self.logger.system(f"Queues data of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()}", extra=self.globalname)
@@ -404,12 +407,12 @@ class Supervisor:
                     print(f"Queues result of manager {manager.globalname} have size {manager.result_lp_queue.qsize()} {manager.result_hp_queue.qsize()}")
                     self.logger.system(f"Queues result of manager {manager.globalname} have size {manager.result_lp_queue.qsize()} {manager.result_hp_queue.qsize()}", extra=self.globalname)
                     time.sleep(0.2) 
-                manager.status = "Shutdown"
         else:
             print("WARNING! Not in Processing state for a cleaned shutdown. Force the shutdown.") 
             self.logger.warning("WARNING! Not in Processing state for a cleaned shutdown. Force the shutdown.", extra=self.globalname)
         
         self.status = "Shutdown"
+        self.send_info(1, self.status, self.fullname, code=1, priority="Low")
         self.stop_all(False)
 
 
@@ -423,6 +426,7 @@ class Supervisor:
                 print(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()} {manager.result_lp_queue.qsize()} {manager.result_hp_queue.qsize()}")
                 self.logger.system(f"Queues of manager {manager.globalname} have size {manager.low_priority_queue.qsize()} {manager.high_priority_queue.qsize()} {manager.result_lp_queue.qsize()} {manager.result_hp_queue.qsize()}", extra=self.globalname)
             self.status = "Waiting"
+            self.send_info(1, self.status, self.fullname, code=1, priority="Low")
 
     def command_start(self):
         self.command_startprocessing()
@@ -434,25 +438,25 @@ class Supervisor:
 
     def command_startprocessing(self):
         self.status = "Processing"
+        self.send_info(1, self.status, self.fullname, code=1, priority="Low")
         for manager in self.manager_workers:
-            manager.status = "Processing"
             manager.set_processdata(1)
 
     def command_stopprocessing(self):
         self.status = "Waiting"
+        self.send_info(1, self.status, self.fullname, code=1, priority="Low")
         for manager in self.manager_workers:
-            manager.status = "Waiting"
             manager.set_processdata(0)
 
     def command_startdata(self):
         self.stopdata = False
         for manager in self.manager_workers:
-            manager.stopdata = False
+            manager.set_stopdata(False)
 
     def command_stopdata(self):
         self.stopdata = True
         for manager in self.manager_workers:
-            manager.stopdata = True
+            manager.set_stopdata(True)
 
     def process_command(self, command):
         type_value = command['header']['type']

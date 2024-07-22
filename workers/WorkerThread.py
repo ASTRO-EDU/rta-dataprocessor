@@ -44,11 +44,8 @@ class WorkerThread(threading.Thread):
 
         self.processdata = 0
 
-        #0 initialised
-        #1 waiting
-        #2 processing
-        #3 stop
         self.status = 0 #initialised
+        self.supervisor.send_info(1, str(self.status), self.fullname, code=1, priority="Low")
 
         #order of priority to read and write data to  queues
         self.tokenresult = self.worker_id
@@ -58,7 +55,8 @@ class WorkerThread(threading.Thread):
         self.logger.system(f"WorkerThread started", extra=self.globalname)
 
     def stop(self):
-        self.status = 3 #stop
+        self.status = 16 #stop
+        self.supervisor.send_info(1, str(self.status), self.fullname, code=1, priority="Low")
         self._stop_event.set()  # Set the stop event
 
     def config(self, configuration):
@@ -89,9 +87,14 @@ class WorkerThread(threading.Thread):
                         self.process_data(low_priority_data, priority=0)
 
                     except queue.Empty:
-                        self.status = 1 #waiting for new data
+                        self.status = 2 #waiting for new data
+                        self.supervisor.send_info(1, str(self.status), self.fullname, code=1, priority="Low")
                         pass  # Continue if both queues are empty
-        
+            else:
+                if self.tokenreading != 0:
+                    self.status = 4 #waiting for reading from queue
+                    self.supervisor.send_info(1, str(self.status), self.fullname, code=1, priority="Low")
+
         self.timer.cancel()
         print(f"WorkerThread stop {self.globalname}")
         self.logger.system(f"WorkerThread stop", extra=self.globalname)
@@ -115,7 +118,7 @@ class WorkerThread(threading.Thread):
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
         # Increment the processed data count and calculate the rate
-        self.status = 2 #processig new data
+        self.status = 8 #processig new data
         self.processed_data_count += 1
 
         dataresult = self.worker.process_data(data)

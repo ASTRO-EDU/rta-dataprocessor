@@ -35,7 +35,7 @@
 	"manager_result_dataflow_type": ["none"],
 	"manager_result_lp_socket": ["none"],
 	"manager_result_hp_socket": ["none"],
-	"manager_num_workers": [1],
+	"manager_num_workers": [2],
 	"logs_path": "/tmp/",
 	"logs_level": 5,
 	"comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"

@@ -51,6 +51,7 @@ class WorkerProcess(Process):
         #2 processing
         #3 stop
         self.manager.worker_status_shared[self.worker_id] = 0 #initialised
+        self.supervisor.send_info(1, str(self.manager.worker_status_shared[self.worker_id]), self.fullname, code=1, priority="Low")
 
         self.start_timer(1)
         self.timer.cancel()
@@ -93,14 +94,17 @@ class WorkerProcess(Process):
                             self.manager.change_token_reading()
                             self.process_data(low_priority_data, priority=0)
                         except queue.Empty:
-                            self.manager.worker_status_shared[self.worker_id] = 1 #waiting for new data
+                            self.manager.worker_status_shared[self.worker_id] = 2 #waiting for new data
+                            self.supervisor.send_info(1, str(self.manager.worker_status_shared[self.worker_id]), self.fullname, code=1, priority="Low")
                             pass  # Continue if both queues are empty
+
         except Exception as e:
             print(f"An error occurred: {e}")
 
 
         self.timer.cancel()
-        self.manager.worker_status_shared[self.worker_id] = 100 #stop
+        self.manager.worker_status_shared[self.worker_id] = 16 #stop
+        self.supervisor.send_info(1, str(self.manager.worker_status_shared[self.worker_id]), self.fullname, code=1, priority="Low")
         print(f"WorkerProcess stop {self.globalname}")
         self.logger.system(f"WorkerProcess stop", extra=self.globalname)
 
@@ -125,7 +129,8 @@ class WorkerProcess(Process):
     def process_data(self, data, priority):
         #print(f"Thread-{self.worker_id} Priority-{priority} processing data. Queues size: {self.low_priority_queue.qsize()} {self.high_priority_queue.qsize()}")
         # Increment the processed data count and calculate the rate
-        self.manager.worker_status_shared[self.worker_id] = 2 #processig new data
+        self.manager.worker_status_shared[self.worker_id] = 8 #processig new data
+        self.supervisor.send_info(1, str(self.manager.worker_status_shared[self.worker_id]), self.fullname, code=1, priority="Low")
         self.processed_data_count += 1
         
         dataresult = None
