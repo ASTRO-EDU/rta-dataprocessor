@@ -91,7 +91,7 @@ class WorkerThread(threading.Thread):
                         self.supervisor.send_info(1, str(self.status), self.fullname, code=1, priority="Low")
                         pass  # Continue if both queues are empty
             else:
-                if self.tokenreading != 0:
+                if self.tokenreading != 0 and self.status != 4:
                     self.status = 4 #waiting for reading from queue
                     self.supervisor.send_info(1, str(self.status), self.fullname, code=1, priority="Low")
 
