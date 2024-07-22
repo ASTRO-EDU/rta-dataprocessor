@@ -18,7 +18,7 @@ class MonitoringPoint:
         header = {
                 "type": 1,
                 "time": 0,  # Replace with actual timestamp if needed
-                "pidsource": self.manager.globalname,
+                "pidsource": self.manager.fullname,
                 "pidtarget": "*"
         }
         self.data["header"] = header
