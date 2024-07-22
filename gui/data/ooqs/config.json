@@ -1,0 +1,7 @@
+{
+    "dataprocessor_names": ["RTADP1","RTADP2"],
+    "workermanager_names": ["RTADP1-Rate","RTADP1-S22Mean","RTADP2-Rate"],
+    "workers": [5,2,1],
+    "monitoring_socket": "tcp://127.0.0.1:5562"
+}
+

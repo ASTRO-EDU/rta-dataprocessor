@@ -1,0 +1,37 @@
+{
+    "header": {
+        "type": 1,
+        "time": 1721138611.7621052,
+        "pidsource": "WorkerManager-RTADP2-Rate",
+        "pidtarget": "*"
+    },
+    "status": "Waiting",
+    "procinfo": {
+        "cpu_percent": 100.1,
+        "memory_usage": [
+            23486464,
+            722866176,
+            12558336,
+            4096,
+            0,
+            96178176,
+            0
+        ]
+    },
+    "queue_lp_size": 0,
+    "queue_hp_size": 0,
+    "stopdatainput": 0,
+    "queue_lp_result_size": 0,
+    "queue_hp_result_size": 0,
+    "workerstatusinit": 1,
+    "workerstatus": 0,
+    "worker_rates": {
+        "0": 0.0
+    },
+    "worker_tot_events": {
+        "0": 0
+    },
+    "worker_status": {
+        "0": 0
+    }
+}

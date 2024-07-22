@@ -1,0 +1,22 @@
+{
+    "node": [
+        "RTADP1",
+        "RTADP2"
+    ],
+    "parent": [
+        "",
+        ""
+    ],
+    "value": [
+        1,
+        1
+    ],
+    "reference": [
+        "root",
+        "invalid"
+    ],
+    "nodetype": [
+        "root",
+        "component"
+    ]
+}
