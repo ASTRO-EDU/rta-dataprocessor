@@ -3,6 +3,7 @@ import json
 import dash
 from dash import dcc, html, Input, Output, State
 from dash.exceptions import PreventUpdate
+import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import plotly.express as px
 import zmq
@@ -63,8 +64,12 @@ def draw_sunchart(datasunchart):
             color='reference',
             color_discrete_map=facecolors
         ))
-    fig.update_layout(margin=dict(t=0, l=0, r=0, b=0), 
-                      width=1500, height=900)
+        # Update layout to make the chart responsive
+    fig.update_layout(
+        margin=dict(t=0, l=0, r=0, b=0),
+        autosize=True
+    )
+    
     # Definiamo i colori dei bordi dei settori
     border_colors = ['orange' if nodetype == 'component' else 'black' for nodetype in datasunchart['nodetype']]
     border_width  = [2 if nodetype == 'component' else 4 for nodetype in datasunchart['nodetype']]
@@ -90,6 +95,7 @@ def draw_sunchart(datasunchart):
     # # Add custom legend to the figure
     fig.add_traces(custom_legend)
     # Ritorna la figura
+
     return fig
 
 ###############################################################################################
@@ -167,8 +173,18 @@ def update_block_array(block_array,new_dict):
     dp_name = new_dict['header']['pidsource'].split("-")[1]
     wm_name = new_dict['header']['pidsource'].split("-")[2]
 
-    dp_status = "1"
-    wm_status = int(new_dict['workerstatus'])
+    wm_status = new_dict['status']
+
+    dp_status = "null"
+
+    if wm_status == "Waiting":
+        wm_status = "1"
+    elif wm_status == "Processing":
+        wm_status = "2"
+    else:
+        wm_status = "invalid"
+
+    #wm_status = int(new_dict['workerstatus'])
 
     wm_queue_lp = new_dict['queue_lp_size']
     wm_queue_hp = new_dict['queue_hp_size']
@@ -209,7 +225,7 @@ def update_block_array(block_array,new_dict):
         "pidsource": "WorkerManager-RTADP1-Rate",
         "pidtarget": "*"
     },
-    "status": "Waiting",
+    "status": "Waiting",  #status worker manager
     "procinfo": {
         "cpu_percent": 98.8,
         "memory_usage": [
@@ -259,23 +275,42 @@ def update_block_array(block_array,new_dict):
 # Inizializza l'app Dash app-layout
 app = dash.Dash(__name__)
 # Layout dell'app
+
+app.layout = html.Div([
+    dbc.Container([
+        html.Div(id='sunburst-container', className='p-3', children=[
+            html.Button('Mostra Istogramma', id='hidehist-button', n_clicks=0, className='btn btn-primary mb-3'),
+            html.Label('none', id='label-histname', style={'display': 'none'}),
+            dcc.Graph(id='sunburst-chart', className='mb-3'),
+            html.Div(id='histogram-container', children=[
+                dcc.Graph(id='histogram-chart', style={'display': 'none'})
+            ])
+        ])
+    ], fluid=True),
+    dcc.Interval(id='interval-component', interval=1000, n_intervals=0),  # Intervallo di aggiornamento ogni secondo
+])
+"""
 app.layout = html.Div([
     html.Div(id='sunburst-container', children=[
         html.Button('Mostra Istogramma', id='hidehist-button', n_clicks=0, 
-                    style={'position': 'fixed', 'top': 10, 'z-index': '1',
-                           'font-size': '20px', 'padding': '10px'}),
+                    style={'font-size': '1.5rem', 'padding': '1rem'}),
         html.Label('none', id='label-histname', style={'display': 'none'}),
         dcc.Graph(id='sunburst-chart'),
         html.Div(id='histogram-container', children=[
             dcc.Graph(id='histogram-chart', style={'display': 'none'})
             ])
     ]),
-    dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),  # Intervallo di aggiornamento ogni 30 secondi
-])
+    dcc.Interval(id='interval-component', interval=1000, n_intervals=0),  # Intervallo di aggiornamento ogni secondo
+])"""
 
+def add_message_processed(count):
+
+    count=count+1
+    return count
 # initialize the data dictionary following the base config
 baseconfig_path = "../data/ooqs/config.json"
 block_array = []
+count_message_processed = 0
 return_dict = initialize_data_dict(baseconfig_path)
 monitoring_socket = return_dict['monitoring_socket']
 block_array = return_dict['block_array']
@@ -284,7 +319,7 @@ block_array = return_dict['block_array']
 data_queue = Queue()
 
 ###### this is only for development
-with open('../data/ooqs/WorkerManager-RTADP1-Rate.json', 'r') as f:
+"""with open('../data/ooqs/WorkerManager-RTADP1-Rate.json', 'r') as f:
     new_dict = json.load(f)
     data_queue.put(new_dict)
 
@@ -295,7 +330,7 @@ with open('../data/ooqs/WorkerManager-RTADP1-S22Mean.json', 'r') as f:
 with open('../data/ooqs/WorkerManager-RTADP2-Rate.json', 'r') as f:
     new_dict = json.load(f)
     data_queue.put(new_dict)
-
+"""
 
 ######
 
@@ -307,17 +342,21 @@ def zeromq_listener():
     socket = context.socket(zmq.PULL)
     socket.connect(monitoring_socket)  # Esempio: connessione TCP su localhost, porta 5555
 
+    print("connect##########")
+    count = 0
     while True:
         msg = socket.recv_string()
         # Elabora il messaggio ricevuto (assumiamo che i dati siano nel formato corretto per il plot)
         # Qui potresti fare il parsing dei dati ricevuti da ZeroMQ e metterli nella coda
         # Qui c'è un esempio di come potrebbe essere aggiunto alla coda:
-        print("message received")
+        
+        count=count+1
+        print("message received="+str(msg))
         data_queue.put(msg)
 
 # Thread per ascoltare ZeroMQ
 zeromq_thread = threading.Thread(target=zeromq_listener)
-zeromq_thread.daemon = True  # Il thread viene terminato quando l'applicazione Dash si chiude
+zeromq_thread.daemon = True  
 zeromq_thread.start()
 
 
@@ -369,6 +408,7 @@ def update_histogram_visibility(n_clicks, click_data, n_intervals, histogram_sty
         prev_nclicks = 'none'
     # print('ciao')
     return histogram_style, button_text
+    """
 ###############################################################################################
 # Callback per aggiornare l'istogramma quando un settore del sunburst chart viene cliccato
 @app.callback(
@@ -389,14 +429,15 @@ def update_histogram(click_data):
     if selected_sector is None:
         raise PreventUpdate
     # Disegna e restituisci l'istogramma
+    
     histogram = draw_histogram(selected_sector)
     return histogram
-    """
+
 ###############################################################################################
 # Callback per aggiornare il sunburst chart quando vengono caricati nuovi dati
 @app.callback(
     Output('sunburst-chart', 'figure'),
-    [Input('interval-component', 'n_intervals')]
+    [Input('interval-component', 'n_intervals')],
 )
 def update_sunburst(n_intervals):
     global prev_interval
@@ -408,11 +449,13 @@ def update_sunburst(n_intervals):
     
         # Prova a prendere un messaggio dalla coda senza bloccare
         message = data_queue.get()
-        print(f"Messaggio processato")
+        global count_message_processed
+        count_message_processed = count_message_processed+1
+        print(f"Messaggio processato="+str(count_message_processed))
         update_block_array(block_array,json.loads(message))
         data_queue.task_done()
+   
     print("after queue size"+str(data_queue.qsize()))
-
     data_dict = create_chart_input_from_dict(block_array)
     print(data_dict)
     sunburst_chart = draw_sunchart(data_dict)
@@ -425,4 +468,4 @@ def update_sunburst(n_intervals):
 if __name__ == '__main__':
     host = '0.0.0.0'
     port = 8050
-    app.run_server(host=host, port=port, debug=True)
+    app.run_server(host=host, port=port, debug=False,use_reloader=False)

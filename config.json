@@ -7,7 +7,7 @@
   {
 	"processname": "RTADP1",
 	"dataflow_type": "string",
-	"processing_type": "thread",
+	"processing_type": "process",
 	"datasocket_type": "pubsub",
 	"data_lp_socket": "tcp://127.0.0.1:5555",
 	"data_hp_socket": "tcp://127.0.0.1:5556",
