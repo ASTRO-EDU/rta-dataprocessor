@@ -62,7 +62,7 @@ class MonitoringPoint:
                     #print(f"Monitor {worker.globalname} {worker.processing_rate}")
                     self.processing_rates[worker.worker_id] = self.manager.processing_rates_shared[worker.worker_id]
                     self.processing_tot_events[worker.worker_id] = self.manager.total_processed_data_count_shared[worker.worker_id]
-                    self.worker_status[worker.worker_id] = self.manager.worker_status_shared[worker.worker_id]
+                    self.worker_status[worker.worker_id] = int(self.manager.worker_status_shared[worker.worker_id])
             if self.manager.processingtype == "thread":
                 for worker in self.manager.worker_threads:
                     self.processing_rates[worker.worker_id] = worker.processing_rate
