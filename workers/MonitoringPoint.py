@@ -22,7 +22,7 @@ class MonitoringPoint:
                 "pidtarget": "*"
         }
         self.data["header"] = header
-        self.data["status"] = "Initialised"  # Append the "status" key to the data dictionary
+        self.data["workermanagerstatus"] = "Initialised"  # Append the "status" key to the data dictionary
         procinfo = {
             "cpu_percent": 0,
             "memory_usage": 0
@@ -54,8 +54,8 @@ class MonitoringPoint:
             self.update("queue_hp_size", self.manager.high_priority_queue.qsize())
             self.update("queue_lp_result_size", self.manager.result_lp_queue.qsize())
             self.update("queue_hp_result_size", self.manager.result_hp_queue.qsize())
-            self.update("workerstatusinit", self.manager.workerstatusinit)
-            self.update("workerstatus", self.manager.workerstatus)
+            self.update("workersstatusinit", self.manager.workersstatusinit)
+            self.update("workersstatus", self.manager.workersstatus)
 
             if self.manager.processingtype == "process":
                 for worker in self.manager.worker_processes:
@@ -75,11 +75,11 @@ class MonitoringPoint:
  
     def set_status(self, new_status):
         #with self.lock:
-            self.data["status"] = new_status
+            self.data["workermanagerstatus"] = new_status
 
     def get_status(self):
         #with self.lock:
-            return self.data["status"]
+            return self.data["workermanagerstatus"]
 
     def resource_monitor(self):
         

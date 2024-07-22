@@ -19,6 +19,7 @@ class WorkerManager(threading.Thread):
     #manager_type="Process" or manager_type="Thread"
     def __init__(self, manager_id, supervisor, name = "None"):
         super().__init__()
+        self.status = "Initialising"
         #unique ID within the supervisor
         self.manager_id = manager_id
         self.supervisor = supervisor
@@ -71,15 +72,13 @@ class WorkerManager(threading.Thread):
         self.worker_processes = []
         self.num_workers = 0
 
-        self.workerstatus=0
-        self.workerstatusinit=0
-
-        self.status = "Initialised"
+        self.workersstatus=0
+        self.workersstatusinit=0
 
         #process data based on Supervisor state
         self.processdata = 0
         self.processdata_shared = multiprocessing.Value('i', 0)
-        self.stopdata = 0
+        self.stopdata = True
 
         self._stop_event = threading.Event()  # Used to stop the manager
 
@@ -95,6 +94,10 @@ class WorkerManager(threading.Thread):
         self.logger.system("Started", extra=self.globalname)
         print(f"Socket result parameters: {self.result_socket_type} / {self.result_lp_socket} / {self.result_hp_socket} / {self.result_dataflow_type}")
         self.logger.system(f"Socket result parameters: {self.result_socket_type} / {self.result_lp_socket} / {self.result_hp_socket} / {self.result_dataflow_type}", extra=self.globalname)
+
+        self.status = "Initialised"
+        self.supervisor.send_info(1, self.status, self.fullname, code=1, priority="Low")
+
 
     def change_token_results(self):
 
@@ -151,13 +154,15 @@ class WorkerManager(threading.Thread):
         #     except Exception as e:
         #         print(f"An error occurred: {e}")
 
+
+    def set_stopdata(self, stopdata):
+        self.stopdata = stopdata
+        self.change_status()
+
+        
     def set_processdata(self, processdata):
         self.processdata = processdata
-
-        if self.processdata == 1:
-            self.status = "Processing"
-        if self.processdata == 0:
-            self.status = "Waiting"
+        self.change_status()
 
         if self.processingtype == "process":
             self.processdata_shared.value = processdata
@@ -165,6 +170,18 @@ class WorkerManager(threading.Thread):
         if self.processingtype == "thread":
             for worker in self.worker_threads:
                 worker.set_processdata(self.processdata)
+
+    def change_status(self):
+        if self.stopdata == True and self.processdata == 0:
+            self.status = "Initialised"
+        if self.stopdata == True and self.processdata == 1:
+            self.status = "Wait for data"
+        if self.stopdata == False and self.processdata == 1:
+            self.status = "Processing"
+        if self.stopdata == False and self.processdata == 0:
+            self.status = "Wait for processing"
+
+        self.supervisor.send_info(1, self.status, self.fullname, code=1, priority="Low")
 
     def start_service_threads(self):
         #Monitoring thread
@@ -192,30 +209,33 @@ class WorkerManager(threading.Thread):
     def run(self):
         self.start_service_threads()
 
-        self.status = "Waiting"
+        self.status = "Initialised"
+        self.supervisor.send_info(1, self.status, self.fullname, code=1, priority="Low")
 
         try:
             while not self._stop_event.is_set():
                 time.sleep(1)  # To avoid 100 per cent of CPU comsumption
+
                 #check the status of the workers
-                self.workerstatus=0
-                self.workerstatusinit=0
+                self.workersstatus=0
+                self.workersstatusinit=0
                 worker_id = 0
                 for process in self.worker_processes:
                     status = self.worker_status_shared[worker_id]
                     if status == 0:
-                        self.workerstatusinit = self.workerstatusinit + 1
+                        self.workersstatusinit = self.workersstatusinit + 1
                     else:
-                        self.workerstatus = self.workerstatus + status
+                        self.workersstatus = self.workersstatus + status
                     worker_id = worker_id + 1
                 for thread in self.worker_threads:
                     if thread.status == 0:
-                        self.workerstatusinit = self.workerstatusinit + 1
+                        self.workersstatusinit = self.workersstatusinit + 1
                     else:
-                        self.workerstatus = self.workerstatus + thread.status
-                if self.num_workers != self.workerstatusinit:
-                    self.workerstatus = self.workerstatus / (self.num_workers-self.workerstatusinit)
-                #print(f"Manager workers status {self.globalname} {self.workerstatusinit} {self.workerstatus}")
+                        self.workersstatus = self.workersstatus + thread.status
+                if self.num_workers != self.workersstatusinit:
+                    self.workersstatus = self.workersstatus / (self.num_workers-self.workersstatusinit)
+                #print(f"Manager workers status {self.globalname} {self.workersstatusinit} {self.workersstatus}")
+            
             print(f"Manager stop {self.globalname}")
             self.logger.system("Manager stop", extra=self.globalname)
         except KeyboardInterrupt:
@@ -338,6 +358,7 @@ class WorkerManager(threading.Thread):
         self._stop_event.set()  # Set the stop event to exit from this thread
         self.stop_internalthreads()
         self.status = "End"
+        self.supervisor.send_info(1, self.status, self.fullname, code=1, priority="Low")
 
 
     def stop_internalthreads(self):
