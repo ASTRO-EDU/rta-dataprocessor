@@ -81,6 +81,7 @@ class WorkerProcess(Process):
                 if self.manager.processdata_shared.value == 1: 
                     #and self.tokenreading == 0:
                     #print(f"! read the first data {self.tokenreading}")
+                    self.manager.worker_status_shared[self.worker_id] = 2 #assume queue empty
                     try:
                         # Check and process high-priority queue first
                         high_priority_data = self.high_priority_queue.get_nowait()
