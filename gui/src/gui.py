@@ -49,12 +49,22 @@ def draw_histogram(selected_sector):
 def draw_sunchart(datasunchart):
     # Define color scale based on reference attribute
     facecolors = {
-        '2': 'skyblue',
-        '0': 'lightgreen',
-        '1': 'darkgreen',
-        'invalid': 'red',
+        '0': 'skyblue',
+        '2': 'green',
+        '4': 'darkgreen',
+        '8': 'red',
+        '16': 'yellow',
+        '24': 'darkgreen',
+        'Shutdown':'crimson',
+        'Waiting':'cornsilk',
+        'Initialised': 'cadetblue',
+        'Wait for processing':'cornflowerblue',
+        'Wait for data':'cyan',
+        'Processing':'darkblue',
         'null': 'gray'
     }
+
+
     fig = go.Figure(px.sunburst(
             datasunchart,
             names='node',
@@ -62,7 +72,9 @@ def draw_sunchart(datasunchart):
             branchvalues="total",
             #values='value',
             color='reference',
-            color_discrete_map=facecolors
+            color_discrete_map=facecolors,
+            hover_name='node',  # Nome che appare al passaggio del mouse
+            hover_data={'reference': True}  # Mostra anche la colonna 'Reference'
         ))
         # Update layout to make the chart responsive
     fig.update_layout(
@@ -74,11 +86,11 @@ def draw_sunchart(datasunchart):
     border_colors = ['orange' if nodetype == 'component' else 'black' for nodetype in datasunchart['nodetype']]
     border_width  = [2 if nodetype == 'component' else 4 for nodetype in datasunchart['nodetype']]
     # Impostazione del colore del bordo
-    fig.update_traces(
+    """ fig.update_traces(
         marker=dict(line=dict(color=border_colors, width=border_width)),
-        hovertemplate='<b>%{label}</b><br>Status: %{color}<br><extra></extra>',
-        customdata=[datasunchart['nodetype']]
-        )  # Cambia il colore del bordo in nero con larghezza 2
+        hovertemplate='<b>%{label}</b><br>Status: %{customdata[0]}<br>Color: %{customdata[1]}<extra></extra>',
+        customdata=datasunchart[['nodetype', 'reference']].values
+        )  # Cambia il colore del bordo in nero con larghezza 2 """
     # Custom legend
     custom_legend = []
     for ref, color in facecolors.items():
@@ -125,41 +137,43 @@ def create_chart_input_from_dict(block_array):
 
 def initialize_data_dict(baseconfig_path):
 
-    base_dict = {}
+    monitoring_socket = "none"
+    block_array = []
+
 
     with open(baseconfig_path, 'r') as f:
         data = json.load(f)
+
+    for element in data:
+
+        if element['processname']=="CommandCenter":
+            continue
     
-    dataprocessor_names = data["dataprocessor_names"]
-    workermanager_names = data["workermanager_names"]
-    workers = data["workers"]
-    monitoring_socket = data["monitoring_socket"]
+        dataprocessor_names = element["processname"]
+        print("DPNAME="+dataprocessor_names)
+        monitoring_socket = element["monitoring_socket"]
+        print("Mon-socket="+monitoring_socket)
 
-    print("Data Processor Names:", dataprocessor_names)
-    print("Worker Manager Names:", workermanager_names)
-    print("Workers:", workers)
-    print("Monitoring Socket:", monitoring_socket)
-
-    block_array = []
-
-    for element in dataprocessor_names:
-        block = Block(element,"",1,"null","dataprocessor")
+        block = Block(dataprocessor_names,"",1,"null","dataprocessor")
         block_array.append(block)
+        
+        workermanager_config = element['manager']
 
-    for element in workermanager_names:
-        block = Block(element,element.split("-")[0],1,"null","workermanager")
-        block_array.append(block)
-
-    for i in range(0,len(workers)):
-
-        workers_number = workers[i]
-
-        for j in range(0,workers_number):
+        for workermanager in workermanager_config:
             
-            block = Block(workermanager_names[i]+"-worker-"+str(j),workermanager_names[i],1,"null","worker")
-            block_array.append(block)
+            workermanager_names = workermanager["name"]
+            print("WM-Name="+monitoring_socket)
 
-             
+            block = Block(dataprocessor_names+"-"+workermanager_names,dataprocessor_names,1,"null","workermanager")
+            block_array.append(block)
+            
+            num_workers = workermanager["num_workers"]  
+            name_workers = workermanager["name_workers"]  
+
+            for i in range(0,num_workers):
+                    
+                    block = Block(dataprocessor_names+"-"+workermanager_names+"-"+name_workers+"-"+str(i),dataprocessor_names+"-"+workermanager_names,1,"null","worker")
+                    block_array.append(block)
 
     return {'block_array':block_array,'monitoring_socket':monitoring_socket}
 
@@ -170,53 +184,62 @@ def update_block_array(block_array,new_dict):
     print("#")
     print(new_dict['header']['pidsource'])
     print("#")
-    dp_name = new_dict['header']['pidsource'].split("-")[1]
-    wm_name = new_dict['header']['pidsource'].split("-")[2]
+    type = new_dict['header']['type']
+    
+    if(type==1):
 
-    wm_status = new_dict['status']
+        
+        dp_name = new_dict['header']['pidsource'].split("-")[0]
+        wm_name = new_dict['header']['pidsource'].split("-")[1]
 
-    dp_status = "null"
+        wm_status = new_dict['workermanagerstatus']
 
-    if wm_status == "Waiting":
-        wm_status = "1"
-    elif wm_status == "Processing":
-        wm_status = "2"
-    else:
-        wm_status = "invalid"
+        #wm_status = int(new_dict['workerstatus'])
 
-    #wm_status = int(new_dict['workerstatus'])
+        wm_queue_lp = new_dict['queue_lp_size']
+        wm_queue_hp = new_dict['queue_hp_size']
 
-    wm_queue_lp = new_dict['queue_lp_size']
-    wm_queue_hp = new_dict['queue_hp_size']
+        wm_queue_results_lp = new_dict['queue_lp_result_size']
+        wm_queue_results_hp = new_dict['queue_hp_result_size']
 
-    wm_queue_results_lp = new_dict['queue_lp_result_size']
-    wm_queue_results_hp = new_dict['queue_hp_result_size']
+        worker_rates = new_dict['worker_rates']
+        worker_tot_events = new_dict['worker_tot_events']
+        worker_status = new_dict['worker_status']
 
-    worker_rates = new_dict['worker_rates']
-    worker_tot_events = new_dict['worker_tot_events']
-    worker_status = new_dict['worker_status']
+        """ for block in block_array:
 
-    for block in block_array:
+            if block.name==dp_name+"-"+wm_name:
+                block.status=str(wm_status)
+                print("update wm status")
+                block.monitoring_data={"wm_queue_lp":wm_queue_lp,
+                                    "wm_queue_hp":wm_queue_hp,
+                                    "wm_queue_results_lp":wm_queue_results_lp,
+                                    "wm_queue_results_hp":wm_queue_results_hp
+                                        }
+        """
+        
+        for key, value in worker_rates.items():
+            for block in block_array:
+                if block.name==dp_name+"-"+wm_name+"-Rate-"+str(key):
+                    block.status=str(int(worker_status[key]))
+                    block.monitoring_data={"rate":worker_rates[key],"tot_event":worker_tot_events[key]}
+        
+    elif type==5:
+        
+        #{'header': {'type': 5, 'subtype': 'info', 'time': 1721649737.8124695,'pidsource': 'RTADP1-Rate', 'pidtarget': '*', 'priority': 'Low'}, 'body': {'level': 1, 'code': 1, 'message': 'Wait for data'}}
+       
+        block_name = new_dict['header']['pidsource']
 
-        if block.name==dp_name:
-            block.status=str(dp_status)
-            print("update dp status")
+        #block_status = str(int(float(new_dict['body']['message'])))
+        block_status = new_dict['body']['message']
 
-        if block.name==dp_name+"-"+wm_name:
-            block.status=str(wm_status)
-            print("update wm status")
-            block.monitoring_data={"wm_queue_lp":wm_queue_lp,
-                                   "wm_queue_hp":wm_queue_hp,
-                                   "wm_queue_results_lp":wm_queue_results_lp,
-                                   "wm_queue_results_hp":wm_queue_results_hp
-                                    }
-
-    for key, value in worker_rates.items():
         for block in block_array:
-            if block.name==dp_name+"-"+wm_name+"-worker-"+str(key):
-                block.status=str(int(worker_status[key]))
-                block.monitoring_data={"rate":worker_rates[key],"tot_event":worker_tot_events[key]}
 
+            if block.name==block_name:
+                block.status=str(block_status)
+                print("update status type 5")
+
+    
     """
     {
     "header": {

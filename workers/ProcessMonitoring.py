@@ -16,7 +16,7 @@ class MonitoringConsumer:
         self.load_configuration(config_file_path, processname)
         self.context = zmq.Context()
         self.socket_monitoring = self.context.socket(zmq.PULL)
-        self.socket_monitoring.bind(self.config.get("monitoring_socket"))
+        self.socket_monitoring.connect(self.config.get("monitoring_socket"))
 
     def receive_and_decode_messages(self):
         while True:

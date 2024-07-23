@@ -40,7 +40,7 @@ class Supervisor1(Supervisor):
 		self.manager_workers.append(manager1)
 
 		indexmanager=1
-		manager2 = WorkerManager1(indexmanager, self, "S22Mean")
+		manager2 = WorkerManager1(indexmanager, self, self.workername[indexmanager])
 		self.setup_result_channel(manager2, indexmanager)
 		manager2.start()
 		self.manager_workers.append(manager2)
