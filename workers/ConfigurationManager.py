@@ -22,23 +22,28 @@ def get_pull_config(address):
         return f"{parts[0]}://*:{parts[2]}"
 
 class ConfigurationManager:
+
     REQUIRED_FIELDS = [
         "processname",
         "dataflow_type",
-        "processing_type",
+        "2processing_type",
         "datasocket_type",
         "data_lp_socket",
         "data_hp_socket",
         "command_socket",
         "monitoring_socket",
-        "manager_result_lp_socket",
-        "manager_result_hp_socket",
-        "manager_result_dataflow_type",
-        "manager_result_socket_type",
         "logs_path",
         "logs_level",
-        "manager_num_workers",
         "comment"
+    ]
+    MANAGER_FIELDS = [
+        "result_socket_type",
+        "result_dataflow_type",
+        "result_lp_socket",
+        "result_hp_socket",
+        "num_workers",
+        "name",
+        "name_workers"
     ]
 
     def __init__(self, file_path):
@@ -53,17 +58,21 @@ class ConfigurationManager:
             #self.validate_configurations(configurations)
             return configurations
         except FileNotFoundError:
-            print(f"Error: File '{config_file}' not found.")
+            print(f"Error: File '{file_path}' not found.")
             return
         except json.JSONDecodeError:
-            print(f"Error: Invalid JSON format in file '{config_file}'.")
+            print(f"Error: Invalid JSON format in file '{file_path}'.")
             return
 
     def validate_configurations(self, configurations):
-        for config in configurations:
-            for field in self.REQUIRED_FIELDS:
-                if field not in config or not config[field]:
-                    raise ValueError(f"Field '{field}' is missing or not well-formed in one or more configurations.")
+            for config in configurations:
+                for field in self.REQUIRED_FIELDS:
+                    if field not in config or not config[field]:
+                        raise ValueError(f"Field '{field}' is missing or not well-formed in one or more configurations.")
+                for manager in config.get("manager", []):
+                    for field in self.MANAGER_FIELDS:
+                        if field not in manager or not manager[field]:
+                            raise ValueError(f"Field '{field}' is missing or not well-formed in one or more manager configurations.")
 
     def create_memory_structure(self):
         structure = {}
@@ -78,15 +87,14 @@ class ConfigurationManager:
     def get_workers_config(self, processorname):
         config = self.get_configuration(processorname)
         if config:
-            result_socket_type = config.get("manager_result_socket_type", [])
-            result_dataflow_type = config.get("manager_result_dataflow_type", [])
-            result_lp_sockets = config.get("manager_result_lp_socket", [])
-            result_hp_sockets = config.get("manager_result_hp_socket", [])
-            num_workers = config.get("manager_num_workers", [])
-            return result_socket_type, result_dataflow_type, result_lp_sockets, result_hp_sockets, num_workers
+            managers = config.get("manager", [])
+            result_socket_type = [m["result_socket_type"] for m in managers]
+            result_dataflow_type = [m["result_dataflow_type"] for m in managers]
+            result_lp_sockets = [m["result_lp_socket"] for m in managers]
+            result_hp_sockets = [m["result_hp_socket"] for m in managers]
+            num_workers = [m["num_workers"] for m in managers]
+            workername = [m["name"] for m in managers]
+            name_workers = [m["name_workers"] for m in managers]
+            return result_socket_type, result_dataflow_type, result_lp_sockets, result_hp_sockets, num_workers, workername, name_workers
         else:
-            return [], [], [], []
-
-
-
-
+            return [], [], [], [], [], [], []
