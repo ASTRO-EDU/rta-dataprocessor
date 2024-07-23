@@ -119,7 +119,7 @@ class Supervisor:
         self.config_manager = ConfigurationManager(config_file)
         self.config=self.config_manager.get_configuration(name)
         print(self.config)
-        self.manager_result_sockets_type, self.manager_result_dataflow_type, self.manager_result_lp_sockets, self.manager_result_hp_sockets, self.manager_num_workers = self.config_manager.get_workers_config(name)
+        self.manager_result_sockets_type, self.manager_result_dataflow_type, self.manager_result_lp_sockets, self.manager_result_hp_sockets, self.manager_num_workers, self.workername, self.name_workers  = self.config_manager.get_workers_config(name)
 
     def start_service_threads(self):
 
