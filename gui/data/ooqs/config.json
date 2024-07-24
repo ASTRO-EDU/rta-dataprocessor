@@ -22,7 +22,7 @@
             "result_hp_socket": "tcp://127.0.0.1:5564",
             "num_workers": 5,
             "name": "Rate",
-            "name_workers": "worker1"
+            "name_workers": "worker"
         },
         {
             "result_socket_type": "none",
