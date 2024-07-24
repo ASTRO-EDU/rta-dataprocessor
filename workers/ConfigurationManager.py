@@ -26,7 +26,7 @@ class ConfigurationManager:
     REQUIRED_FIELDS = [
         "processname",
         "dataflow_type",
-        "2processing_type",
+        "processing_type",
         "datasocket_type",
         "data_lp_socket",
         "data_hp_socket",

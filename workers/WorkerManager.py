@@ -23,6 +23,7 @@ class WorkerManager(threading.Thread):
         #unique ID within the supervisor
         self.manager_id = manager_id
         self.supervisor = supervisor
+        self.workersname = self.supervisor.name_workers[manager_id]
         self.config = self.supervisor.config
         self.logger = self.supervisor.logger
         self.name = name
