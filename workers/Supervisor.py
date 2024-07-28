@@ -9,9 +9,7 @@ from MonitoringPoint import MonitoringPoint
 from WorkerThread import WorkerThread
 from MonitoringThread import MonitoringThread
 from WorkerManager import WorkerManager
-from WorkerProcess import WorkerProcess
 from ConfigurationManager import ConfigurationManager, get_pull_config
-import multiprocessing
 import zmq
 import json
 import queue
@@ -198,10 +196,8 @@ class Supervisor:
     def start_workers(self):
         indexmanager=0
         for manager in self.manager_workers: 
-            if self.processingtype == "thread":
+            if self.processingtype == "thread" or self.processingtype == "process":
                 manager.start_worker_threads(self.manager_num_workers[indexmanager])
-            if self.processingtype == "process":
-                manager.start_worker_processes(self.manager_num_workers[indexmanager])
             indexmanager = indexmanager + 1
 
     def start(self):
@@ -559,10 +555,7 @@ class Supervisor:
 
         # Stop managers
         for manager in self.manager_workers: 
-            if manager.processingtype == "process":
-                manager.stop(fast)
-            else:
-                manager.stop(fast)
+            manager.stop(fast)
             manager.join()
 
         # Stop all internal thread
