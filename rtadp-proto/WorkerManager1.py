@@ -13,13 +13,14 @@ from Worker1 import Worker1
 class WorkerManager1(WorkerManager):
 	def __init__(self, manager_id, supervisor, name = ""):
 		super().__init__(manager_id, supervisor, name)
+		self.manager_id = manager_id
 
 	def start_worker_threads(self, num_threads):
 		super().start_worker_threads(num_threads)
 		#Worker threads
 		for i in range(num_threads):
 			processor = Worker1()
-			thread = WorkerThread(i, self, "Rate", processor)
+			thread = WorkerThread(i, self, self.supervisor.name_workers[self.manager_id], processor)
 			self.worker_threads.append(thread)
 			thread.start()
 
@@ -28,7 +29,7 @@ class WorkerManager1(WorkerManager):
 		# Worker processes
 		for i in range(num_processes):
 			processor = Worker1()
-			process = WorkerProcess(i, self, "Rate", processor)
+			process = WorkerProcess(i, self, self.supervisor.name_workers[self.manager_id], processor)
 			self.worker_processes.append(process)
 			process.start()
 			

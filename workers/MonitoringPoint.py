@@ -56,6 +56,8 @@ class MonitoringPoint:
             self.update("queue_hp_result_size", self.manager.result_hp_queue.qsize())
             self.update("workersstatusinit", self.manager.workersstatusinit)
             self.update("workersstatus", self.manager.workersstatus)
+            self.update("workersname", self.manager.workersname)
+
 
             if self.manager.processingtype == "process":
                 for worker in self.manager.worker_processes:

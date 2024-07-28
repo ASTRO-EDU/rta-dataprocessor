@@ -22,6 +22,7 @@ import sys
 import psutil
 import os
 from WorkerLogger import WorkerLogger
+import traceback
 
 class Supervisor:
     def __init__(self, config_file="config.json", name = "None"):
@@ -91,6 +92,7 @@ class Supervisor:
         except Exception as e:
             # Handle any other unexpected exceptions
             print(f"ERROR: An unexpected error occurred: {e}")
+            traceback.print_exc()
             self.logger.warning(f"ERROR: An unexpected error occurred: {e}", extra=self.globalname)
             sys.exit(1)
 
@@ -107,6 +109,7 @@ class Supervisor:
                 signal.signal(signal.SIGTERM, self.handle_signals)
                 signal.signal(signal.SIGINT, self.handle_signals)
             except ValueError:
+                traceback.print_exc()
                 print("WARNING! Signal only works in main thread. It is not possible to set up signal handlers!")
                 self.logger.warning("WARNING! Signal only works in main thread. It is not possible to set up signal handlers!", extra=self.globalname)
             self.status = "Initialised"
@@ -119,7 +122,7 @@ class Supervisor:
         self.config_manager = ConfigurationManager(config_file)
         self.config=self.config_manager.get_configuration(name)
         print(self.config)
-        self.manager_result_sockets_type, self.manager_result_dataflow_type, self.manager_result_lp_sockets, self.manager_result_hp_sockets, self.manager_num_workers = self.config_manager.get_workers_config(name)
+        self.manager_result_sockets_type, self.manager_result_dataflow_type, self.manager_result_lp_sockets, self.manager_result_hp_sockets, self.manager_num_workers, self.workername, self.name_workers  = self.config_manager.get_workers_config(name)
 
     def start_service_threads(self):
 
