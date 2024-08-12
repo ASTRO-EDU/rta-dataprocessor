@@ -80,11 +80,13 @@ class Supervisor:
             self.socket_command.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
             
             #monitoring
-            self.socket_monitoring = self.context.socket(zmq.PUSH)
-            self.socket_monitoring.connect(self.config.get("monitoring_socket"))
-            # self.monitoringpoint = MonitoringPoint(self)
-            # self.monitoring_thread = None
-
+            #pushpull
+            #self.socket_monitoring = self.context.socket(zmq.PUSH)
+            #self.socket_monitoring.connect(self.config.get("monitoring_socket"))
+            #pubsub
+            self.socket_monitoring = self.context.socket(zmq.PUB)
+            self.socket_monitoring.bind(self.config.get("monitoring_socket"))
+            
             #results
             self.socket_lp_result = [None] * 100
             self.socket_hp_result = [None] * 100
