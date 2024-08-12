@@ -205,6 +205,7 @@ def update_block_array(block_array,new_dict):
         worker_rates = new_dict['worker_rates']
         worker_tot_events = new_dict['worker_tot_events']
         worker_status = new_dict['worker_status']
+        workersname = new_dict['workersname']
 
         """ for block in block_array:
 
@@ -220,7 +221,7 @@ def update_block_array(block_array,new_dict):
         
         for key, value in worker_rates.items():
             for block in block_array:
-                if block.name==dp_name+"-"+wm_name+"-Rate-"+str(key):
+                if block.name==dp_name+"-"+wm_name+"-"+workersname+"-"+str(key):
                     block.status=str(int(worker_status[key]))
                     block.monitoring_data={"rate":worker_rates[key],"tot_event":worker_tot_events[key]}
         
