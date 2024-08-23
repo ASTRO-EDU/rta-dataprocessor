@@ -86,7 +86,10 @@ class Supervisor:
             #pubsub
             self.socket_monitoring = self.context.socket(zmq.PUB)
             print(self.config.get("monitoring_socket"))
-            self.socket_monitoring.connect(self.config.get("monitoring_socket"))
+            if(self.config.get("monitoring_forwarder")=="on"):
+                self.socket_monitoring.connect(self.config.get("monitoring_socket"))
+            else:
+                self.socket_monitoring.bind(self.config.get("monitoring_socket"))
             
             #results
             self.socket_lp_result = [None] * 100

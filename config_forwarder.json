@@ -3,7 +3,7 @@
         "processname": "MonitoringForward",
         "frontend_socket": "tcp://127.0.0.1:5561",
         "backend_socket": "tcp://127.0.0.1:5562",
-        "monitoring_forwarder":"off"
+        "monitoring_forwarder":"on"
       
     },
 	{
@@ -19,7 +19,7 @@
     "data_hp_socket": "tcp://127.0.0.1:5565",
     "command_socket": "tcp://127.0.0.1:5568",
     "monitoring_socket": "tcp://127.0.0.1:5561",
-    "monitoring_forwarder":"off",
+    "monitoring_forwarder":"on",
     "manager": [
         {
             "result_socket_type": "pubsub",
@@ -52,8 +52,8 @@
         "data_lp_socket": "tcp://127.0.0.1:5566",
         "data_hp_socket": "tcp://127.0.0.1:5567",
         "command_socket": "tcp://127.0.0.1:5568",
-        "monitoring_socket": "tcp://127.0.0.1:5562",
-        "monitoring_forwarder":"off",
+        "monitoring_socket": "tcp://127.0.0.1:5561",
+        "monitoring_forwarder":"on",
         "manager": [
         {
             "result_socket_type": "none",

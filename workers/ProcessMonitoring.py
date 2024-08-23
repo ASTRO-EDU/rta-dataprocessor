@@ -18,40 +18,47 @@ class MonitoringConsumer:
         self.context = zmq.Context()
         #self.socket_monitoring = self.context.socket(zmq.PULL)
         #self.socket_monitoring.bind(self.config.get("monitoring_socket"))
-        self.socket_monitoring = self.context.socket(zmq.SUB)
-        self.socket_monitoring.connect(self.config.get("backend_socket"))
-        self.socket_monitoring.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
-        """
-        with open(config_file_path, 'r') as file:
-            data = json.load(file)
+    
         
-        result = [(item['processname'], item['monitoring_socket']) 
-          for item in data 
-          if item['processname'] in processname]
+        if(self.config.get("monitoring_forwarder")=="on"):
+            self.socket_monitoring = self.context.socket(zmq.SUB)
+            self.socket_monitoring.connect(self.config.get("backend_socket"))
+            self.socket_monitoring.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
+        else:
         
-        self.context = zmq.Context()
-        self.socket_monitoring = self.context.socket(zmq.SUB)
-        self.socket_monitoring.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
-        
-        
-        # Stampare il risultato
-        for processname, monitoring_socket in result:
-            print(f"Processname: {processname}, Monitoring Socket: {monitoring_socket}")
+            with open(config_file_path, 'r') as file:
+                data = json.load(file)
             
-            self.socket_monitoring.connect(monitoring_socket)
-            #self.socket_monitoring.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
-        """
+            result = [(item['processname'], item['monitoring_socket']) 
+            for item in data 
+            if item['processname'] not in ["MonitoringForward","CommandCenter"]]
+            
+            self.context = zmq.Context()
+            self.socket_monitoring = self.context.socket(zmq.SUB)
+            self.socket_monitoring.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
+            
+            
+            # Stampare il risultato
+            for processname, monitoring_socket in result:
+                print(f"Processname: {processname}, Monitoring Socket: {monitoring_socket}")
+                
+                self.socket_monitoring.connect(monitoring_socket)
+                #self.socket_monitoring.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
+            
 
     def receive_and_decode_messages(self):
+        
         while True:
             message = self.socket_monitoring.recv_string()
             decoded_message = json.loads(message)
             print("Received and decoded message:", decoded_message)
+            
 
     def load_configuration(self, config_file, name="CommandCenter"):
         self.config_manager = ConfigurationManager(config_file)
         self.config=self.config_manager.get_configuration(name)
         print(self.config)
+        
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
