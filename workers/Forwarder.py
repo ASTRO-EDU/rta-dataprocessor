@@ -3,8 +3,9 @@
 #
 # Authors:
 #
-#    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 #    Nicolo' Parmiggiani <nicolo.parmiggiani@inaf.it>
+#    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
+#
 
 import zmq
 import sys
@@ -18,11 +19,8 @@ class Forwarder:
         self.processname = processname
         self.load_configuration(config_file_path, processname)
 
-        
-        
         # Creazione del contesto ZMQ
         self.context = zmq.Context()
-
     
     def start(self):
         #Creazione del socket SUB (per ricevere messaggi dai publisher)

@@ -22,7 +22,7 @@ class MonitoringConsumer:
         
         if(self.config.get("monitoring_forwarder")=="on"):
             self.socket_monitoring = self.context.socket(zmq.SUB)
-            self.socket_monitoring.connect(self.config.get("backend_socket"))
+            self.socket_monitoring.connect(self.config.get("monitoring_socket"))
             self.socket_monitoring.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
         else:
         
