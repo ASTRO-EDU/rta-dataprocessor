@@ -122,7 +122,7 @@ class WorkerThread(threading.Thread):
         #self.supervisor.send_info(1, str(self.status), self.fullname, code=1, priority="Low")
         self.processed_data_count += 1
 
-        dataresult = self.worker.process_data(data)
+        dataresult = self.worker.process_data(data,priority)
 
         #if dataresult != None: 
         if dataresult != None and self.tokenresult == 0:            
