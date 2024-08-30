@@ -149,10 +149,16 @@ def initialize_data_dict(baseconfig_path):
         if element['processname']=="CommandCenter":
             continue
     
+        if element['processname']=="MonitoringForward":
+            monitoring_socket = element["monitoring_socket"]
+            print("Mon-socket="+monitoring_socket)
+            
+        if element['processname']=="MonitoringForward":
+            continue
+    
         dataprocessor_names = element["processname"]
         print("DPNAME="+dataprocessor_names)
-        monitoring_socket = element["monitoring_socket"]
-        print("Mon-socket="+monitoring_socket)
+        
 
         block = Block(dataprocessor_names,"",1,"null","dataprocessor")
         block_array.append(block)
@@ -363,7 +369,9 @@ with open('../data/ooqs/WorkerManager-RTADP2-Rate.json', 'r') as f:
 # Funzione per la ricezione di messaggi da ZeroMQ
 def zeromq_listener():
     context = zmq.Context()
-    socket = context.socket(zmq.PULL)
+    socket = context.socket(zmq.SUB)
+    socket.setsockopt_string(zmq.SUBSCRIBE, "")
+    print("## MON SOCKET## "+monitoring_socket)
     socket.connect(monitoring_socket)  # Esempio: connessione TCP su localhost, porta 5555
 
     print("connect##########")
