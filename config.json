@@ -3,6 +3,7 @@
         "processname": "MonitoringForward",
         "frontend_socket": "tcp://127.0.0.1:5561",
         "backend_socket": "tcp://127.0.0.1:5562",
+        "monitoring_socket": "tcp://127.0.0.1:5562",
         "monitoring_forwarder":"off"
       
     },
