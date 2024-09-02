@@ -24,13 +24,13 @@ class Forwarder:
     
     def start(self):
         #Creazione del socket SUB (per ricevere messaggi dai publisher)
-        self.frontend = self.context.socket(zmq.SUB)
-        self.frontend.bind(self.config.get("frontend_socket"))
-        self.frontend.setsockopt_string(zmq.SUBSCRIBE, "")  # Sottoscrive a tutti i messaggi
+        self.frontend = self.context.socket(zmq.PULL)
+        self.frontend.bind(self.config.get("forwarder_frontend_socket"))
+        #self.frontend.setsockopt_string(zmq.SUBSCRIBE, "")  # Sottoscrive a tutti i messaggi
 
         # Creazione del socket PUB (per inoltrare i messaggi ai subscriber)
         self.backend = self.context.socket(zmq.PUB)
-        self.backend.bind(self.config.get("backend_socket"))
+        self.backend.bind(self.config.get("forwarder_backend_socket"))
 
         # Utilizzo di zmq.proxy per collegare i socket
         try:
@@ -53,5 +53,5 @@ class Forwarder:
 if __name__ == "__main__":
     
     config_file_path = sys.argv[1]
-    forwarder = Forwarder(config_file_path,"MonitoringForward")
+    forwarder = Forwarder(config_file_path,"Monitoring")
     forwarder.start()
