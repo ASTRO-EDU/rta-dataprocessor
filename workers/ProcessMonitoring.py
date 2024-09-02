@@ -16,8 +16,6 @@ class MonitoringConsumer:
         self.processname = processname
         self.load_configuration(config_file_path, processname)
         self.context = zmq.Context()
-        #self.socket_monitoring = self.context.socket(zmq.PULL)
-        #self.socket_monitoring.bind(self.config.get("monitoring_socket"))
     
         print(self.config.get("monitoring_socket"))
         if(self.config.get("monitoring_forwarder")=="on"):

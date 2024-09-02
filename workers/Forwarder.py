@@ -19,26 +19,25 @@ class Forwarder:
         self.processname = processname
         self.load_configuration(config_file_path, processname)
 
-        # Creazione del contesto ZMQ
+        
         self.context = zmq.Context()
     
     def start(self):
-        #Creazione del socket SUB (per ricevere messaggi dai publisher)
+      
         self.frontend = self.context.socket(zmq.PULL)
         self.frontend.bind(self.config.get("forwarder_frontend_socket"))
-        #self.frontend.setsockopt_string(zmq.SUBSCRIBE, "")  # Sottoscrive a tutti i messaggi
-
-        # Creazione del socket PUB (per inoltrare i messaggi ai subscriber)
+        
+        
         self.backend = self.context.socket(zmq.PUB)
         self.backend.bind(self.config.get("forwarder_backend_socket"))
 
-        # Utilizzo di zmq.proxy per collegare i socket
+        
         try:
             zmq.proxy(self.frontend, self.backend)
         except zmq.ContextTerminated:
             print("Context terminated")
         finally:
-            # Pulizia delle risorse
+           
             self.frontend.close()
             self.backend.close()
             self.context.term()
