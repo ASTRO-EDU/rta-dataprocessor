@@ -1,10 +1,11 @@
 [
     {
         "processname": "Monitoring",
-        "monitoring_forwarder":"off",
-        "forwarder_frontend_socket": "none",
-        "forwarder_backend_socket": "none",
-        "monitoring_socket": "tcp://127.0.0.1:5561"
+        "monitoring_forwarder":"on",
+        "forwarder_frontend_socket": "tcp://127.0.0.1:5561",
+        "forwarder_backend_socket": "tcp://127.0.0.1:5562",
+        "monitoring_socket": "tcp://127.0.0.1:5562"
+      
     },
 	{
         "processname": "CommandCenter",
