@@ -11,6 +11,7 @@ import sys
 from ConfigurationManager import ConfigurationManager
 
 class MonitoringConsumer:
+    
     def __init__(self, config_file_path, processname=[]):
         
         self.processname = processname

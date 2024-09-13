@@ -3,8 +3,10 @@
 #
 # Authors:
 #
+#    Nicolò Parmiggiani <nicolo.parmiggiani@inaf.it>
 #    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 #
+
 import zmq
 import json
 import sys
@@ -47,10 +49,12 @@ class MonitoringConsumerThread:
                 message = self.socket_monitoring.recv_string()
                 decoded_message = json.loads(message)
                 self.message_queue.put(decoded_message)
+                print(decoded_message)
             except zmq.Again:
                 # Questo blocco viene eseguito se scade il timeout
                 time.sleep(0.01)
-                print("stop monitoring")
+        
+        print("exit monitoring") 
                 
         
         
@@ -61,7 +65,7 @@ class MonitoringConsumerThread:
         
         
     def stop_monitoring_thread(self):
-        
+        print("stop monitoring thread") 
         self.run_monitoring = False
         self.monitoring_thread.join()
 
@@ -73,7 +77,7 @@ class MonitoringConsumerThread:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python ProcessMonitoring.py <config_file>")
+        print("Usage: python ProcessMonitoringThread.py <config_file>")
         sys.exit(1)
 
     config_file_path = sys.argv[1]
@@ -82,6 +86,7 @@ if __name__ == "__main__":
     monitoring_consumer = MonitoringConsumerThread(config_file_path, "Monitoring")
 
     try:
-        monitoring_consumer.receive_and_decode_messages()
+        monitoring_consumer.start_monitoring_thread()
     except KeyboardInterrupt:
+        monitoring_consumer.stop_monitoring_thread()
         print("Consumer stopped.")
