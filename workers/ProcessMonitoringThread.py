@@ -65,9 +65,11 @@ class MonitoringConsumerThread:
         
         
     def stop_monitoring_thread(self):
-        print("stop monitoring thread") 
+        
+        print("stop monitoring thread1") 
         self.run_monitoring = False
         self.monitoring_thread.join()
+        print("stop monitoring thread2") 
 
     def load_configuration(self, config_file, name="CommandCenter"):
         self.config_manager = ConfigurationManager(config_file)
