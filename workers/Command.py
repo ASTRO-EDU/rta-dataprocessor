@@ -65,5 +65,6 @@ class Command:
         print(self.config)
 
 
-    def __del__(self):
-        print(f"Oggetto {self.name} distrutto")
+    def release_socket(self):
+        print(f"release socket")
+        self.socket_command.close()
