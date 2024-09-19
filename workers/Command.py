@@ -65,6 +65,3 @@ class Command:
         print(self.config)
 
 
-    def release_socket(self):
-        print(f"release socket")
-        self.socket_command.close()
