@@ -31,6 +31,9 @@ class AvroDataGenerator:
         if self.config.get("datasocket_type") == "pubsub":
             self.socket = self.context.socket(zmq.PUB)
 
+        print("Connecting hp to:" , self.config.get("data_hp_socket"))
+        print("Connecting lp to:" , self.config.get("data_hp_socket"))
+
         if self.queue == "hp":
             if self.config.get("datasocket_type") == "pushpull":
                 self.socket.connect(self.config.get("data_hp_socket"))
@@ -126,10 +129,10 @@ class AvroDataGenerator:
 
     def calcdatarate(self):
         while True:
-            print("dc")
-            time.sleep(60)        
+            update_interval=10
+            time.sleep(1)        
             elapsed_time = time.time() - self.next_time
-            if elapsed_time > 60:
+            if elapsed_time > update_interval:
                 self.next_time = time.time()
                 self.processing_rate = self.processed_data_count / elapsed_time
                 print(self.processing_rate)
