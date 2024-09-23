@@ -13,7 +13,7 @@ class Worker2(WorkerBase):
 	def __init__(self):
 		super().__init__()
 
-	def process_data(self, data):
+	def process_data(self, data, priority):
 		datadict = json.loads(data)
 		print(datadict["timestamp"])
 		#time.sleep(0.1)

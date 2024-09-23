@@ -45,7 +45,7 @@ class Worker1(WorkerBase):
 		super().config(configuration)
 
 
-	def process_data(self, data):
+	def process_data(self, data, priority):
 
 		# Custom processing logic for Worker1
 		#print("Process data...")
