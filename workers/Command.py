@@ -63,5 +63,10 @@ class Command:
         self.config_manager = ConfigurationManager(config_file)
         self.config=self.config_manager.get_configuration(name)
         print(self.config)
+        
+    def release_socket(self):
+        self.socket_command.close()
+        self.context.term()
+        
 
 

@@ -10,6 +10,7 @@ import zmq
 import threading
 from queue import Queue
 import queue 
+import sys
 
 prev_interval = -1
 prev_nclicks  = 'none'
@@ -149,11 +150,11 @@ def initialize_data_dict(baseconfig_path):
         if element['processname']=="CommandCenter":
             continue
     
-        if element['processname']=="MonitoringForward":
+        if element['processname']=="Monitoring":
             monitoring_socket = element["monitoring_socket"]
             print("Mon-socket="+monitoring_socket)
             
-        if element['processname']=="MonitoringForward":
+        if element['processname']=="Monitoring":
             continue
     
         dataprocessor_names = element["processname"]
@@ -227,6 +228,8 @@ def update_block_array(block_array,new_dict):
         
         for key, value in worker_rates.items():
             for block in block_array:
+                print(block.name)
+                print(dp_name+"-"+wm_name+"-"+workersname+"-"+str(key))
                 if block.name==dp_name+"-"+wm_name+"-"+workersname+"-"+str(key):
                     block.status=str(int(worker_status[key]))
                     block.monitoring_data={"rate":worker_rates[key],"tot_event":worker_tot_events[key]}
@@ -338,7 +341,7 @@ def add_message_processed(count):
     count=count+1
     return count
 # initialize the data dictionary following the base config
-baseconfig_path = "../data/ooqs/config.json"
+baseconfig_path = sys.argv[1]
 block_array = []
 count_message_processed = 0
 return_dict = initialize_data_dict(baseconfig_path)
@@ -499,5 +502,5 @@ def update_sunburst(n_intervals):
 # Esegui l'app
 if __name__ == '__main__':
     host = '0.0.0.0'
-    port = 8050
+    port = 8060
     app.run_server(host=host, port=port, debug=False,use_reloader=False)
