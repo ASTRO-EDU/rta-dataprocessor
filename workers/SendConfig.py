@@ -20,19 +20,15 @@ def main():
      
     config_file_path = sys.argv[1]
 
+    pidtarget_processname = sys.argv[2]
 
-    command_subtype = sys.argv[2].lower()
-    pidtarget_processname = sys.argv[3]
-
-    if command_subtype not in ["shutdown", "cleanedshutdown", "start", "stop", "startprocessing", "stopprocessing", "reset", "startdata", "stopdata",  "getstatus"]:
-        print("Invalid command type. Use 'shutdown', 'cleanedshutdown', 'start', 'stop', 'startprocessing', 'stopprocessing', 'reset', 'startdata', 'stopdata',  or 'getstatus'.")
-        sys.exit(1)
-
+    config_json = sys.argv[3]
+    
     command = Command(config_file_path, "CommandCenter")  # Adjust the address based on your setup
 
     try:
         
-        command.send_command(command_subtype, pidtarget_processname)
+        command.send_configuration(pidtarget_processname,config_json)
 
     except KeyboardInterrupt:
         print("Command generation stopped.")

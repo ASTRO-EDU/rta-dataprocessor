@@ -39,11 +39,11 @@ class Supervisor1(Supervisor):
 		manager1.start()
 		self.manager_workers.append(manager1)
 
-		# indexmanager=1
-		# manager2 = WorkerManager1(indexmanager, self, self.workername[indexmanager])
-		# self.setup_result_channel(manager2, indexmanager)
-		# manager2.start()
-		# self.manager_workers.append(manager2)
+		indexmanager=1
+		manager2 = WorkerManager1(indexmanager, self, self.workername[indexmanager])
+		self.setup_result_channel(manager2, indexmanager)
+		manager2.start()
+		self.manager_workers.append(manager2)
 
 	#to be reimplemented ####
 	#Decode the data before load it into the queue. For "dataflowtype": "binary"

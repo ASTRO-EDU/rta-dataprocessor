@@ -14,7 +14,7 @@ class Supervisor2(Supervisor):
 
 	def start_managers(self):
 		indexmanager=0
-		manager1 = WorkerManager2(indexmanager, self, "Rate")
+		manager1 = WorkerManager2(indexmanager, self, self.workername[indexmanager])
 		manager1.start()
 		self.manager_workers.append(manager1)
 
