@@ -20,16 +20,17 @@ class WorkerManager1(WorkerManager):
 		#Worker threads
 		for i in range(num_threads):
 			processor = Worker1()
-			thread = WorkerThread(i, self, self.supervisor.name_workers[self.manager_id], processor)
+			thread = WorkerThread(i, self, self.supervisor.name_workers[self.manager_id], processor, self._workers_stop_event)
 			self.worker_threads.append(thread)
 			thread.start()
+			#TODO: start_worker_threads must be implemented in WorkerManager. Just function returning processor object must be defined here 
 
 	def start_worker_processes(self, num_processes):
 		super().start_worker_processes(num_processes)
 		# Worker processes
 		for i in range(num_processes):
 			processor = Worker1()
-			process = WorkerProcess(i, self, self.supervisor.name_workers[self.manager_id], processor)
+			process = WorkerProcess(i, self, self.supervisor.name_workers[self.manager_id], processor, self._workers_stop_event)
 			self.worker_processes.append(process)
 			process.start()
-			
+			#TODO: start_worker_processes must be implemented in WorkerManager. Just function returning processor object must be defined here 
