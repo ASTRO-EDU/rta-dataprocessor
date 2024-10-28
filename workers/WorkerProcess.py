@@ -7,6 +7,7 @@
 #
 import queue
 import multiprocessing
+import signal
 import time
 import zmq
 from multiprocessing import Event, Queue, Process
@@ -15,7 +16,7 @@ import psutil
 import traceback
 
 class WorkerProcess(Process):
-    def __init__(self, worker_id, manager, name, worker):
+    def __init__(self, worker_id, manager, name, worker, event): #Add a shared event, otherwise you cannot interact with an event defined in object init when running into a different process. Memory is not shared
         super().__init__()
 
         self.worker = worker
@@ -44,7 +45,7 @@ class WorkerProcess(Process):
         self.total_processed_data_count = 0
         self.processing_rate = 0
 
-        self._stop_event = Event()  # Set the stop event
+        self._stop_event = event  # Set the stop event
 
         #0 initialised
         #1 waiting
@@ -60,22 +61,37 @@ class WorkerProcess(Process):
         self.tokenresult = self.worker_id
         self.tokenreading = self.worker_id
 
-        print(f"{self.globalname} started {self.pidprocess}")
+        print(f"{self.globalname} started {self.pidprocess}") # pidprocess is the same of Supervisor. the init happens before forking the new process
         self.logger.system(f"WorkerProcess started", extra=self.globalname)
 
     def stop(self):
+        """This method is deprecated.
+        
+        you cannot call a method is a WorkerProcess instance while running into child process. the result is that you call the stop method of the object in the parent.
+        also parent process has an instance of workerprocess, because to fork a child you need to declare an object instance before forking. fork happens at workerprocess.start() method. after you cannot interact anymore with the stop method you think
+        """
         self.timer.cancel()
         time.sleep(0.1)
         self._stop_event.set()  # Set the stop event
-
     def config(self, configuration):
         self.worker.config(configuration)
 
     def run(self):
+        
+        ## !!Disable signal handling.!! ##
+        # This is the real reason why rtadp was able to close job. 
+        # SIGINT was handled to call command_shutdown in child processes, but this method is not good since every process will close but will raise errors in joining 
+        signal.signal(signal.SIGINT, signal.SIG_IGN) #ignore ALL the signals handled from Supervisor. 
+        # signal.signal(signal.SIGTERM, signal.SIG_IGN) #not tried yet
+        #Note: for ACS, it should be okay ignore them since workers will be created outside ACS
+        
+        
         self.start_timer(1)
-
+        self.pidprocess = psutil.Process().pid
+        print(f"{self.globalname} started with child PID: {self.pidprocess}") # pidprocess is the same of Supervisor. start method happens into forked process
+        
         try:
-            while not self._stop_event.is_set():
+            while not self._stop_event.is_set(): #TODO: consider to check with an OR also queue size to complete tasks after receiving stop
                 time.sleep(0.0001) #must be 0
 
                 if self.manager.processdata_shared.value == 1: 
