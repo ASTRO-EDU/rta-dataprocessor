@@ -78,6 +78,7 @@ class Supervisor:
             self.socket_command = self.context.socket(zmq.SUB)
             self.socket_command.connect(self.config.get("command_socket"))
             self.socket_command.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
+            self.socket_command.setsockopt(zmq.RCVTIMEO, 1000)  # 1-second timeout and avoid deadlock because recv_string indefinitely wait. To close start() method it is needed to send another command when continueall is already false;  this involve to send a signal calling the shutdown, then send a command to exit start. 
             
             #monitoring
             #pushpull
@@ -218,7 +219,7 @@ class Supervisor:
             while self.continueall:
                 self.listen_for_commands()
                 time.sleep(1)  # To avoid 100 per cent CPU
-        except KeyboardInterrupt:
+        except KeyboardInterrupt: ##TODO:  KeyboardInterrupt is not handled when a signal handler overrides SIGINT behaviour. Is this a featree for ACS, when no handler can be set?
             print("Keyboard interrupt received. Terminating.")
             self.command_shutdown()
 
@@ -379,13 +380,12 @@ class Supervisor:
 
     def listen_for_commands(self):
         while self.continueall:
-            print("Waiting for commands...")
-            self.logger.system("Waiting for commands...", extra=self.globalname)
-            #try:
-            command = json.loads(self.socket_command.recv_string())
-            self.process_command(command)
-            #except zmq.error.ZMQError:
-            #    print("WARNING! zmq.error.ZMQError")
+            self.logger.debug("Waiting for commands...", extra=self.globalname)
+            try:
+                command = json.loads(self.socket_command.recv_string())
+                self.process_command(command)
+            except zmq.error.ZMQError:
+               self.logger.debug("No Commands Received. Now I can terminate", extra=self.globalname)
  
 
         print("End listen_for_commands")
