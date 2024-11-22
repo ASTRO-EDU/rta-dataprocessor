@@ -13,7 +13,7 @@ import zmq
 from threading import Timer
 
 class WorkerThread(threading.Thread):
-    def __init__(self, worker_id, manager, name, worker):
+    def __init__(self, worker_id, manager, name, worker, event): #Add shared event just for compliant function interface between workers
         super().__init__()
 
         self.worker = worker
@@ -40,7 +40,7 @@ class WorkerThread(threading.Thread):
         self.total_processed_data_count = 0
         self.processing_rate = 0
 
-        self._stop_event = threading.Event()  # Set the stop event
+        self._stop_event = event  # Set the stop event
 
         self.processdata = 0
 
@@ -54,7 +54,7 @@ class WorkerThread(threading.Thread):
         print(f"{self.globalname} started")
         self.logger.system(f"WorkerThread started", extra=self.globalname)
 
-    def stop(self):
+    def stop(self): #TODO: stop could be deprecated to keep similar interface to processes
         self.status = 16 #stop
         #self.supervisor.send_info(1, str(self.status), self.fullname, code=1, priority="Low")
         self._stop_event.set()  # Set the stop event

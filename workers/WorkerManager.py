@@ -54,6 +54,7 @@ class WorkerManager(threading.Thread):
             self.high_priority_queue = queue.Queue()
             self.result_lp_queue = queue.Queue()
             self.result_hp_queue = queue.Queue()
+            self._workers_stop_event = threading.Event() #shared event to stop threads. just for compatible interface with workerprocess
 
         #input queue for processes
         if self.processingtype == "process":
@@ -61,6 +62,7 @@ class WorkerManager(threading.Thread):
             self.high_priority_queue = multiprocessing.Queue()
             self.result_lp_queue = multiprocessing.Queue()
             self.result_hp_queue = multiprocessing.Queue()
+            self._workers_stop_event = multiprocessing.Event() #shared event for processes. necessary
 
 
         self.monitoringpoint = None
@@ -349,9 +351,15 @@ class WorkerManager(threading.Thread):
                 print("End closing queues")
                 self.logger.system("End closing queues", extra=self.globalname)
 
-        for process in self.worker_processes:
-            process.stop()
-            process.join()
+        self._workers_stop_event.set() #set the event stopping threads or processes
+        
+        for process in self.worker_processes: #removed stop method from processing, it does not work
+            if process.is_alive(): #check if a child is active
+                print(f"Joining process {process.pid}")
+                process.join()
+            else:
+                print(f"Process {process.pid} is not alive, skipping join.")
+
         # Stop worker threads
         for thread in self.worker_threads:
             thread.stop()
