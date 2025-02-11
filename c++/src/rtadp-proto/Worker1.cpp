@@ -170,22 +170,18 @@ void Worker1::printGenericDatum(const avro::GenericDatum& datum, int indent = 0)
 
 ////////////////////////////////////////////
 std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int priority) {
-    std::vector<uint8_t> binary_result;
-
-    
-    // result["data"] = "stringa_vuota";
+    std::vector<uint8_t> binary_result;    
     // result["dataType"] = "binary";
 
     std::cout << "Dentro Worker1::processData " << std::endl;
-    std::cout << "Received data size: " << data.size() << std::endl;
+    std::cout << "Received data size: " << data.size() << std::endl;    // Size of the binary buffer
 
     std::string dataflow_type = get_supervisor()->dataflowtype;
 
     if (dataflow_type == "binary") {
 
-        std::cout << "Dentro Worker1::processData DATAFLOWTYPE BINARY " << std::endl;
+        std::cout << "Dentro Worker1::processData con DATAFLOWTYPE == BINARY" << std::endl;
         std::cout << "\n RICEZIONE DI Worker1::processData():" << std::endl;
-
 
         // Verifica dimensione minima
         if (data.size() < sizeof(int32_t)) {
@@ -195,21 +191,15 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
 
         // Estrai la dimensione del payload
         int32_t size;
-        // std::memcpy(&size, data.data(), sizeof(int32_t)); // Copia i primi 4 byte in `size`
+        std::memcpy(&size, data.data(), sizeof(int32_t));  // Read the size from the buffer
 
-        // Verifica validità della dimensione
         if (size <= 0 || size > static_cast<int32_t>(data.size() - sizeof(int32_t))) {
             std::cerr << "Invalid size value: " << size << std::endl;
             return binary_result;
         }
 
-        // Copia il payload in un vettore separato
-        std::vector<uint8_t> vec(size);
-        // std::memcpy(vec.data(), data.data() + sizeof(int32_t), size);
-
         const HeaderWF* receivedPacket = reinterpret_cast<const HeaderWF*>(data.data());
         // std::memcpy(&receivedPacket, vec.data(), sizeof(HeaderWF));
-
         // std::cout << "Ci sono4" << std::endl;
 
         // Verify the content of the debufferized data
@@ -219,21 +209,18 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
 
         HeaderWF::print(*receivedPacket, 10);
 
-        // Test        
-        /*  }
-        else {
-            std::cerr << "Error: Not enough data to decode HeaderWF." << std::endl;
-        } */
-
         //result["data"] = data;
-        
         // Simulate processing
         //std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(random_duration())));
 
-        binary_result.insert(binary_result.end(), data.begin(), data.end());
+        // Copia il payload in un vettore separato
+        std::vector<uint8_t> vec(size);
+        std::memcpy(vec.data(), data.data() + sizeof(int32_t), size);
+
+        // binary_result.insert(binary_result.end(), data.begin(), data.end());
+        binary_result.insert(binary_result.end(), vec.begin(), vec.end());  // Ritorna il payload del pacchetto per caricarlo sulla coda
     } 
 
-    
     else if (dataflow_type == "filename") {
         nlohmann::json result;
 
@@ -249,8 +236,6 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
 
         std::string json_str = result.dump();
         binary_result = std::vector<uint8_t>(json_str.begin(), json_str.end());
-
-
     }
     else if (dataflow_type == "string") {
         nlohmann::json result;
@@ -269,7 +254,6 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
         std::cout << "binary_result: " << binary_result.size() << std::endl;
     }
     
-
     std::cout << "Esco da Worker1::processData " << std::endl;
 
     return binary_result;

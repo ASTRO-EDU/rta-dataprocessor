@@ -76,9 +76,8 @@ void WorkerThread::run() {
                         auto low_priority_data = low_priority_queue->get();
                         manager->change_token_reading();
 
-                        std::cout << "WorkerThread::run: ENTRO IN WorkerThread::process_data" << std::endl;
-
                         if (!low_priority_data.empty()) {
+                            std::cout << "WorkerThread::run: ENTRO IN WorkerThread::process_data" << std::endl;
                             process_data(low_priority_data, 0);
                         }
                         else {
@@ -216,15 +215,11 @@ void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) 
     }
 
     std::cout << "DENTRO WorkerThread::process_data  " << std::endl;
-
     auto dataresult = worker->processData(data, priority);
-
     std::cout << "TORNATO IN WorkerThread::process_data  " << std::endl;
 
     // std::cout << "DDDDDDDDDD: " << dataresult << std::endl;
-
     // auto dataresult_string = dataresult["data"].get<std::string>();     
-    // std::cout << "eeeeeeeeee: " << dataresult_string << std::endl;
 
     std::cout << "WorkerThread::process_data: DIMENSIONE: " << dataresult.size() << std::endl;
 
@@ -233,8 +228,6 @@ void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) 
 
         if (priority == 0) {
             manager->getResultLpQueue()->push(dataresult);
-
-
         } 
         else {
             manager->getResultHpQueue()->push(dataresult);

@@ -552,8 +552,6 @@ void Supervisor::listen_for_lp_data() {
 
 
             try {
-
-
                 auto result = socket_lp_data->recv(data, flags);
                 int err_code = zmq_errno();
 
@@ -566,7 +564,6 @@ void Supervisor::listen_for_lp_data() {
                     }
 
                     std::cout << "Fuori dal while" << std::endl;
-
                     continue; // Keep looking for commands
                 }
             }
@@ -584,11 +581,6 @@ void Supervisor::listen_for_lp_data() {
 
 
             ///////////////////////////////////////////
-            /*
-            std::cout << "Ci sono1" << std::endl;
-            std::cout << "DATA.DATA(): " << data.data() << std::endl;
-            std::cout << "Received data size: " << data.size() << std::endl;
-            */
             
             std::cout << "\n RICEZIONE DI Supervisor::listen_for_lp_data():" << std::endl;
 
@@ -599,13 +591,12 @@ void Supervisor::listen_for_lp_data() {
 
             int32_t size;
             std::vector<uint8_t> vec;
+            memcpy(&size, data.data(), sizeof(int32_t));
 
             if (size <= 0 || size > data.size() - sizeof(int32_t)) {
                 std::cerr << "Invalid size value: " << size << std::endl;
                 // break;
             }
-
-            // memcpy(&size, data.data(), sizeof(int32_t));
 
             // std::cout << "Ci sono2" << std::endl;
             // std::cout << "msg size is: " << message.size() << std::endl;
@@ -632,15 +623,9 @@ void Supervisor::listen_for_lp_data() {
             std::vector<uint8_t> binary_data(static_cast<const uint8_t*>(data.data()), static_cast<const uint8_t*>(data.data()) + data.size());
 
             for (auto &manager : manager_workers) {
-                // auto decodeddata = data.to_string();
-                // std::cout << "\n RAW RECEIVED DATA: " << data << std::endl;
-                // std::cout << "\n DECODED RECEIVED DATA: " << decodeddata << std::endl;
-
                 if (!binary_data.empty()) {
                     std::cout << "Supervisor::listen_for_lp_data pusho sulla coda" << std::endl;
-
                     manager->getLowPriorityQueue()->push(binary_data);
-
                     std::cout << "Supervisor::listen_for_lp_data pushato sulla coda" << std::endl;
                 }
 
