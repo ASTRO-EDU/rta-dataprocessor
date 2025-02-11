@@ -1,0 +1,59 @@
+{
+  "type": "record",
+  "name": "HeaderHK",
+  "fields": [
+    {
+      "name": "apid",
+      "type": "int"
+    },
+    {
+      "name": "counter",
+      "type": "int"
+    },
+    {
+      "name": "type",
+      "type": "int"
+    },
+    {
+      "name": "time",
+      "type": {
+        "type": "record",
+        "name": "TimeSpec",
+        "fields": [
+          {
+            "name": "tv_sec",
+            "type": "long"
+          },
+          {
+            "name": "tv_nsec",
+            "type": "long"
+          }
+        ]
+      }
+    },
+    {
+      "name": "abstime",
+      "type": "int"
+    },
+    {
+      "name": "runID",
+      "type": "int"
+    },
+    {
+      "name": "configID",
+      "type": "int"
+    },
+    {
+      "name": "wformcount",
+      "type": "int"
+    },
+    {
+      "name": "flags",
+      "type": "int"
+    },
+    {
+      "name": "crc",
+      "type": "int"
+    }
+  ]
+}

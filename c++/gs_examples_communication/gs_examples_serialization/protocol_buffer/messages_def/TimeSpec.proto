@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+message TimeSpec {
+  int64 tv_sec = 1;
+  int64 tv_nsec = 2;
+}
