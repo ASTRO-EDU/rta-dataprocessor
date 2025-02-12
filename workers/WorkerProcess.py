@@ -73,8 +73,9 @@ class WorkerProcess(Process):
         self.timer.cancel()
         time.sleep(0.1)
         self._stop_event.set()  # Set the stop event
-    def config(self, configuration):
-        self.worker.config(configuration)
+    
+    def config(self, conf_message):
+        return self.worker.config(conf_message)
 
     def run(self):
         

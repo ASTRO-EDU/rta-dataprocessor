@@ -15,7 +15,7 @@ from WorkerManager import WorkerManager
 class WorkerBase():
 	def __init__(self):
 		pass
-
+	
 	def init(self, manager: WorkerManager, supervisor: Supervisor, workersname: str, fullname: str):
 		self.manager = manager
 		self.supervisor = supervisor
@@ -24,16 +24,12 @@ class WorkerBase():
 		self.fullname = fullname
 
 	#to be reimplemented ####
-	def config(self, configuration):
-		
-		#print(f"Received config: {configuration}")
-		# Extract the pidtarget
-		pidtarget = configuration['header']['pidtarget']
-
-		if pidtarget == self.workersname or pidtarget == self.fullname:
-			print(f"Received config: {configuration}")
-		else: 
-			return
+	def config(self, conf_message):
+		# Get configuration
+		configuration = conf_message['config']['config']
+		print(f"Received config: {configuration}")
+		self.logger.system(f"Received config: {configuration}")
+		return configuration
 
 
 	
@@ -41,5 +37,4 @@ class WorkerBase():
 	#to be reimplemented ####
 	def process_data(self, data, priority):
 		pass
-
 

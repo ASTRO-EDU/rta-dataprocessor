@@ -28,6 +28,7 @@ class ConfigurationManager:
         "dataflow_type",
         "processing_type",
         "datasocket_type",
+        "data_queue_maxsize"
         "data_lp_socket",
         "data_hp_socket",
         "command_socket",

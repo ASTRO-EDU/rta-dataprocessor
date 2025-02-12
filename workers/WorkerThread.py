@@ -59,8 +59,8 @@ class WorkerThread(threading.Thread):
         #self.supervisor.send_info(1, str(self.status), self.fullname, code=1, priority="Low")
         self._stop_event.set()  # Set the stop event
 
-    def config(self, configuration):
-        self.worker.config(configuration)
+    def config(self, conf_message):
+        return self.worker.config(conf_message)
 
     def set_processdata(self, processdata1):
         self.processdata=processdata1

@@ -17,7 +17,7 @@ import multiprocessing
 
 class WorkerManager(threading.Thread):
     #manager_type="Process" or manager_type="Thread"
-    def __init__(self, manager_id, supervisor, name = "None"):
+    def __init__(self, manager_id, supervisor, name="None"):
         super().__init__()
         self.status = "Initialising"
         #unique ID within the supervisor
@@ -48,18 +48,23 @@ class WorkerManager(threading.Thread):
                 
         self.socket_monitoring = self.supervisor.socket_monitoring
 
+        # queue 
+        data_queue_maxsize = self.config.get('data_queue_maxsize')
+        if data_queue_maxsize is None:
+            data_queue_maxsize = 10000
+        
         #input queue for thread
         if self.processingtype == "thread":
-            self.low_priority_queue = queue.Queue()
-            self.high_priority_queue = queue.Queue()
+            self.low_priority_queue = queue.Queue(maxsize=data_queue_maxsize)
+            self.high_priority_queue = queue.Queue(maxsize=data_queue_maxsize)
             self.result_lp_queue = queue.Queue()
             self.result_hp_queue = queue.Queue()
             self._workers_stop_event = threading.Event() #shared event to stop threads. just for compatible interface with workerprocess
 
         #input queue for processes
         if self.processingtype == "process":
-            self.low_priority_queue = multiprocessing.Queue()
-            self.high_priority_queue = multiprocessing.Queue()
+            self.low_priority_queue = multiprocessing.Queue(maxsize=data_queue_maxsize)
+            self.high_priority_queue = multiprocessing.Queue(maxsize=data_queue_maxsize)
             self.result_lp_queue = multiprocessing.Queue()
             self.result_hp_queue = multiprocessing.Queue()
             self._workers_stop_event = multiprocessing.Event() #shared event for processes. necessary

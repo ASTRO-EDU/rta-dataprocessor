@@ -24,6 +24,7 @@ import os
 from WorkerLogger import WorkerLogger
 import traceback
 
+
 class Supervisor:
     def __init__(self, config_file="config.json", name = "None"):
         self.name = name
@@ -316,8 +317,15 @@ class Supervisor:
             if not self.stopdata:
                 data = self.socket_lp_data.recv()
                 for manager in self.manager_workers:
-                    decodeddata = self.decode_data(data)  
-                    manager.low_priority_queue.put(decodeddata) 
+                    decodeddata = self.decode_data(data)
+                    try:
+                        manager.low_priority_queue.put(decodeddata, block=False) 
+                    except queue.Full:
+                        self.logger.error(f"lp_data_queue full! Data lost: {decodeddata}", self.name)
+                    except ValueError:
+                        self.logger.warning(f"lp_data_queue closed while put method was executed." 
+                                            f"This could make you lose some data!", self.name)
+
         print("End listen_for_lp_data")
         self.logger.system("End listen_for_lp_data", extra=self.globalname)
 
@@ -327,7 +335,13 @@ class Supervisor:
                 data = self.socket_hp_data.recv()
                 for manager in self.manager_workers: 
                     decodeddata = self.decode_data(data)
-                    manager.high_priority_queue.put(decodeddata) 
+                    try:
+                        manager.high_priority_queue.put(decodeddata, block=False) 
+                    except queue.Full:
+                        self.logger.error(f"hp_data_queue full! Data lost: {decodeddata}", self.name)
+                    except ValueError:
+                        self.logger.warning(f"hp_data_queue closed while put method was executed." 
+                                            f"This could make you lose some data!", self.name)
         print("End listen_for_hp_data")
         self.logger.system("End listen_for_hp_data", extra=self.globalname)
 
@@ -336,7 +350,13 @@ class Supervisor:
             if not self.stopdata:
                 data = self.socket_lp_data.recv_string()
                 for manager in self.manager_workers: 
-                    manager.low_priority_queue.put(data) 
+                    try:
+                        manager.low_priority_queue.put(data, block=False) 
+                    except queue.Full:
+                        self.logger.error(f"lp_string_queue full! Data lost: {data}", self.name)
+                    except ValueError:
+                        self.logger.warning(f"lp_string_queue closed while put method was executed." 
+                                            f"This could make you lose some data!", self.name)
         print("End listen_for_lp_string")
         self.logger.system("End listen_for_lp_string", extra=self.globalname)
 
@@ -345,7 +365,13 @@ class Supervisor:
             if not self.stopdata:
                 data = self.socket_hp_data.recv_string()
                 for manager in self.manager_workers: 
-                    manager.high_priority_queue.put(data) 
+                    try:
+                        manager.high_priority_queue.put(data, block=False) 
+                    except queue.Full:
+                        self.logger.error(f"hp_data_queue full! Data lost: {data}", self.name)
+                    except ValueError:
+                        self.logger.warning(f"hp_string_queue closed while put method was executed." 
+                                            f"This could make you lose some data!", self.name)
         print("End listen_for_hp_string")
         self.logger.system("End listen_for_hp_string", extra=self.globalname)
 
@@ -380,12 +406,13 @@ class Supervisor:
 
     def listen_for_commands(self):
         while self.continueall:
-            self.logger.debug("Waiting for commands...", extra=self.globalname)
             try:
                 command = json.loads(self.socket_command.recv_string())
+                # self.logger.debug("Waiting for commands...", extra=self.globalname)
                 self.process_command(command)
             except zmq.error.ZMQError:
-               self.logger.debug("No Commands Received. Now I can terminate", extra=self.globalname)
+               # self.logger.debug("No Commands Received. Now I can terminate", extra=self.globalname)
+               continue
  
 
         print("End listen_for_commands")
@@ -468,33 +495,36 @@ class Supervisor:
         subtype_value = command['header']['subtype']
         pidtarget = command['header']['pidtarget']
         pidsource = command['header']['pidsource']
-        if type_value == 0: #command
-            if pidtarget == self.name or pidtarget == "all".lower() or pidtarget == "*":
+        if pidtarget == self.name or pidtarget == "all".lower() or pidtarget == "*":
+            if type_value == 0: #command
                 print(f"Received command: {command}")
+                self.logger.system(f"Received command: {command}", extra=self.name)
                 if subtype_value == "shutdown":
                     self.command_shutdown()  
-                if subtype_value == "cleanedshutdown":
+                elif subtype_value == "cleanedshutdown":
                     self.command_cleanedshutdown()
-                if subtype_value == "getstatus":
+                elif subtype_value == "getstatus":
                     for manager in self.manager_workers:
                         manager.monitoring_thread.sendto(pidsource)
-                if subtype_value == "start": #data processing + data
+                elif subtype_value == "start": #data processing + data
                         self.command_start()
-                if subtype_value == "stop": #data processing + data
+                elif subtype_value == "stop": #data processing + data
                         self.command_stop()
-                if subtype_value == "startprocessing": #data processing
+                elif subtype_value == "startprocessing": #data processing
                         self.command_startprocessing()
-                if subtype_value == "stopprocessing": #data processing
+                elif subtype_value == "stopprocessing": #data processing
                         self.command_stopprocessing()
-                if subtype_value == "reset": #reset the data processor
+                elif subtype_value == "reset": #reset the data processor
                         self.command_reset()
-                if subtype_value == "stopdata": #data acquisition
+                elif subtype_value == "stopdata": #data acquisition
                         self.command_stopdata()
-                if subtype_value == "startdata": #data acquisition
+                elif subtype_value == "startdata": #data acquisition
                         self.command_startdata()
-        if type_value == 3: #config
-            for manager in self.manager_workers:
-                manager.configworkers(command)
+            elif type_value == 3: #config
+                print(f"Received configuration: {command}")
+                self.logger.system(f"Received configuration: {command}", extra=self.name)
+                for manager in self.manager_workers:
+                    manager.configworkers(command)
 
 
     def send_alarm(self, level, message, pidsource, code=0, priority="Low"):
