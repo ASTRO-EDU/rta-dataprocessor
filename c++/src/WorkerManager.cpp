@@ -22,10 +22,11 @@ WorkerManager::WorkerManager(int manager_id, Supervisor* supervisor, const std::
     globalname = "WorkerManager-" + fullname;
     processingtype = supervisor->processingtype;
     max_workers = 100;
-    result_socket_type = supervisor->manager_result_sockets_type[manager_id];
+    result_socket_type = supervisor->manager_result_sockets_type;
     result_lp_socket = supervisor->manager_result_lp_sockets[manager_id];
     result_hp_socket = supervisor->manager_result_hp_sockets[manager_id];
-    result_dataflow_type = supervisor->manager_result_dataflow_type[manager_id];
+    // result_dataflow_type = supervisor->manager_result_dataflow_type[manager_id];
+    result_dataflow_type = supervisor->manager_result_dataflow_type;
     socket_lp_result = supervisor->socket_lp_result;
     socket_hp_result = supervisor->socket_hp_result;
     pid = getpid();

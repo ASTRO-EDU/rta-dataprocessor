@@ -6,7 +6,7 @@ WorkerManager2::WorkerManager2(int manager_id, Supervisor* supervisor, const std
 
 // Override to start worker threads
 void WorkerManager2::start_worker_threads(int num_threads) {
-    std::cout << "Number of threads: " << num_threads << std::endl;
+    std::cout << "(RTADP2) Number of threads: " << num_threads << std::endl;
 
     // Creazione dei thread dei worker
     for (int i = 0; i < num_threads; ++i) {
@@ -29,7 +29,7 @@ void WorkerManager2::start_worker_threads(int num_threads) {
         }
         else {
             // TODO: Rimuovere print o meglio trasformare come log
-            std::cout << "A WorkerThread has been created for manager_id: " << manager_id << std::endl;
+            std::cout << "(RTADP2) A WorkerThread has been created for manager_id: " << manager_id << std::endl;
         }
 
         // Crea e avvia il thread solo se il nome è valido

@@ -209,7 +209,7 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
 
         HeaderWF::print(*receivedPacket, 10);
 
-        //result["data"] = data;
+        // result["data"] = data;
         // Simulate processing
         //std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(random_duration())));
 
@@ -217,8 +217,8 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
         std::vector<uint8_t> vec(size);
         std::memcpy(vec.data(), data.data() + sizeof(int32_t), size);
 
-        // binary_result.insert(binary_result.end(), data.begin(), data.end());
-        binary_result.insert(binary_result.end(), vec.begin(), vec.end());  // Ritorna il payload del pacchetto per caricarlo sulla coda
+        binary_result.insert(binary_result.end(), data.begin(), data.end());
+        // binary_result.insert(binary_result.end(), vec.begin(), vec.end());  // Ritorna il payload del pacchetto per caricarlo sulla coda
     } 
 
     else if (dataflow_type == "filename") {

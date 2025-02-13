@@ -38,7 +38,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
     context = zmq::context_t(1);
 
     try {
-        int timeout = 1000; 
+        int timeout = 20000;    // 1000
 
         // Retrieve and log configuration
         processingtype = config["processing_type"].get<std::string>();
@@ -277,8 +277,10 @@ void Supervisor::load_configuration(const std::string &config_file, const std::s
 
     // Extract values from the tuple returned by get_workers_config
     auto workers_config = config_manager->get_workers_config(name);
-    manager_result_sockets_type = std::get<0>(workers_config)[0]; // assuming single value
-    manager_result_dataflow_type = std::get<1>(workers_config)[0]; // assuming single value
+    
+    manager_result_sockets_type = std::get<0>(workers_config)[0];
+
+    manager_result_dataflow_type = std::get<1>(workers_config)[0]; 
     manager_result_lp_sockets = std::get<2>(workers_config);
     manager_result_hp_sockets = std::get<3>(workers_config);
     manager_num_workers = std::get<4>(workers_config)[0]; // assuming single value
@@ -305,21 +307,36 @@ void Supervisor::start_service_threads() {
 
 // Set up result channel for a given WorkerManager
 void Supervisor::setup_result_channel(WorkerManager *manager, int indexmanager) {
+    logger->info("                                      \n\n \n  CCCCCCCC");
+
     socket_lp_result[indexmanager] = nullptr;
     socket_hp_result[indexmanager] = nullptr;
     //context = zmq::context_t(1);
 
+    logger->info("                     \n \n AAAAAAABBBBBBBB" + manager->get_result_lp_socket());
+
+
     if (manager->get_result_lp_socket() != "none") {
+        logger->info(" \n \n              AAAAAAAAAAA");
+        logger->info(" \n \n              AAAAAAAAAAA");
+
         if (manager->get_result_socket_type() == "pushpull") {
+            logger->info("                \n \n  BBBBBBBBBB");
+
             socket_lp_result[indexmanager] = new zmq::socket_t(context, ZMQ_PUSH);
             socket_lp_result[indexmanager]->connect(manager->get_result_lp_socket());
+            std::cout << "INDEX MANAGER: " << indexmanager << std::endl;
             std::cout << "---result lp socket pushpull " << manager->get_globalname() << " " << manager->get_result_lp_socket() << std::endl;
             logger->info("---result lp socket pushpull " + manager->get_globalname() + " " + manager->get_result_lp_socket(), globalname);
-        } else if (manager->get_result_socket_type() == "pubsub") {
+        } 
+        else if (manager->get_result_socket_type() == "pubsub") {
             socket_lp_result[indexmanager] = new zmq::socket_t(context, ZMQ_PUB);
             socket_lp_result[indexmanager]->bind(manager->get_result_lp_socket());
-            std::cout << "---result lp socket pushpull " << manager->get_globalname() << " " << manager->get_result_lp_socket() << std::endl;
-            logger->info("---result lp socket pushpull " + manager->get_globalname() + " " + manager->get_result_lp_socket(), globalname);
+            std::cout << "---result lp socket pubsub " << manager->get_globalname() << " " << manager->get_result_lp_socket() << std::endl;
+            logger->info("---result lp socket pubsub " + manager->get_globalname() + " " + manager->get_result_lp_socket(), globalname);
+        }
+        else {
+            logger->info("+++++++++++++++++++++++ " + manager->get_result_socket_type());
         }
     }
 
@@ -329,11 +346,12 @@ void Supervisor::setup_result_channel(WorkerManager *manager, int indexmanager) 
             socket_hp_result[indexmanager]->connect(manager->get_result_hp_socket());
             std::cout << "---result hp socket pushpull " << manager->get_globalname() << " " << manager->get_result_hp_socket() << std::endl;
             logger->info("---result hp socket pushpull " + manager->get_globalname() + " " + manager->get_result_hp_socket(), globalname);
-        } else if (manager->get_result_socket_type() == "pubsub") {
+        } 
+        else if (manager->get_result_socket_type() == "pubsub") {
             socket_hp_result[indexmanager] = new zmq::socket_t(context, ZMQ_PUB);
             socket_hp_result[indexmanager]->bind(manager->get_result_hp_socket());
-            std::cout << "---result hp socket pushpull " << manager->get_globalname() << " " << manager->get_result_hp_socket() << std::endl;
-            logger->info("---result hp socket pushpull " + manager->get_globalname() + " " + manager->get_result_hp_socket(), globalname);
+            std::cout << "---result hp socket pubsub " << manager->get_globalname() << " " << manager->get_result_hp_socket() << std::endl;
+            logger->info("---result hp socket pubsub " + manager->get_globalname() + " " + manager->get_result_hp_socket(), globalname);
         }
     }
 }
@@ -342,7 +360,13 @@ void Supervisor::setup_result_channel(WorkerManager *manager, int indexmanager) 
 void Supervisor::start_managers() {
     int indexmanager = 0;
     WorkerManager *manager = new WorkerManager(indexmanager, this, "Generic");
+
+    logger->info("                      ENTRO IN setup_result_channel");
+
     setup_result_channel(manager, indexmanager);
+
+    logger->warning("                   ESCO DA setup_result_channel");
+
     manager->run();
     manager_workers.push_back(manager);
     // TODO: Rimuovere print o meglio trasformare come log
@@ -364,6 +388,7 @@ void Supervisor::start_workers() {
 ///////////////////////////////////////
 // Start Supervisor operation
 void Supervisor::start() {
+    logger->info("                    START MANAGERS");
     start_managers();
     start_workers();
     start_service_threads();
@@ -451,43 +476,91 @@ void Supervisor::listen_for_result() {
     logger->info("End listen_for_result", globalname);
 }
 
+//////////////////////////////////////////////////
 // Send result data
 void Supervisor::send_result(WorkerManager *manager, int indexmanager) {
-    // std::cout << "DENTRO Supervisor::send_result\n" << std::endl;
-
-  if (manager->getResultLpQueue()->empty() && manager->getResultHpQueue()->empty()) {
-      return;
+    if (manager->getResultLpQueue()->empty() && manager->getResultHpQueue()->empty()) {
+        return;
     }
+
+    logger->warning("INDEX MANAGER di Supervisor::send_result: {}", std::to_string(indexmanager));
+
+    logger->warning("++++++++++++++++++++: {}", manager->get_result_dataflow_type());
 
     json data;
     int channel = -1;
 
-    try {
+    if (!manager->getResultHpQueue()->empty()) {
+        logger->warning("Entro nel primo IF (HP) con channel: {}", std::to_string(channel));
+
         // Tries to get an element from the hp queue
         channel = 1;
-        data = manager->getResultHpQueue()->get();  
+
+        logger->warning("////////////// 1 => {}", std::to_string(channel));
+
+        data = manager->getResultHpQueue()->get();
+
+        logger->warning("////////////// 2 => {}", std::to_string(channel));
+    }
+    else if (!manager->getResultLpQueue()->empty()) {
+        logger->warning("Entro nel secondo IF (LP) con channel: {}", std::to_string(channel));
+
+        // If it fails, it does the same with the lp queue
+        channel = 0;
+
+        logger->warning("////////////// 3 => {}", std::to_string(channel));
+
+        data = manager->getResultLpQueue()->get();
+
+        logger->warning("////////////// 4 => {}", std::to_string(channel));
+    }
+    else {
+        std::cout << "ENTRAMBE LE CODE VUOTE Supervisor::send_result\n" << std::endl;
+        return;
+    }
+
+    /*
+    try {
+        logger->warning("Entro nel TRY con channel: {}", std::to_string(channel));
+
+        // Tries to get an element from the hp queue
+        channel = 1;
+
+        logger->warning("////////////// 1 => {}", std::to_string(channel));
+
+        data = manager->getResultHpQueue()->get(); 
+
+        logger->warning("////////////// 2 => {}", std::to_string(channel));
     } 
     catch (const std::exception &e) {
+        logger->warning("Entro nel CATCH con channel: {}", std::to_string(channel));
+
         try {
+            logger->warning("Entro nel TRY2 con channel: {}", std::to_string(channel));
+
             // If it fails, it does the same with the lp queue
             channel = 0;
             data = manager->getResultLpQueue()->get();  
+
+            logger->warning("////////////// 3 => {}", std::to_string(channel));
         } 
         catch (const std::exception &e) {
-            std::cout << "ENTRAMBE LE CODE VUOTE2 Supervisor::send_result\n" << std::endl;
+            std::cout << "ENTRAMBE LE CODE VUOTE Supervisor::send_result\n" << std::endl;
             return;
         }
     }
+    */
+
+    logger->warning("////////////// 5 => {}", std::to_string(channel));
 
     if (channel == 0) {
         if (manager->get_result_lp_socket() == "none") {
             std::cout << "SOCKET VUOTO Supervisor::send_result\n" << std::endl;
+
             return;
         }
         if (manager->get_result_dataflow_type() == "string" || manager->get_result_dataflow_type() == "filename") {
             try {
-                std::cout << "MANDO STRINGHE Supervisor::send_result\n" << std::endl;
-
                 std::string data_str = data.get<std::string>();
                 socket_lp_result[indexmanager]->send(zmq::buffer(data_str));
             } 
@@ -498,6 +571,8 @@ void Supervisor::send_result(WorkerManager *manager, int indexmanager) {
         } 
         else if (manager->get_result_dataflow_type() == "binary") {
             try {
+                logger->warning("------------------------ MANDO BINARI Supervisor::send_result\n");
+
                 socket_lp_result[indexmanager]->send(zmq::buffer(data.dump()));
             } 
             catch (const std::exception &e) {
@@ -558,13 +633,15 @@ void Supervisor::listen_for_lp_data() {
                 if (!result) {
                     std::cout << "listen_for_lp_data waiting for a producer" << std::endl;
 
+                    /*
                     while (err_code == EAGAIN) {   // Continue if no commands were received
                         // std::cout << "Waiting" << std::endl;
                         continue; // Keep looking for commands
                     }
+                    */
 
                     std::cout << "Fuori dal while" << std::endl;
-                    continue; // Keep looking for commands
+                    // continue; // Keep looking for commands
                 }
             }
             catch (const zmq::error_t& e) {
@@ -579,18 +656,16 @@ void Supervisor::listen_for_lp_data() {
                 }
             }
 
-
             ///////////////////////////////////////////
             
             std::cout << "\n RICEZIONE DI Supervisor::listen_for_lp_data():" << std::endl;
 
             if (data.size() < sizeof(int32_t)) {
                 std::cerr << "Error: Received data size is smaller than expected." << std::endl;
-                break;
+                // break;
             }
 
             int32_t size;
-            std::vector<uint8_t> vec;
             memcpy(&size, data.data(), sizeof(int32_t));
 
             if (size <= 0 || size > data.size() - sizeof(int32_t)) {
@@ -598,18 +673,14 @@ void Supervisor::listen_for_lp_data() {
                 // break;
             }
 
-            // std::cout << "Ci sono2" << std::endl;
-            // std::cout << "msg size is: " << message.size() << std::endl;
-
+            /*
+            // Print the packet
+            
+            std::vector<uint8_t> vec;
             vec.resize(data.size());
             // memcpy(vec.data(), static_cast<const char*>(data.data()), data.size());
 
-            // std::cout << "Ci sono3" << std::endl
-
             HeaderWF* receivedPacket = reinterpret_cast<HeaderWF*>(data.data());
-            // std::memcpy(&receivedPacket, vec.data(), sizeof(HeaderWF));
-
-            // std::cout << "Ci sono4" << std::endl;
 
             // Verify the content of the debufferized data
             std::cout << "Debufferized Header APID: " << receivedPacket->h.apid << std::endl;
@@ -617,6 +688,7 @@ void Supervisor::listen_for_lp_data() {
             std::cout << "Size of timespec: " << sizeof(receivedPacket->h.ts) << ", Alignment:" << alignof(receivedPacket->h.ts) << "\n" << std::endl;
 
             HeaderWF::print(*receivedPacket, 10);
+            */
             ///////////////////////////////////////////
 
 

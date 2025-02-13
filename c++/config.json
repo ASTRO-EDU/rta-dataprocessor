@@ -20,24 +20,15 @@
     "command_socket": "tcp://127.0.0.1:5568",
     "monitoring_socket": "tcp://127.0.0.1:5561",
     "manager": [
-      {
-        "result_socket_type": "pubsub",
-        "result_dataflow_type": "binary",
-        "result_lp_socket": "tcp://127.0.0.1:5566",
-        "result_hp_socket": "tcp://127.0.0.1:5567",
-        "num_workers": 5,
-        "name": "Rate",
-        "name_workers": "worker"
-      },
-      {
-        "result_socket_type": "none",
-        "result_dataflow_type": "none",
-        "result_lp_socket": "none",
-        "result_hp_socket": "none",
-        "num_workers": 2,
-        "name": "S22Mean",
-        "name_workers": "worker"
-      }
+        {
+            "result_socket_type": "pubsub",
+            "result_dataflow_type": "binary",
+            "result_lp_socket": "tcp://127.0.0.1:5566",
+            "result_hp_socket": "tcp://127.0.0.1:5567",
+            "num_workers": 5,
+            "name": "Rate",
+            "name_workers": "worker"
+        }
     ],
     "logs_path": "/tmp/",
     "logging": "both",

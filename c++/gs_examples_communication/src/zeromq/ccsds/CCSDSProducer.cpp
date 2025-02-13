@@ -20,6 +20,9 @@ int main(int argc, char* argv[]) {
 
     std::string ip_port = getIpPortFromConfig("config.txt");
     std::cout << "Sending with socket: " << ip_port << std::endl;
+
+
+    /////////////////////////////////////////////
     std::queue<HeaderWF> serializedQueue;
     std::signal(SIGINT, signalHandler);
 
@@ -39,6 +42,9 @@ int main(int argc, char* argv[]) {
     
     zmq::context_t context(1);
     Producer<HeaderWF>* producer = new Producer<HeaderWF>(context, "tcp://" + ip_port);
+
+    /////////////////////////////////////////////
+
 
     auto t2a = std::chrono::system_clock::now();
 

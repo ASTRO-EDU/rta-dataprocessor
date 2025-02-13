@@ -10,6 +10,9 @@
 #include <execinfo.h>
 #include <unistd.h>
 
+#include "ccsds/include/packet.h"
+#include <iostream>
+
 #include "WorkerThread.h"
 
 
@@ -200,7 +203,7 @@ void WorkerThread::workerop(int interval) {
         next_time = std::chrono::high_resolution_clock::now();
         processing_rate = static_cast<double>(processed_data_count) / elapsed_time;
         total_processed_data_count += processed_data_count;
-        logger->info(fmt::format("{} Rate Hz {:.1f} Current events {} Total events {} Queues {} {}", globalname, processing_rate, processed_data_count, total_processed_data_count, low_priority_queue->size(), high_priority_queue->size()));
+        // logger->warning(fmt::format("{} Rate Hz {:.1f} Current events {} Total events {} Queues {} {}", globalname, processing_rate, processed_data_count, total_processed_data_count, low_priority_queue->size(), high_priority_queue->size()));
         processed_data_count = 0;
     }
 }
@@ -217,9 +220,35 @@ void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) 
     std::cout << "DENTRO WorkerThread::process_data  " << std::endl;
     auto dataresult = worker->processData(data, priority);
     std::cout << "TORNATO IN WorkerThread::process_data  " << std::endl;
+    
+    std::cout << "\n RICEZIONE DI WorkerThread::process_data:" << std::endl;
 
-    // std::cout << "DDDDDDDDDD: " << dataresult << std::endl;
-    // auto dataresult_string = dataresult["data"].get<std::string>();     
+
+    // Verifica dimensione minima
+    if (data.size() < sizeof(int32_t)) {
+        std::cerr << "Error: Received data size is smaller than expected." << std::endl;
+    }
+
+    // Estrai la dimensione del payload
+    int32_t size;
+    std::memcpy(&size, data.data(), sizeof(int32_t));  // Read the size from the buffer
+
+    if (size <= 0 || size > static_cast<int32_t>(data.size() - sizeof(int32_t))) {
+        std::cerr << "Invalid size value: " << size << std::endl;
+    }
+
+    const HeaderWF* receivedPacket = reinterpret_cast<const HeaderWF*>(data.data());
+    // std::memcpy(&receivedPacket, vec.data(), sizeof(HeaderWF));
+    // std::cout << "Ci sono4" << std::endl;
+
+    // Verify the content of the debufferized data
+    std::cout << "Debufferized Header APID: " << receivedPacket->h.apid << std::endl;
+    std::cout << "Debufferized Data size: " << receivedPacket->d.size << std::endl;
+    std::cout << "Size of timespec: " << sizeof(receivedPacket->h.ts) << ", Alignment:" << alignof(receivedPacket->h.ts) << "\n" << std::endl;
+
+    HeaderWF::print(*receivedPacket, 10);
+
+
 
     std::cout << "WorkerThread::process_data: DIMENSIONE: " << dataresult.size() << std::endl;
 
