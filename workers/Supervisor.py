@@ -55,6 +55,9 @@ class Supervisor:
      
             print(f"Supervisor: {self.globalname} / {self.dataflowtype} / {self.processingtype} / {self.datasockettype}")   
             self.logger.system(f"Supervisor: {self.globalname} / {self.dataflowtype} / {self.processingtype} / {self.datasockettype}", extra=self.globalname)   
+            # Log warning message for parallelism with thread in python
+            if self.processingtype == "thread":
+                self.logger.warning("Attention! For WorkerThreads, defining a larger number of threads in the configuration file (num_workers > 1) does not allow efficient parallelization due to the python implementation of RTA-dp. If you need to parallelize your tasks it is advisable to switch to the WorkerProcess type.", self.name)
 
             if self.datasockettype == "pushpull":
                 #low priority data stream connection

@@ -75,6 +75,7 @@ class WorkerProcess(Process):
         self._stop_event.set()  # Set the stop event
     
     def config(self, conf_message):
+        self.logger.warning("Attention! Dynamic configuration is not enabled for WorkerProcess, due to missing process memory management. This configuration command will therefore not affect the configuration of your Workers. Use the WorkerThread type if Dynamic configuration is needed.")
         return self.worker.config(conf_message)
 
     def run(self):
