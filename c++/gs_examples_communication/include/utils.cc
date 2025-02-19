@@ -6,7 +6,6 @@
 
 #include "utils.hh"
 
-
 std::atomic<bool> stop{false}; 
 
 void signalHandler(int signal) {

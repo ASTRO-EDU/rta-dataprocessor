@@ -13,7 +13,7 @@
 #include <iostream>
 
 void Header::print(const Header& header) {
-    std::cout << "HeaderHK:" << std::endl;
+    std::cout << "Header:" << std::endl;
     std::cout << "  APID: " << header.apid << std::endl;
     std::cout << "  Counter: " << header.counter << std::endl;
     std::cout << "  Type: " << header.type << std::endl;
@@ -35,7 +35,7 @@ void Data_Wf::print(const Data_Wf& data) {
 }
 
 
-//limit print of data to first n samples, 0 prints all 
+// Limit print of data to first n samples, 0 prints all 
 void Data_Wf::print(const Data_Wf& data, const int limit_print){
     std::cout << "Data_Wf:" << std::endl;
     std::cout << "  Equalization Level: " << data.equalizationLevel << std::endl;

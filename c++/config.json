@@ -21,7 +21,7 @@
     "monitoring_socket": "tcp://127.0.0.1:5561",
     "manager": [
         {
-            "result_socket_type": "pubsub",
+            "result_socket_type": "pushpull",
             "result_dataflow_type": "binary",
             "result_lp_socket": "tcp://127.0.0.1:5566",
             "result_hp_socket": "tcp://127.0.0.1:5567",
@@ -39,7 +39,7 @@
         "processname": "RTADP2",
         "dataflow_type": "binary",
         "processing_type": "thread",
-        "datasocket_type": "pubsub",
+        "datasocket_type": "pushpull",
         "data_lp_socket": "tcp://127.0.0.1:5566",
         "data_hp_socket": "tcp://127.0.0.1:5567",
         "command_socket": "tcp://127.0.0.1:5568",

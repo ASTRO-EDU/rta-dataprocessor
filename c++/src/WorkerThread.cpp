@@ -5,12 +5,12 @@
 //
 //    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 //
-#include <memory>
 
+#include <memory>
 #include <execinfo.h>
 #include <unistd.h>
-
 #include "ccsds/include/packet.h"
+#include "../include/utils2.hh"
 #include <iostream>
 
 #include "WorkerThread.h"
@@ -23,7 +23,6 @@ WorkerThread::WorkerThread(int worker_id, WorkerManager* manager, const std::str
     : worker_id(worker_id), manager(manager), name(name), worker(worker),
      processdata(0), status(0), tokenresult(worker_id), tokenreading(worker_id), _stop_event(false) {
 
-    // TODO: Rimuovere print o meglio trasformare come log
     std::cout << "Creating a WorkerThread with name: " << name << std::endl;
 
     supervisor = manager->getSupervisor();
@@ -60,6 +59,8 @@ void WorkerThread::set_processdata(int processdata1) {
 
 //////////////////////////////////////////////////
 void WorkerThread::run() {
+    std::cout << "WorkerThread::run start!!!!!!!!" << std::endl;
+
     start_timer(1);
 
     while (!_stop_event) {
@@ -67,34 +68,28 @@ void WorkerThread::run() {
         if (processdata == 1 && tokenreading == 0) {
                 // Check and process high-priority queue first
                 if (!high_priority_queue->empty()) {
+                    std::cout << "WorkerThread::run: start processing hp data" << std::endl;
+
                     auto high_priority_data = high_priority_queue->get();
                     manager->change_token_reading();
                     process_data(high_priority_data, 1);
                 } 
-                else {
-                    // Process low-priority queue if high-priority queue is empty
-                    if (!low_priority_queue->empty()) {
-                        std::cout << "DENTRO WorkerThread::run" << std::endl;
+                // Process low-priority queue if high-priority queue is empty
+                else if (!low_priority_queue->empty()) {
+                    std::cout << "WorkerThread::run: start processing lp data" << std::endl;
 
-                        auto low_priority_data = low_priority_queue->get();
-                        manager->change_token_reading();
-
-                        if (!low_priority_data.empty()) {
-                            std::cout << "WorkerThread::run: ENTRO IN WorkerThread::process_data" << std::endl;
-                            process_data(low_priority_data, 0);
-                        }
-                        else {
-                            logger->error("low_priority_data data is empty!");
-                        }
-                    } 
-                    else {
-                        status = 2; // waiting for new data
-                    }
+                    auto low_priority_data = low_priority_queue->get();
+                    manager->change_token_reading();
+                    process_data(low_priority_data, 0);
                 }
-
+                else {
+                    // std::cout << "WorkerThread::run: both queues are empty, waiting for new data" << std::endl;
+                    status = 2; // waiting for new data
+                }
         } 
         else {
             if (tokenreading != 0 && status != 4) {
+                std::cout << "WorkerThread::run: waiting for reading from queue" << std::endl;
                 status = 4; // waiting for reading from queue
             }
         }
@@ -203,13 +198,16 @@ void WorkerThread::workerop(int interval) {
         next_time = std::chrono::high_resolution_clock::now();
         processing_rate = static_cast<double>(processed_data_count) / elapsed_time;
         total_processed_data_count += processed_data_count;
-        // logger->warning(fmt::format("{} Rate Hz {:.1f} Current events {} Total events {} Queues {} {}", globalname, processing_rate, processed_data_count, total_processed_data_count, low_priority_queue->size(), high_priority_queue->size()));
+        logger->info(fmt::format("{} Rate Hz {:.1f} Current events {} Total events {} Queues {} {}", globalname, processing_rate, processed_data_count, total_processed_data_count, low_priority_queue->size(), high_priority_queue->size()));
         processed_data_count = 0;
     }
 }
 
 ////////////////////////////////////////////
 void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) {
+    std::cout << "WorkerThread::process_data priority:" << priority << std::endl;
+
+
     status = 8; // processing new data
     processed_data_count++;
 
@@ -217,41 +215,70 @@ void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) 
         return;
     }
 
-    std::cout << "DENTRO WorkerThread::process_data  " << std::endl;
     auto dataresult = worker->processData(data, priority);
-    std::cout << "TORNATO IN WorkerThread::process_data  " << std::endl;
-    
-    std::cout << "\n RICEZIONE DI WorkerThread::process_data:" << std::endl;
 
 
-    // Verifica dimensione minima
-    if (data.size() < sizeof(int32_t)) {
-        std::cerr << "Error: Received data size is smaller than expected." << std::endl;
-    }
-
-    // Estrai la dimensione del payload
+    // Extract the size of the packet (first 4 bytes)
     int32_t size;
-    std::memcpy(&size, data.data(), sizeof(int32_t));  // Read the size from the buffer
+    std::memcpy(&size, dataresult.data(), sizeof(int32_t));
 
-    if (size <= 0 || size > static_cast<int32_t>(data.size() - sizeof(int32_t))) {
-        std::cerr << "Invalid size value: " << size << std::endl;
+    std::vector<uint8_t> vec(size);
+    vec.resize(size);    // Resize the data vector to hold the full payload
+
+    // Store into vec only the actual packet data, excluding the size field
+    memcpy(vec.data(), static_cast<const uint8_t*>(dataresult.data()), size);
+
+    // Transform the raw data into the Header struct
+    const Header* receivedPacket = reinterpret_cast<const Header*>(vec.data());
+    uint32_t packet_type = receivedPacket->type;  // Get the type of the received packet
+
+    // Access the Header fields
+    std::cout << "  \nAPID3: " << receivedPacket->apid << std::endl;
+    std::cout << "  Counter3: " << receivedPacket->counter << std::endl;
+    std::cout << "  Type3: " << receivedPacket->type << std::endl;
+    std::cout << "  Absolute Time3: " << receivedPacket->abstime << std::endl;
+
+    if (!dataresult.empty() && tokenresult == 0) {
+        logger->info("WorkerThread::process_data: pushing dataresult into the queue");
+
+        // Push the received data into queue according to the packet type
+        if (priority == 0) {
+            if (packet_type == 1) {  // WF Packet
+                std::cout << "\nWorkerThread::process_data: Waveform packet received" << std::endl;
+
+                // Extract the HeaderWF struct from the raw bytes
+                const HeaderWF* packet_wf = reinterpret_cast<const HeaderWF*>(vec.data());
+
+                // for (auto& manager : manager_workers) {
+                manager->getResultLpQueue()->push(serializePacket(*packet_wf));
+                // }
+            }
+            else if (packet_type == 20) {  // HK Packet
+                std::cout << "\nWorkerThread::process_data: Housekeeping packet received" << std::endl;
+
+                // Extract the HeaderHK struct from the raw bytes
+                const HeaderHK* packet_hk = reinterpret_cast<const HeaderHK*>(vec.data());
+
+                // for (auto& manager : manager_workers) {
+                manager->getResultLpQueue()->push(serializePacket(*packet_hk));
+                // }
+            }
+            else {
+                std::cerr << "Unknown packet type: " << packet_type << std::endl;
+            }
+        } 
+        else {
+            manager->getResultHpQueue()->push(dataresult);
+        }
+
+        manager->change_token_results();
+    }
+    else {
+        logger->info("WorkerThread::process_data: dataresult EMPTY");
+
     }
 
-    const HeaderWF* receivedPacket = reinterpret_cast<const HeaderWF*>(data.data());
-    // std::memcpy(&receivedPacket, vec.data(), sizeof(HeaderWF));
-    // std::cout << "Ci sono4" << std::endl;
-
-    // Verify the content of the debufferized data
-    std::cout << "Debufferized Header APID: " << receivedPacket->h.apid << std::endl;
-    std::cout << "Debufferized Data size: " << receivedPacket->d.size << std::endl;
-    std::cout << "Size of timespec: " << sizeof(receivedPacket->h.ts) << ", Alignment:" << alignof(receivedPacket->h.ts) << "\n" << std::endl;
-
-    HeaderWF::print(*receivedPacket, 10);
-
-
-
-    std::cout << "WorkerThread::process_data: DIMENSIONE: " << dataresult.size() << std::endl;
-
+    /*
     if (!dataresult.empty() && tokenresult == 0) {
         std::cout << "WorkerThread::process_data: pusho sulla coda" << std::endl;
 
@@ -266,5 +293,6 @@ void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) 
     else {
         std::cout << "WorkerThread::process_data: dataresult EMPTY" << std::endl;
     }
+    */
 }
 ////////////////////////////////////////////

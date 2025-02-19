@@ -47,6 +47,8 @@ void Worker2::config(const nlohmann::json& configuration) {
 std::vector<uint8_t> Worker2::processData(const std::vector<uint8_t>& data, int priority) {
     std::cout << "DENTRO Worker2::processData" << std::endl;
 
+    std::cout << "Worker2::process_data priority:" << priority << std::endl;
+
     std::cout << "\n RICEZIONE DI Worker2::processData():" << std::endl;
 
     // Verifica dimensione minima
@@ -54,36 +56,30 @@ std::vector<uint8_t> Worker2::processData(const std::vector<uint8_t>& data, int 
         std::cerr << "Error: Received data size is smaller than expected." << std::endl;
     }
 
-    // Estrai la dimensione del payload
+    // Extract the size of the packet (first 4 bytes)
     int32_t size;
     std::memcpy(&size, data.data(), sizeof(int32_t));  // Read the size from the buffer
 
     if (size <= 0 || size > static_cast<int32_t>(data.size() - sizeof(int32_t))) {
-        std::cerr << "Invalid size value: " << size << std::endl;
+        std::cerr << "Invalid size value2: " << size << std::endl;
     }
 
-    const HeaderWF* receivedPacket = reinterpret_cast<const HeaderWF*>(data.data());
-    // std::memcpy(&receivedPacket, vec.data(), sizeof(HeaderWF));
-    // std::cout << "Ci sono4" << std::endl;
+    std::vector<uint8_t> vec(size);
+    vec.resize(size);    // Resize the data vector to hold the full payload
 
-    // Verify the content of the debufferized data
-    std::cout << "Debufferized Header APID: " << receivedPacket->h.apid << std::endl;
-    std::cout << "Debufferized Data size: " << receivedPacket->d.size << std::endl;
-    std::cout << "Size of timespec: " << sizeof(receivedPacket->h.ts) << ", Alignment:" << alignof(receivedPacket->h.ts) << "\n" << std::endl;
+    // Store into vec only the actual packet data, excluding the size field
+    memcpy(vec.data(), static_cast<const uint8_t*>(data.data()), size);
 
-    HeaderWF::print(*receivedPacket, 10);
+    // Transform the raw data into the Header struct
+    const Header* receivedPacket = reinterpret_cast<const Header*>(vec.data());
+    uint32_t packet_type = receivedPacket->type;  // Get the type of the received packet
 
-    /*
-    std::string str(data.begin(), data.end());
-    nlohmann::json result = nlohmann::json::parse(str);
+    // Access the Header fields
+    std::cout << "  APID: " << receivedPacket->apid << std::endl;
+    std::cout << "  Counter: " << receivedPacket->counter << std::endl;
+    std::cout << "  Type: " << receivedPacket->type << std::endl;
+    std::cout << "  Absolute Time: " << receivedPacket->abstime << std::endl;
 
-    if (result.is_array() && !result.empty()) {
-        std::cout << "Worker2::processData: TIMESTAMP " << result[0]["timestamp"] << std::endl;
-    }
-    else if (result.is_object()) {
-        std::cout << "Worker2::processData: TIMESTAMP " << result["timestamp"] << std::endl;
-    }
-    */
 
     return {};
 }

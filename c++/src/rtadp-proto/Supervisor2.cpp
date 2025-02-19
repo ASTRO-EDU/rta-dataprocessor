@@ -15,13 +15,10 @@ Supervisor2::~Supervisor2() {
 void Supervisor2::start_managers() {
     int indexmanager = 0;
     WorkerManager* manager2 = new WorkerManager2(indexmanager, this, workername);
-    
     setup_result_channel(manager2, indexmanager);
-    
     manager2->run();
     manager_workers.push_back(manager2);
-    // TODO: Rimuovere print o meglio trasformare come log
-    std::cout << "DER SUP2 manager started. manager_workers lenght: " << manager_workers.size() << std::endl;
+    logger->info("DER SUP2 manager started");
 }
 
 // For "dataflowtype": "binary", decode the data before loading it into the queue.

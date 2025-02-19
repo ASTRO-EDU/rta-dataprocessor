@@ -19,6 +19,8 @@
 #include "avro/Specific.hh"
 #include "ccsds/include/packet.h"
 
+#include "../include/utils2.hh"
+
 
 Supervisor* Supervisor::instance = nullptr;
 
@@ -38,7 +40,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
     context = zmq::context_t(1);
 
     try {
-        int timeout = 20000;    // 1000
+        int timeout = 5000;    // 1000
 
         // Retrieve and log configuration
         processingtype = config["processing_type"].get<std::string>();
@@ -124,32 +126,6 @@ Supervisor::Supervisor(std::string config_file, std::string name)
 
     std::ifstream ifs("../../rtadp-proto/avro_schema.json");
     avro::compileJsonSchema(ifs, avro_schema);
-
-
-    // Load Avro schema from the provided schema string
-    /* std::string avro_schema_str = R"({
-        "type": "record",
-        "name": "AvroMonitoringPoint",
-        "namespace": "astri.mon.kafka",
-        "fields": [
-            {"name": "assembly", "type": "string"},
-            {"name": "name", "type": "string"},
-            {"name": "serial_number", "type": "string"},
-            {"name": "timestamp", "type": "double"},
-            {"name": "source_timestamp", "type": ["null", "long"]},
-            {"name": "units", "type": "string"},
-            {"name": "archive_suppress", "type": "boolean"},
-            {"name": "env_id", "type": "string"},
-            {"name": "eng_gui", "type": "boolean"},
-            {"name": "op_gui", "type": "boolean"},
-            {"name": "data", "type": {"type": "array", "items": ["double", "int", "long", "string", "boolean"]}}
-        ]
-    })";
-
-    std::istringstream schema_stream(avro_schema_str);
-    avro::compileJsonSchema(schema_stream, avro_schema);    
-
-    this->avro_schema = avro_schema;*/
 }
 
 //////////////////////////////////
@@ -277,9 +253,7 @@ void Supervisor::load_configuration(const std::string &config_file, const std::s
 
     // Extract values from the tuple returned by get_workers_config
     auto workers_config = config_manager->get_workers_config(name);
-    
     manager_result_sockets_type = std::get<0>(workers_config)[0];
-
     manager_result_dataflow_type = std::get<1>(workers_config)[0]; 
     manager_result_lp_sockets = std::get<2>(workers_config);
     manager_result_hp_sockets = std::get<3>(workers_config);
@@ -307,36 +281,24 @@ void Supervisor::start_service_threads() {
 
 // Set up result channel for a given WorkerManager
 void Supervisor::setup_result_channel(WorkerManager *manager, int indexmanager) {
-    logger->info("                                      \n\n \n  CCCCCCCC");
-
     socket_lp_result[indexmanager] = nullptr;
     socket_hp_result[indexmanager] = nullptr;
     //context = zmq::context_t(1);
 
-    logger->info("                     \n \n AAAAAAABBBBBBBB" + manager->get_result_lp_socket());
-
-
     if (manager->get_result_lp_socket() != "none") {
-        logger->info(" \n \n              AAAAAAAAAAA");
-        logger->info(" \n \n              AAAAAAAAAAA");
-
         if (manager->get_result_socket_type() == "pushpull") {
-            logger->info("                \n \n  BBBBBBBBBB");
-
             socket_lp_result[indexmanager] = new zmq::socket_t(context, ZMQ_PUSH);
             socket_lp_result[indexmanager]->connect(manager->get_result_lp_socket());
-            std::cout << "INDEX MANAGER: " << indexmanager << std::endl;
-            std::cout << "---result lp socket pushpull " << manager->get_globalname() << " " << manager->get_result_lp_socket() << std::endl;
             logger->info("---result lp socket pushpull " + manager->get_globalname() + " " + manager->get_result_lp_socket(), globalname);
         } 
         else if (manager->get_result_socket_type() == "pubsub") {
             socket_lp_result[indexmanager] = new zmq::socket_t(context, ZMQ_PUB);
             socket_lp_result[indexmanager]->bind(manager->get_result_lp_socket());
-            std::cout << "---result lp socket pubsub " << manager->get_globalname() << " " << manager->get_result_lp_socket() << std::endl;
             logger->info("---result lp socket pubsub " + manager->get_globalname() + " " + manager->get_result_lp_socket(), globalname);
         }
         else {
-            logger->info("+++++++++++++++++++++++ " + manager->get_result_socket_type());
+            std::cerr << "Invalid socket type from config file." << std::endl;
+            logger->error("Invalid socket type from config file.");
         }
     }
 
@@ -344,14 +306,16 @@ void Supervisor::setup_result_channel(WorkerManager *manager, int indexmanager) 
         if (manager->get_result_socket_type() == "pushpull") {
             socket_hp_result[indexmanager] = new zmq::socket_t(context, ZMQ_PUSH);
             socket_hp_result[indexmanager]->connect(manager->get_result_hp_socket());
-            std::cout << "---result hp socket pushpull " << manager->get_globalname() << " " << manager->get_result_hp_socket() << std::endl;
             logger->info("---result hp socket pushpull " + manager->get_globalname() + " " + manager->get_result_hp_socket(), globalname);
         } 
         else if (manager->get_result_socket_type() == "pubsub") {
             socket_hp_result[indexmanager] = new zmq::socket_t(context, ZMQ_PUB);
             socket_hp_result[indexmanager]->bind(manager->get_result_hp_socket());
-            std::cout << "---result hp socket pubsub " << manager->get_globalname() << " " << manager->get_result_hp_socket() << std::endl;
             logger->info("---result hp socket pubsub " + manager->get_globalname() + " " + manager->get_result_hp_socket(), globalname);
+        }
+        else {
+            std::cerr << "Invalid socket type from config file." << std::endl;
+            logger->error("Invalid socket type from config file.");
         }
     }
 }
@@ -360,17 +324,11 @@ void Supervisor::setup_result_channel(WorkerManager *manager, int indexmanager) 
 void Supervisor::start_managers() {
     int indexmanager = 0;
     WorkerManager *manager = new WorkerManager(indexmanager, this, "Generic");
-
-    logger->info("                      ENTRO IN setup_result_channel");
-
     setup_result_channel(manager, indexmanager);
-
-    logger->warning("                   ESCO DA setup_result_channel");
-
     manager->run();
     manager_workers.push_back(manager);
-    // TODO: Rimuovere print o meglio trasformare come log
-    std::cout << "BASE SUP manager started. man lenght: " << manager_workers.size() << std::endl;
+    logger->info("BASE SUP manager started.");
+
 }
 
 // Start workers
@@ -379,8 +337,7 @@ void Supervisor::start_workers() {
 
     for (auto &manager : manager_workers) {
         manager->start_worker_threads(manager_num_workers);
-        // TODO: Rimuovere print o meglio trasformare come log
-        std::cout << "SUP start_worker_threads" << std::endl;
+        logger->info("BASE SUP start_worker_threads");
         indexmanager++;
     }
 }
@@ -388,7 +345,7 @@ void Supervisor::start_workers() {
 ///////////////////////////////////////
 // Start Supervisor operation
 void Supervisor::start() {
-    logger->info("                    START MANAGERS");
+    logger->info("Starting managers and workers");
     start_managers();
     start_workers();
     start_service_threads();
@@ -483,80 +440,32 @@ void Supervisor::send_result(WorkerManager *manager, int indexmanager) {
         return;
     }
 
-    logger->warning("INDEX MANAGER di Supervisor::send_result: {}", std::to_string(indexmanager));
-
-    logger->warning("++++++++++++++++++++: {}", manager->get_result_dataflow_type());
-
     json data;
     int channel = -1;
 
     if (!manager->getResultHpQueue()->empty()) {
-        logger->warning("Entro nel primo IF (HP) con channel: {}", std::to_string(channel));
-
-        // Tries to get an element from the hp queue
         channel = 1;
-
-        logger->warning("////////////// 1 => {}", std::to_string(channel));
-
         data = manager->getResultHpQueue()->get();
-
-        logger->warning("////////////// 2 => {}", std::to_string(channel));
     }
     else if (!manager->getResultLpQueue()->empty()) {
-        logger->warning("Entro nel secondo IF (LP) con channel: {}", std::to_string(channel));
-
-        // If it fails, it does the same with the lp queue
         channel = 0;
-
-        logger->warning("////////////// 3 => {}", std::to_string(channel));
-
+        std::cout << "Supervisor::send_result: getting results." << std::endl;
         data = manager->getResultLpQueue()->get();
+        std::cout << "Supervisor::send_result: finished getting results." << std::endl;
 
-        logger->warning("////////////// 4 => {}", std::to_string(channel));
     }
     else {
-        std::cout << "ENTRAMBE LE CODE VUOTE Supervisor::send_result\n" << std::endl;
+        std::cout << "Both queues are empty, can't send results." << std::endl;
+        logger->warning("Both queues are empty, can't send results.");
         return;
     }
 
-    /*
-    try {
-        logger->warning("Entro nel TRY con channel: {}", std::to_string(channel));
-
-        // Tries to get an element from the hp queue
-        channel = 1;
-
-        logger->warning("////////////// 1 => {}", std::to_string(channel));
-
-        data = manager->getResultHpQueue()->get(); 
-
-        logger->warning("////////////// 2 => {}", std::to_string(channel));
-    } 
-    catch (const std::exception &e) {
-        logger->warning("Entro nel CATCH con channel: {}", std::to_string(channel));
-
-        try {
-            logger->warning("Entro nel TRY2 con channel: {}", std::to_string(channel));
-
-            // If it fails, it does the same with the lp queue
-            channel = 0;
-            data = manager->getResultLpQueue()->get();  
-
-            logger->warning("////////////// 3 => {}", std::to_string(channel));
-        } 
-        catch (const std::exception &e) {
-            std::cout << "ENTRAMBE LE CODE VUOTE Supervisor::send_result\n" << std::endl;
-            return;
-        }
-    }
-    */
-
-    logger->warning("////////////// 5 => {}", std::to_string(channel));
-
     if (channel == 0) {
-        if (manager->get_result_lp_socket() == "none") {
-            std::cout << "SOCKET VUOTO Supervisor::send_result\n" << std::endl;
+        logger->info("Sending lp results.");
 
+        if (manager->get_result_lp_socket() == "none") {
+            std::cout << "Lp socket is empty, can't send results." << std::endl;
+            logger->warning("Lp socket is empty, can't send results.");
             return;
         }
         if (manager->get_result_dataflow_type() == "string" || manager->get_result_dataflow_type() == "filename") {
@@ -571,10 +480,10 @@ void Supervisor::send_result(WorkerManager *manager, int indexmanager) {
         } 
         else if (manager->get_result_dataflow_type() == "binary") {
             try {
-                logger->warning("------------------------ MANDO BINARI Supervisor::send_result\n");
-
+                std::cout << "Supervisor::send_result: sending binary lp results." << std::endl;
                 socket_lp_result[indexmanager]->send(zmq::buffer(data.dump()));
-            } 
+                std::cout << "Supervisor::send_result: finished sending binary lp results." << std::endl;
+            }
             catch (const std::exception &e) {
                 std::cerr << "ERROR: data not in binary format to be sent to socket_result: " << e.what() << std::endl;
                 logger->error("ERROR: data not in binary format to be sent to socket_result: " + std::string(e.what()), globalname);
@@ -583,8 +492,11 @@ void Supervisor::send_result(WorkerManager *manager, int indexmanager) {
     }
 
     if (channel == 1) {
+        logger->info("Sending hp results.");
+
         if (manager->get_result_hp_socket() == "none") {
-            std::cout << "CHANNEL 1 Supervisor::send_result\n" << std::endl;
+            std::cout << "Hp socket is empty, can't send results." << std::endl;
+            logger->warning("Hp socket is empty, can't send results.");
             return;
         }
         if (manager->get_result_dataflow_type() == "string" || manager->get_result_dataflow_type() == "filename") {
@@ -607,40 +519,32 @@ void Supervisor::send_result(WorkerManager *manager, int indexmanager) {
             }
         }
     }
-
-    std::cout << "FUORI Supervisor::send_result\n" << std::endl;
 }
 
 ///////////////////////////////////////////////////////////////////
 // Listen for low priority binary data
 void Supervisor::listen_for_lp_data() {
-    std::cout << "\n Dentro listen_for_lp_data " << std::endl;
+    std::cout << "IIIIIInside listen_for_lp_data" << std::endl;
 
     while (continueall) {
-        std::cout << "Ci sono" << std::endl;
-
         if (!stopdata) {
-            std::cout << "Ci sono0" << std::endl;
-
             zmq::message_t data;
             zmq::recv_flags flags = zmq::recv_flags::none;
-
 
             try {
                 auto result = socket_lp_data->recv(data, flags);
                 int err_code = zmq_errno();
 
                 if (!result) {
-                    std::cout << "listen_for_lp_data waiting for a producer" << std::endl;
+                    // std::cout << "Waiting for a producer" << std::endl;
 
-                    /*
-                    while (err_code == EAGAIN) {   // Continue if no commands were received
+
+                /*    while (err_code == EAGAIN) {   // Continue if no commands were received
                         // std::cout << "Waiting" << std::endl;
                         continue; // Keep looking for commands
                     }
-                    */
+                */
 
-                    std::cout << "Fuori dal while" << std::endl;
                     // continue; // Keep looking for commands
                 }
             }
@@ -651,155 +555,61 @@ void Supervisor::listen_for_lp_data() {
                     break;
                 }
                 else {
+                    std::cerr << "ZMQ exception in listen_for_lp_data: " << e.what() << std::endl;
                     logger->error("ZMQ exception in listen_for_lp_data: {}", e.what());
                     throw;
                 }
             }
 
-            ///////////////////////////////////////////
+            std::cerr << "RECV FINITA" << std::endl;
             
-            std::cout << "\n RICEZIONE DI Supervisor::listen_for_lp_data():" << std::endl;
-
-            if (data.size() < sizeof(int32_t)) {
-                std::cerr << "Error: Received data size is smaller than expected." << std::endl;
-                // break;
-            }
-
+            // Extract the size of the packet (first 4 bytes)
             int32_t size;
             memcpy(&size, data.data(), sizeof(int32_t));
 
+            // Size has to be non-negative and does not exceed the available data in data
             if (size <= 0 || size > data.size() - sizeof(int32_t)) {
-                std::cerr << "Invalid size value: " << size << std::endl;
-                // break;
+                std::cerr << "Invalid size value1: " << size << std::endl;
             }
 
-            /*
-            // Print the packet
+            std::vector<uint8_t> vec(size);
+            vec.resize(size);    // Resize the data vector to hold the full payload
             
-            std::vector<uint8_t> vec;
-            vec.resize(data.size());
-            // memcpy(vec.data(), static_cast<const char*>(data.data()), data.size());
+            // Store into vec only the actual packet data, excluding the size field
+            memcpy(vec.data(), static_cast<const uint8_t*>(data.data()) + sizeof(uint32_t), size);  
 
-            HeaderWF* receivedPacket = reinterpret_cast<HeaderWF*>(data.data());
-
-            // Verify the content of the debufferized data
-            std::cout << "Debufferized Header APID: " << receivedPacket->h.apid << std::endl;
-            std::cout << "Debufferized Data size: " << receivedPacket->d.size << std::endl;
-            std::cout << "Size of timespec: " << sizeof(receivedPacket->h.ts) << ", Alignment:" << alignof(receivedPacket->h.ts) << "\n" << std::endl;
-
-            HeaderWF::print(*receivedPacket, 10);
-            */
-            ///////////////////////////////////////////
+            // Transform the raw data into the Header struct
+            const Header* receivedPacket = reinterpret_cast<const Header*>(vec.data());
+            uint32_t packet_type = receivedPacket->type;  // Get the type of the received packet
 
 
-            std::vector<uint8_t> binary_data(static_cast<const uint8_t*>(data.data()), static_cast<const uint8_t*>(data.data()) + data.size());
+            // Access the Header fields
+            std::cout << "  APID1: " << receivedPacket->apid << std::endl;
+            std::cout << "  Counter1: " << receivedPacket->counter << std::endl;
+            std::cout << "  Type1: " << receivedPacket->type << std::endl;
+            std::cout << "  Absolute Time1: " << receivedPacket->abstime << std::endl;
 
-            for (auto &manager : manager_workers) {
-                if (!binary_data.empty()) {
-                    std::cout << "Supervisor::listen_for_lp_data pusho sulla coda" << std::endl;
-                    manager->getLowPriorityQueue()->push(binary_data);
-                    std::cout << "Supervisor::listen_for_lp_data pushato sulla coda" << std::endl;
+
+            // Push the received data into queue according to the packet type
+            if (packet_type == 1) {  // WF Packet
+                // Extract the HeaderWF struct from the raw bytes
+                const HeaderWF* packet_wf = reinterpret_cast<const HeaderWF*>(vec.data());  
+
+                for (auto& manager : manager_workers) {
+                    manager->getLowPriorityQueue()->push(serializePacket(*packet_wf));
                 }
-
-                /*
-                const uint8_t* avro_data = reinterpret_cast<const uint8_t*>(data.data());   // static_cast
-                size_t avro_size = data.size();
-
-                if (avro_data == nullptr) {
-                    logger->error("Avro data pointer is null. Cannot process further.");
-                    break;
-                }
-
-                std::cout << "\n AVRO DATA: " << avro_data << std::endl;
-                std::cout << "\n AVRO SIZE: " << avro_size << std::endl;
-
-                std::unique_ptr<avro::InputStream> in;
-                try {
-                    in = avro::memoryInputStream(avro_data, avro_size);
-                }
-                catch (const std::exception& e) {
-                    logger->error("Failed to create memory input stream: {}", e.what());
-                    throw;
-                }
-
-                avro::DecoderPtr d = avro::binaryDecoder();
-                d->init(*in);
-
-                avro::GenericDatum datum(avro_schema);
-                try {
-                    avro::decode(*d, datum);
-                }
-                catch (const avro::Exception& e) {
-                    logger->error("Error decoding Avro data: {}", e.what());
-                    throw;
-                }
-
-                std::cout << "Type: " << datum.type() << std::endl;
-
-                if (datum.type() == avro::AVRO_RECORD) {
-                    try {
-                        auto record = std::any_cast<avro::GenericRecord>(datum);
-                        std::cout << "Record field count: " << record.fieldCount() << std::endl;
-                    }
-                    catch (const avro::Exception& e) {
-                        logger->error("Error accessing GenericDatum value: {}", e.what());
-                        throw;
-                    }
-                }
-                else {
-                    std::cout << "Datum is not a record. Type: " << datum.type() << std::endl;
-                }*/
-
-
-                    /* 
-                    spdlog::warn("Raw data size: {}", data.size());
-                    spdlog::warn("Raw data content: {}", std::string(reinterpret_cast<const char*>(data.data()), data.size()));
-                    
-                    spdlog::warn("Raw decodeddata size: {}", decodeddata.size());
-                    spdlog::warn("Raw decodeddata content: {}", std::string(reinterpret_cast<const char*>(decodeddata.data()), decodeddata.size()));
-
-
-                    auto in = avro::memoryInputStream(reinterpret_cast<const uint8_t*>(decodeddata.data()), decodeddata.size());
-                    if (!in) {
-                        logger->error("Memory input stream creation failed for data: {}", decodeddata);
-                        break;
-                    }
-                    else {
-                        logger->warning("Input stream created successfully for data.");
-                    }
-
-                    auto decoder = avro::binaryDecoder();
-                    decoder->init(*in);
-
-                    if (!avro_schema.root()) {
-                        logger->error("Avro schema is null or invalid!");
-                        break;
-                    }
-                    else {
-                        logger->warning("Avro schema is valid.");
-                        std::cout << "AVRO SCHEMA ROOT TYPE: " << avro_schema.root()->type() << std::endl;
-                    }
-
-                    try {
-                        avro::GenericDatum datum(avro_schema);
-                        avro::decode(*decoder, datum);
-                        logger->warning("Decoded datum successfully");
-                    }
-                    catch (const avro::Exception& e) {
-                        logger->error("Avro exception during decode: {}", e.what());
-                        throw;
-                    }
-                    catch (const std::exception& e) {
-                        logger->error("Standard exception during decode: {}", e.what());
-                        throw;
-                    }
-
-                    logger->warning("ZZZZZZZ FINITO DI GESTIRE I DATI");
-                }
-                else {
-                    std::cerr << "Received null or empty data!" << std::endl;
-                } */
             }
+            else if (packet_type == 20) {  // HK Packet
+                // Extract the HeaderHK struct from the raw bytes
+                const HeaderHK* packet_hk = reinterpret_cast<const HeaderHK*>(vec.data());
+
+                for (auto& manager : manager_workers) {
+                    manager->getLowPriorityQueue()->push(serializePacket(*packet_hk));
+                }
+            }
+            else {
+                std::cerr << "Unknown packet type: " << packet_type << std::endl;
+            } 
         }
     }
 
@@ -810,6 +620,8 @@ void Supervisor::listen_for_lp_data() {
 
 // Listen for high priority binary data
 void Supervisor::listen_for_hp_data() {
+    std::cout << "IIIIIIInside listen_for_hp_data" << std::endl;
+
     while (continueall) {
         if (!stopdata) {
             zmq::message_t data;
@@ -1100,6 +912,7 @@ void Supervisor::command_stopprocessing() {
 // Start data command
 void Supervisor::command_startdata() {
     stopdata = false;
+
     for (auto &manager : manager_workers) {
         manager->set_stopdata(false);
     }
@@ -1108,6 +921,7 @@ void Supervisor::command_startdata() {
 // Stop data command
 void Supervisor::command_stopdata() {
     stopdata = true;
+
     for (auto &manager : manager_workers) {
         manager->set_stopdata(true);
     }

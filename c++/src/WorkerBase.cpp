@@ -29,8 +29,6 @@ void WorkerBase::init(WorkerManager* manager, Supervisor* supervisor, const std:
 }
 
 void WorkerBase::config(const nlohmann::json& configuration) {
-    // spdlog::error("WorkerBase::config: CONFIG");
-
     // Extract the pidtarget
     std::string pidtarget = configuration["header"]["pidtarget"];
 
