@@ -18,6 +18,7 @@
 #include "avro/Decoder.hh"
 #include "avro/Specific.hh"
 #include "ccsds/include/packet.h"
+// #include "Packet2.h"
 
 #include "../include/utils2.hh"
 
@@ -40,7 +41,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
     context = zmq::context_t(1);
 
     try {
-        int timeout = 5000;    // 1000
+        int timeout = 15000;    // 1000
 
         // Retrieve and log configuration
         processingtype = config["processing_type"].get<std::string>();
@@ -57,6 +58,10 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         if (datasockettype == "pushpull") {
             socket_lp_data = new zmq::socket_t(context, ZMQ_PULL);
             socket_lp_data->bind(config["data_lp_socket"].get<std::string>());
+
+            //////////////////
+            // socket_lp_data->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+            //////////////////
 
             socket_hp_data = new zmq::socket_t(context, ZMQ_PULL);
             socket_hp_data->bind(config["data_hp_socket"].get<std::string>());
@@ -524,8 +529,6 @@ void Supervisor::send_result(WorkerManager *manager, int indexmanager) {
 ///////////////////////////////////////////////////////////////////
 // Listen for low priority binary data
 void Supervisor::listen_for_lp_data() {
-    std::cout << "IIIIIInside listen_for_lp_data" << std::endl;
-
     while (continueall) {
         if (!stopdata) {
             zmq::message_t data;
@@ -538,14 +541,13 @@ void Supervisor::listen_for_lp_data() {
                 if (!result) {
                     // std::cout << "Waiting for a producer" << std::endl;
 
-
-                /*    while (err_code == EAGAIN) {   // Continue if no commands were received
+                    /*
+                    while (err_code == EAGAIN) {   // Continue if no commands were received
                         // std::cout << "Waiting" << std::endl;
                         continue; // Keep looking for commands
                     }
-                */
-
                     // continue; // Keep looking for commands
+                    */
                 }
             }
             catch (const zmq::error_t& e) {
@@ -561,7 +563,7 @@ void Supervisor::listen_for_lp_data() {
                 }
             }
 
-            std::cerr << "RECV FINITA" << std::endl;
+            // std::cerr << "RECV FINITA" << std::endl;
             
             // Extract the size of the packet (first 4 bytes)
             int32_t size;
@@ -569,7 +571,7 @@ void Supervisor::listen_for_lp_data() {
 
             // Size has to be non-negative and does not exceed the available data in data
             if (size <= 0 || size > data.size() - sizeof(int32_t)) {
-                std::cerr << "Invalid size value1: " << size << std::endl;
+                std::cerr << "Invalid size value: " << size << std::endl;
             }
 
             std::vector<uint8_t> vec(size);
@@ -578,30 +580,24 @@ void Supervisor::listen_for_lp_data() {
             // Store into vec only the actual packet data, excluding the size field
             memcpy(vec.data(), static_cast<const uint8_t*>(data.data()) + sizeof(uint32_t), size);  
 
-            // Transform the raw data into the Header struct
-            const Header* receivedPacket = reinterpret_cast<const Header*>(vec.data());
-            uint32_t packet_type = receivedPacket->type;  // Get the type of the received packet
+            const uint8_t* raw_data = vec.data();
 
-
-            // Access the Header fields
-            std::cout << "  APID1: " << receivedPacket->apid << std::endl;
-            std::cout << "  Counter1: " << receivedPacket->counter << std::endl;
-            std::cout << "  Type1: " << receivedPacket->type << std::endl;
-            std::cout << "  Absolute Time1: " << receivedPacket->abstime << std::endl;
-
+            // Extract payload in order to get the packet type
+            const Data_HkDams* receivedPayload = reinterpret_cast<const Data_HkDams*>(raw_data + sizeof(HeaderDams));
+            uint8_t packet_type = receivedPayload->type;  // Store type in a variable
 
             // Push the received data into queue according to the packet type
-            if (packet_type == 1) {  // WF Packet
-                // Extract the HeaderWF struct from the raw bytes
-                const HeaderWF* packet_wf = reinterpret_cast<const HeaderWF*>(vec.data());  
+            if (packet_type == Data_WaveData::TYPE) {  // WF Packet
+                // Extract the HeaderWFDams struct from the raw bytes
+                const HeaderWFDams* packet_wf = reinterpret_cast<const HeaderWFDams*>(raw_data);
 
                 for (auto& manager : manager_workers) {
                     manager->getLowPriorityQueue()->push(serializePacket(*packet_wf));
                 }
             }
-            else if (packet_type == 20) {  // HK Packet
-                // Extract the HeaderHK struct from the raw bytes
-                const HeaderHK* packet_hk = reinterpret_cast<const HeaderHK*>(vec.data());
+            else if (packet_type == Data_HkDams::TYPE) {  // HK Packet
+                // Extract the HeaderHKDams struct from the raw bytes
+                const HeaderHKDams* packet_hk = reinterpret_cast<const HeaderHKDams*>(raw_data);
 
                 for (auto& manager : manager_workers) {
                     manager->getLowPriorityQueue()->push(serializePacket(*packet_hk));
@@ -620,8 +616,6 @@ void Supervisor::listen_for_lp_data() {
 
 // Listen for high priority binary data
 void Supervisor::listen_for_hp_data() {
-    std::cout << "IIIIIIInside listen_for_hp_data" << std::endl;
-
     while (continueall) {
         if (!stopdata) {
             zmq::message_t data;

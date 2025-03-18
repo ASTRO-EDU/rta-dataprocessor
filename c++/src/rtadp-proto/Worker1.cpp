@@ -57,8 +57,6 @@ std::string get_current_time_as_string() {
 
 ////////////////////////////////////////////
 std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int priority) {
-    std::cout << "Worker1::process_data priority:" << priority << std::endl;
-
     std::vector<uint8_t> binary_result;    
     std::string dataflow_type = get_supervisor()->dataflowtype;
 
@@ -75,32 +73,49 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
 
         // Size has to be non-negative and does not exceed the available data in data
         if (size <= 0 || size > data.size() - sizeof(int32_t)) {
-            std::cerr << "Invalid size value2: " << size << std::endl;
+            std::cerr << "Invalid size value: " << size << std::endl;
         }
 
         std::vector<uint8_t> vec(size);
         vec.resize(size);    // Resize the data vector to hold the full payload
 
         // Store into vec only the actual packet data, excluding the size field
-        memcpy(vec.data(), static_cast<const uint8_t*>(data.data()), size);
-        // memcpy(vec.data(), data.data(), size);
+        //memcpy(vec.data(), static_cast<const uint8_t*>(data.data()), size);
+        memcpy(vec.data(), static_cast<const uint8_t*>(data.data()) + sizeof(int32_t), size);
 
-        // Transform the raw data into the Header struct
-        const Header* receivedPacket = reinterpret_cast<const Header*>(vec.data());
-        uint32_t packet_type = receivedPacket->type;  // Get the type of the received packet
+        const uint8_t* raw_data = vec.data();
 
-        if (packet_type == 1) {  // WF Packet
-            std::cout << "\nWaveform packet received. Printing header data: " << std::endl;
+        // Extract payload in order to get the packet type
+        const Data_HkDams* receivedPayload = reinterpret_cast<const Data_HkDams*>(raw_data + sizeof(HeaderDams));
+        uint8_t packet_type = receivedPayload->type;  // Store type in a variable
+
+        if (packet_type == Data_WaveData::TYPE) {  // WF Packet
+            std::cout << "Waveform packet received. Printing infos: " << std::endl;
         }
-        else if (packet_type == 20) { // HK Packet
-            std::cout << "\nHousekeeping packet received. Printing header data: " << std::endl;
+        else if (packet_type == Data_HkDams::TYPE) { // HK Packet
+            std::cout << "Housekeeping packet received. Printing infos: " << std::endl;
         }
 
-        // Access the Header fields
-        std::cout << "  APID: " << receivedPacket->apid << std::endl;
-        std::cout << "  Counter: " << receivedPacket->counter << std::endl;
-        std::cout << "  Type: " << receivedPacket->type << std::endl;
-        std::cout << "  Absolute Time: " << receivedPacket->abstime << std::endl;
+        // Extract the header of the packet to print some infos
+        const HeaderDams* receivedHeader = reinterpret_cast<const HeaderDams*>(raw_data);
+        uint8_t start = receivedHeader->start;
+        uint8_t apid = receivedHeader->apid;
+        uint16_t sequence = receivedHeader->sequence;
+        uint16_t runID = receivedHeader->runID;
+        uint16_t header_size = receivedHeader->size;
+        uint32_t crc = receivedHeader->crc;
+
+        std::cout << "Header:" << std::endl;
+        std::cout << "  Start Byte: " << std::hex << (int)start << std::endl;
+        std::cout << "  APID: " << std::hex << (int)apid << std::endl;
+        std::cout << "  Sequence: " << std::hex << sequence << std::endl;
+        printf("  Run ID: %04X\n", runID);
+        printf("  Size: %04X\n", header_size);
+        printf("  CRC: %08X\n", crc);
+
+        std::cout << "Payload:" << std::endl;
+        std::cout << "  Type: " << std::dec << (int)packet_type
+            << " (0x" << std::hex << (int)packet_type << ")" << std::endl;
 
         // Payload to return
         // binary_result.insert(binary_result.end(), data.begin(), data.end());  // Append data at the end

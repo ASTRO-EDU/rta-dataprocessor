@@ -13,9 +13,11 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fstream>
+#include <arpa/inet.h>  // For htons(), htonl()
 #include "WorkerLogger.h"
 #include "ConfigurationManager.h"
 #include "WorkerManager.h"
+
 
 #include "avro/ValidSchema.hh"
 
@@ -170,7 +172,7 @@ public:
     std::vector<zmq::socket_t*> socket_hp_result;
     std::vector<std::string> getNameWorkers() const;
     WorkerLogger *logger;
-    ConfigurationManager *config_manager;
+    ConfigurationManager* config_manager;
     json config;
     int manager_num_workers;
     std::string manager_result_sockets_type;

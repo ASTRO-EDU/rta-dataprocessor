@@ -31,6 +31,7 @@ void pushPacketToQueue(std::queue<std::vector<uint8_t>>& queue, const T& packet)
 }
 
 // Function to serialize packets of type T into a vector and return them
+/*
 template <typename T>
 std::vector<uint8_t> serializePacket(const T& packet) {
     std::vector<uint8_t> buffer(sizeof(T));
@@ -38,5 +39,14 @@ std::vector<uint8_t> serializePacket(const T& packet) {
     
     return buffer;
 }
+*/
+template <typename T>
+std::vector<uint8_t> serializePacket(const T& packet) {
+    int32_t size = sizeof(T);
+    std::vector<uint8_t> buffer(sizeof(int32_t) + size);  // Allocate extra space for size
+    memcpy(buffer.data(), &size, sizeof(int32_t));        // Copy size at the start
+    memcpy(buffer.data() + sizeof(int32_t), &packet, size); // Copy packet data
 
+    return buffer;
+}
 #endif

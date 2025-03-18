@@ -35,7 +35,6 @@ void HKGenerator::generate_data() {
     c1.d.wformcount = rand() % 5000;
     c1.d.flags      = 0xABCD;
     c1.d.crc        = 0xEF01;
-
 }
 
 WFGenerator::WFGenerator(const int runID) : runID(runID), pc(0) {}
@@ -83,5 +82,4 @@ void WFGenerator::generate_data() {
     }
 
     c1.d.crc = rand();
-
 }

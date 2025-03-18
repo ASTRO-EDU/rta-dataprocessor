@@ -59,8 +59,6 @@ void WorkerThread::set_processdata(int processdata1) {
 
 //////////////////////////////////////////////////
 void WorkerThread::run() {
-    std::cout << "WorkerThread::run start!!!!!!!!" << std::endl;
-
     start_timer(1);
 
     while (!_stop_event) {
@@ -68,16 +66,12 @@ void WorkerThread::run() {
         if (processdata == 1 && tokenreading == 0) {
                 // Check and process high-priority queue first
                 if (!high_priority_queue->empty()) {
-                    std::cout << "WorkerThread::run: start processing hp data" << std::endl;
-
                     auto high_priority_data = high_priority_queue->get();
                     manager->change_token_reading();
                     process_data(high_priority_data, 1);
                 } 
                 // Process low-priority queue if high-priority queue is empty
                 else if (!low_priority_queue->empty()) {
-                    std::cout << "WorkerThread::run: start processing lp data" << std::endl;
-
                     auto low_priority_data = low_priority_queue->get();
                     manager->change_token_reading();
                     process_data(low_priority_data, 0);
@@ -89,7 +83,6 @@ void WorkerThread::run() {
         } 
         else {
             if (tokenreading != 0 && status != 4) {
-                std::cout << "WorkerThread::run: waiting for reading from queue" << std::endl;
                 status = 4; // waiting for reading from queue
             }
         }
@@ -205,9 +198,6 @@ void WorkerThread::workerop(int interval) {
 
 ////////////////////////////////////////////
 void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) {
-    std::cout << "WorkerThread::process_data priority:" << priority << std::endl;
-
-
     status = 8; // processing new data
     processed_data_count++;
 
@@ -217,32 +207,12 @@ void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) 
 
     auto dataresult = worker->processData(data, priority);
 
-
-    // Extract the size of the packet (first 4 bytes)
-    int32_t size;
-    std::memcpy(&size, dataresult.data(), sizeof(int32_t));
-
-    std::vector<uint8_t> vec(size);
-    vec.resize(size);    // Resize the data vector to hold the full payload
-
-    // Store into vec only the actual packet data, excluding the size field
-    memcpy(vec.data(), static_cast<const uint8_t*>(dataresult.data()), size);
-
-    // Transform the raw data into the Header struct
-    const Header* receivedPacket = reinterpret_cast<const Header*>(vec.data());
-    uint32_t packet_type = receivedPacket->type;  // Get the type of the received packet
-
-    // Access the Header fields
-    std::cout << "  \nAPID3: " << receivedPacket->apid << std::endl;
-    std::cout << "  Counter3: " << receivedPacket->counter << std::endl;
-    std::cout << "  Type3: " << receivedPacket->type << std::endl;
-    std::cout << "  Absolute Time3: " << receivedPacket->abstime << std::endl;
-
     if (!dataresult.empty() && tokenresult == 0) {
         logger->info("WorkerThread::process_data: pushing dataresult into the queue");
 
         // Push the received data into queue according to the packet type
         if (priority == 0) {
+            /*
             if (packet_type == 1) {  // WF Packet
                 std::cout << "\nWorkerThread::process_data: Waveform packet received" << std::endl;
 
@@ -266,6 +236,7 @@ void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) 
             else {
                 std::cerr << "Unknown packet type: " << packet_type << std::endl;
             }
+            */
         } 
         else {
             manager->getResultHpQueue()->push(dataresult);
