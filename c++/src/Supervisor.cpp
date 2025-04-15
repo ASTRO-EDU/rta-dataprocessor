@@ -583,12 +583,12 @@ void Supervisor::listen_for_lp_data() {
                 std::cerr << "Invalid size value: " << size << std::endl;
                 continue;
             }
-            std::cout << "Extracted packet size: " << size << std::endl;
+            std::cout << "Extracted packet size: " << std::dec << (int)size << " (0x" << std::hex << (int)size << ")" << std::endl;
 
             /**/std::cout << "Received Raw Packet: ";
-            uint8_t* raw_data2 = static_cast<uint8_t*>(data.data());
+            const uint8_t* raw_packet = static_cast<const uint8_t*>(data.data());
             for (size_t i = 0; i < data.size(); ++i) {
-                std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)raw_data2[i] << " ";
+                std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)raw_packet[i] << " ";
             }
             std::cout << std::dec << std::endl;
 
@@ -597,7 +597,6 @@ void Supervisor::listen_for_lp_data() {
 
             // const uint8_t* raw_data = vec.data();
 
-            const uint8_t* raw_packet = static_cast<const uint8_t*>(data.data());
             uint8_t packet_type = raw_packet[4 + sizeof(HeaderDams)]; // 4 bytes for size + header bytes
             uint8_t subtype = raw_packet[4 + sizeof(HeaderDams) + 1];
             // [4 bytes size prefix]
@@ -608,12 +607,16 @@ void Supervisor::listen_for_lp_data() {
                 << ", SUBTYPE: " << static_cast<int>(subtype) << std::dec << std::endl;
 
             if (packet_type == Data_WaveHeader::TYPE) {  // WF Packet
-                if (subtype == Data_WaveHeader::SUB_TYPE) {
-                    std::cout << "Waveform header received." << std::endl;
+                std::cout << "Waveform packet received. Pushing into the queue" << std::endl;
+
+                // Extract the HeaderWFDams struct from the raw bytes
+                const HeaderWFDams* packet_wf = reinterpret_cast<const HeaderWFDams*>(raw_packet + sizeof(uint32_t));
+
+                for (auto& manager : manager_workers) {
+                    manager->getLowPriorityQueue()->push(serializePacket(*packet_wf));
                 }
-                else if (subtype == Data_WaveData::SUB_TYPE) {
-                    std::cout << "Waveform payload received." << std::endl;
-                }
+
+                std::cout << "Finished pushing into the queue" << std::endl;
             }
             else if (packet_type == Data_HkDams::TYPE) {  // HK Packet
                 std::cout << "Housekeeping packet received." << std::endl;
