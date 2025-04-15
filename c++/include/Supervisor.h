@@ -168,6 +168,9 @@ public:
     zmq::socket_t *socket_hp_data;
     zmq::socket_t *socket_command;
     zmq::socket_t *socket_monitoring;
+
+    zmq::socket_t* ctrl_socket;
+
     std::vector<zmq::socket_t*> socket_lp_result;
     std::vector<zmq::socket_t*> socket_hp_result;
     std::vector<std::string> getNameWorkers() const;

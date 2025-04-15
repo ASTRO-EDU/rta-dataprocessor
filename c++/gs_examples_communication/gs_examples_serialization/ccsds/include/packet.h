@@ -160,7 +160,6 @@ public:
             uint32_t currOff;	// 8
             uint32_t trigOff;	// 9
             uint32_t size;		// 10
-
         };
     };
 };

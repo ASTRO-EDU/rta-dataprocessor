@@ -95,6 +95,11 @@ Supervisor::Supervisor(std::string config_file, std::string name)
 
         socket_lp_result.resize(100, nullptr);
         socket_hp_result.resize(100, nullptr);
+
+
+        ctrl_socket = new zmq::socket_t(context, ZMQ_PUSH);
+        std::string ctrl_address = "tcp://127.0.0.1:1235";  // Bind on all interfaces, port 1235
+        ctrl_socket->connect(ctrl_address);
     } 
     catch (const std::exception &e) {
         // Handle any other unexpected exceptions
@@ -563,8 +568,64 @@ void Supervisor::listen_for_lp_data() {
                 }
             }
 
-            // std::cerr << "RECV FINITA" << std::endl;
-            
+
+            if (data.size() < sizeof(int32_t)) {
+                std::cerr << "ERROR: Packet too small to contain size prefix" << std::endl;
+                continue;  // skip to next packet
+            }
+
+            int32_t size;
+            memcpy(&size, data.data(), sizeof(int32_t));
+
+            // Verify that the size prefix is positive and matches the actual payload size. The total message should be exactly 4 bytes (prefix) 
+            // + "size" bytes (payload).
+            if (size <= 0 || size != static_cast<int32_t>(data.size() - sizeof(uint32_t))) {
+                std::cerr << "Invalid size value: " << size << std::endl;
+                continue;
+            }
+            std::cout << "Extracted packet size: " << size << std::endl;
+
+            /**/std::cout << "Received Raw Packet: ";
+            uint8_t* raw_data2 = static_cast<uint8_t*>(data.data());
+            for (size_t i = 0; i < data.size(); ++i) {
+                std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)raw_data2[i] << " ";
+            }
+            std::cout << std::dec << std::endl;
+
+            // std::vector<uint8_t> vec(size);
+            // vec.resize(size);    // Resize the data vector to hold the full payload
+
+            // const uint8_t* raw_data = vec.data();
+
+            const uint8_t* raw_packet = static_cast<const uint8_t*>(data.data());
+            uint8_t packet_type = raw_packet[4 + sizeof(HeaderDams)]; // 4 bytes for size + header bytes
+            uint8_t subtype = raw_packet[4 + sizeof(HeaderDams) + 1];
+            // [4 bytes size prefix]
+            // [12 bytes HeaderDams] 
+            // [44 bytes Data_WaveHeader]
+
+            std::cout << "TYPE: " << std::hex << static_cast<int>(packet_type)
+                << ", SUBTYPE: " << static_cast<int>(subtype) << std::dec << std::endl;
+
+            if (packet_type == Data_WaveHeader::TYPE) {  // WF Packet
+                if (subtype == Data_WaveHeader::SUB_TYPE) {
+                    std::cout << "Waveform header received." << std::endl;
+                }
+                else if (subtype == Data_WaveData::SUB_TYPE) {
+                    std::cout << "Waveform payload received." << std::endl;
+                }
+            }
+            else if (packet_type == Data_HkDams::TYPE) {  // HK Packet
+                std::cout << "Housekeeping packet received." << std::endl;
+            }
+            else {
+                std::cerr << "Unknown packet type: " << packet_type << std::endl;
+            }
+
+
+
+
+            /*
             // Extract the size of the packet (first 4 bytes)
             int32_t size;
             memcpy(&size, data.data(), sizeof(int32_t));
@@ -573,6 +634,7 @@ void Supervisor::listen_for_lp_data() {
             if (size <= 0 || size > data.size() - sizeof(int32_t)) {
                 std::cerr << "Invalid size value: " << size << std::endl;
             }
+
 
             std::vector<uint8_t> vec(size);
             vec.resize(size);    // Resize the data vector to hold the full payload
@@ -606,6 +668,7 @@ void Supervisor::listen_for_lp_data() {
             else {
                 std::cerr << "Unknown packet type: " << packet_type << std::endl;
             } 
+            */
         }
     }
 
@@ -873,6 +936,13 @@ void Supervisor::command_reset() {
 
 // Start command
 void Supervisor::command_start() {
+    {
+        std::string command = "START"; // or "STOP"
+        zmq::message_t msg(command.data(), command.size());
+        ctrl_socket->send(msg, zmq::send_flags::none);
+        std::cout << "INFO: Sent control command: " << command << std::endl;
+    }
+
     command_startprocessing();
     command_startdata();
 }
@@ -1014,6 +1084,13 @@ void Supervisor::stop_all(bool fast) {
 
     std::cout << "Stopping all workers and managers..." << std::endl;
     logger->info("Stopping all workers and managers...", globalname);
+
+    {
+        std::string command = "STOP"; // or "STOP"
+        zmq::message_t msg(command.data(), command.size());
+        ctrl_socket->send(msg, zmq::send_flags::none);
+        std::cout << "INFO: Sent control command: " << command << std::endl;
+    }
 
     command_stop();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
