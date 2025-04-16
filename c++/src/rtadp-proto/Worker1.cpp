@@ -110,12 +110,11 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
         std::cout << "  APID: " << std::hex << (int)apid << std::endl;
         std::cout << "  Sequence: " << std::hex << sequence << std::endl;
         printf("  Run ID: %04X\n", runID);
-        printf("  Size: %04X\n", header_size);
+        std::cout << "  Size: " << std::dec << (int)header_size << std::endl;
         printf("  CRC: %08X\n", crc);
 
         std::cout << "Payload:" << std::endl;
-        std::cout << "  Type: " << std::dec << (int)packet_type
-            << " (0x" << std::hex << (int)packet_type << ")" << std::endl;
+        std::cout << "  Type: " << std::hex << (int)packet_type << std::endl;
 
         // Payload to return
         // binary_result.insert(binary_result.end(), data.begin(), data.end());  // Append data at the end

@@ -585,17 +585,13 @@ void Supervisor::listen_for_lp_data() {
             }
             std::cout << "Extracted packet size: " << std::dec << (int)size << " (0x" << std::hex << (int)size << ")" << std::endl;
 
-            /**/std::cout << "Received Raw Packet: ";
+            /**/
+            std::cout << "Received Raw Packet: ";
             const uint8_t* raw_packet = static_cast<const uint8_t*>(data.data());
             for (size_t i = 0; i < data.size(); ++i) {
                 std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)raw_packet[i] << " ";
             }
             std::cout << std::dec << std::endl;
-
-            // std::vector<uint8_t> vec(size);
-            // vec.resize(size);    // Resize the data vector to hold the full payload
-
-            // const uint8_t* raw_data = vec.data();
 
             uint8_t packet_type = raw_packet[4 + sizeof(HeaderDams)]; // 4 bytes for size + header bytes
             uint8_t subtype = raw_packet[4 + sizeof(HeaderDams) + 1];
@@ -609,8 +605,8 @@ void Supervisor::listen_for_lp_data() {
             if (packet_type == Data_WaveHeader::TYPE) {  // WF Packet
                 std::cout << "Waveform packet received. Pushing into the queue" << std::endl;
 
-                // Extract the HeaderWFDams struct from the raw bytes
-                const HeaderWFDams* packet_wf = reinterpret_cast<const HeaderWFDams*>(raw_packet + sizeof(uint32_t));
+                // Extract the WfPacketDams struct from the raw bytes
+                const WfPacketDams* packet_wf = reinterpret_cast<const WfPacketDams*>(raw_packet + sizeof(uint32_t));
 
                 for (auto& manager : manager_workers) {
                     manager->getLowPriorityQueue()->push(serializePacket(*packet_wf));
@@ -624,54 +620,6 @@ void Supervisor::listen_for_lp_data() {
             else {
                 std::cerr << "Unknown packet type: " << packet_type << std::endl;
             }
-
-
-
-
-            /*
-            // Extract the size of the packet (first 4 bytes)
-            int32_t size;
-            memcpy(&size, data.data(), sizeof(int32_t));
-
-            // Size has to be non-negative and does not exceed the available data in data
-            if (size <= 0 || size > data.size() - sizeof(int32_t)) {
-                std::cerr << "Invalid size value: " << size << std::endl;
-            }
-
-
-            std::vector<uint8_t> vec(size);
-            vec.resize(size);    // Resize the data vector to hold the full payload
-            
-            // Store into vec only the actual packet data, excluding the size field
-            memcpy(vec.data(), static_cast<const uint8_t*>(data.data()) + sizeof(uint32_t), size);  
-
-            const uint8_t* raw_data = vec.data();
-
-            // Extract payload in order to get the packet type
-            const Data_HkDams* receivedPayload = reinterpret_cast<const Data_HkDams*>(raw_data + sizeof(HeaderDams));
-            uint8_t packet_type = receivedPayload->type;  // Store type in a variable
-
-            // Push the received data into queue according to the packet type
-            if (packet_type == Data_WaveData::TYPE) {  // WF Packet
-                // Extract the HeaderWFDams struct from the raw bytes
-                const HeaderWFDams* packet_wf = reinterpret_cast<const HeaderWFDams*>(raw_data);
-
-                for (auto& manager : manager_workers) {
-                    manager->getLowPriorityQueue()->push(serializePacket(*packet_wf));
-                }
-            }
-            else if (packet_type == Data_HkDams::TYPE) {  // HK Packet
-                // Extract the HeaderHKDams struct from the raw bytes
-                const HeaderHKDams* packet_hk = reinterpret_cast<const HeaderHKDams*>(raw_data);
-
-                for (auto& manager : manager_workers) {
-                    manager->getLowPriorityQueue()->push(serializePacket(*packet_hk));
-                }
-            }
-            else {
-                std::cerr << "Unknown packet type: " << packet_type << std::endl;
-            } 
-            */
         }
     }
 

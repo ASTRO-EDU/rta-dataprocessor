@@ -185,7 +185,7 @@ public:
 };
 
 // #pragma pack(push, 1)
-class HeaderHKDams {
+class HKPacketDams {
 public:
     struct __attribute__((packed)) {
         HeaderDams h;
@@ -194,7 +194,7 @@ public:
 };
 // #pragma pack(pop)
 
-class HeaderWFDams {
+class WfPacketDams {
 public:
     struct __attribute__((packed)) {
         HeaderDams h;
