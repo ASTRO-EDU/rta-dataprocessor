@@ -3,9 +3,11 @@ FROM --platform=linux/amd64 ubuntu:22.04
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
+# Install system dependencies with GCC 11
 RUN apt-get update && apt-get install -y \
     build-essential \
+    gcc-11 \
+    g++-11 \
     cmake \
     git \
     python3-dev \
@@ -30,6 +32,10 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
+# Set GCC 11 as default
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 \
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
+
 # Build and install cppzmq
 RUN cd /tmp && \
     git clone https://github.com/zeromq/cppzmq.git && \
@@ -47,7 +53,7 @@ RUN cd /tmp && \
 RUN cd /tmp && \
     git clone https://github.com/apache/avro.git && \
     cd avro/lang/c++ && \
-    git checkout release-1.11.1 && \
+    git checkout release-1.11.0 && \
     git clean -fdx && \
     mkdir build && \
     cd build && \
@@ -58,55 +64,26 @@ RUN cd /tmp && \
     cd /tmp && \
     rm -rf avro
 
-# Create worker user
+# Install spdlog from source
+RUN cd /tmp && \
+    git clone --branch v1.14.1 https://github.com/gabime/spdlog.git && \
+    cd spdlog && mkdir build && cd build && \
+    cmake .. && \
+    cmake --build . && \ 
+    make install && \ 
+    cd /tmp && rm -rf spdlog
+
+# Create worker user and workspace
 RUN useradd -m -s /bin/bash worker
 USER worker
 WORKDIR /home/worker
+RUN mkdir -p /home/worker/workspace /home/worker/dependencies
 
-# Set up Miniconda
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh \
-    && chmod +x miniconda.sh \
-    && ./miniconda.sh -b -p /home/worker/miniconda3 \
-    && rm miniconda.sh
-
-# Set up environment directories
-RUN mkdir -p /home/worker/worker-env /home/worker/workspace /home/worker/dependencies
-
-# Add conda to PATH
-ENV PATH="/home/worker/miniconda3/bin:$PATH"
-
-# Initialize conda for bash
-RUN conda init bash
-
-# Configure conda
-RUN conda config --append channels conda-forge \
-    && conda config --set channel_priority strict
-
-# Switch back to root for final setup
-USER root
-
-# Create and set permissions for shared directories
-RUN mkdir -p /shared_dir /data01 /data02 \
-    && chown -R worker:worker /shared_dir /data01 /data02 /home/worker
-
-# Copy environment files (these will need to be present during build)
-COPY --chown=worker:worker env/conda/environment.yml /home/worker/worker-env/
-COPY --chown=worker:worker env/venv/requirements.txt /home/worker/worker-env/
-
-# Switch back to worker for final setup
-USER worker
-
-# Create conda environment and install pip requirements
-RUN . /home/worker/miniconda3/etc/profile.d/conda.sh \
-    && conda env create -n worker -f /home/worker/worker-env/environment.yml \
-    && conda activate worker \
-    && pip3 install -r /home/worker/worker-env/requirements.txt
-
-# Set default shell to bash
-SHELL ["/bin/bash", "--login", "-c"]
+# Remove Miniconda setup (we don't use it anymore)
 
 # Mount point for workspace
 VOLUME /home/worker/workspace
 
 # Default command to keep container running
-CMD ["bash"] 
+CMD ["bash"]
+
