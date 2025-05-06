@@ -62,8 +62,8 @@ If you need to build without Docker, ensure you have all dependencies installed:
 
 - Boost (1.73.0 or higher)
 - ZeroMQ (4.3.4 or higher)
-- Avro C++ (latest)
-- spdlog (1.11.0 or higher)
+- Avro C++ (1.11.0)
+- spdlog (1.14.1 or higher)
 
 Then follow the same build steps as in the Docker container.
 
