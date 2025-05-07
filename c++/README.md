@@ -148,7 +148,7 @@ The project uses configuration files in JSON format. Make sure to set up the app
 rm -rf build
 mkdir build
 cd build
-cmake ..
+cmake -DENABLE_LOGGING=OFF ..
 make -j$(nproc)
 ```
 
