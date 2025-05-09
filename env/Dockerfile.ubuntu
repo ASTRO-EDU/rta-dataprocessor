@@ -84,6 +84,12 @@ RUN mkdir -p /home/worker/workspace /home/worker/dependencies
 # Mount point for workspace
 VOLUME /home/worker/workspace
 
+# Copy Python requirements
+COPY env/venv/requirements.amd.txt /tmp/requirements.txt
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+
 # Default command to keep container running
 CMD ["bash"]
 
