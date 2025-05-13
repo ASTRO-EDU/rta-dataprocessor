@@ -9,6 +9,7 @@ import threading
 import unittest
 from pathlib import Path
 import logging
+import zmq
 
 logging.basicConfig(
     level=logging.INFO,
@@ -71,13 +72,17 @@ class TestIntegration(unittest.TestCase):
     def run_dams_simulator(self, addr, port, indir, rpid, wform_sec):
         logger.info('Starting DAMS simulator')
         cmd = [
-            'python3', 'gfse.py',
+            'python3', '/home/worker/workspace/gfse.py',
             '--addr', addr,
             '--port', str(port),
             '--indir', indir,
             '--rpid', str(rpid),
             '--wform-sec', str(wform_sec)
         ]
+        
+        # Give the simulator time to initialize
+        time.sleep(8)
+
         process = subprocess.Popen(
             cmd,
             cwd='/home/worker/workspace/dl0_simulated',
@@ -86,10 +91,12 @@ class TestIntegration(unittest.TestCase):
         )
         self.processes.append(process)
         logger.info(f'DAMS simulator started with PID {process.pid}')
+        
         return process
 
     def send_start_command(self):
-        logger.info('Sending start command')
+        logger.info('Sending start command to system components')
+        # This command sends the start command to the main system components
         cmd = ['python3', 'SendCommand.py', self.rtaconfig, 'start', 'all']
         process = subprocess.Popen(
             cmd,
@@ -102,6 +109,19 @@ class TestIntegration(unittest.TestCase):
         logger.info(f'SendCommand output: {stdout.decode().strip()}')
         if stderr:
             logger.error(f'SendCommand error: {stderr.decode().strip()}')
+
+        # The control port is port+1 according to gfse.py
+        # control_port = port + 1
+        
+        # Send START command directly to control socket
+        context = zmq.Context()
+        control_socket = context.socket(zmq.PUSH)
+        control_socket.connect(f"tcp://127.0.0.1:1235")
+        control_socket.send_string("START")
+        logger.info(f"Sent START command to control port 1235")
+        control_socket.close()
+        context.term()
+
         return process
 
     def test_full_integration(self):
@@ -111,12 +131,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNotNone(monitoring_process, "Failed to start ProcessMonitoring")
         time.sleep(2)  # Give it time to initialize
 
-        # Start the Consumer
-        consumer_process = self.run_consumer()
-        self.assertIsNotNone(consumer_process, "Failed to start Consumer")
-        time.sleep(2)  # Give it time to initialize
-
-        # Start DAMS simulator
+        # Start DAMS simulator (which also sends the START command to it)
         simulator_process = self.run_dams_simulator(
             addr='127.0.0.1',
             port=1234,
@@ -125,11 +140,14 @@ class TestIntegration(unittest.TestCase):
             wform_sec=100
         )
         self.assertIsNotNone(simulator_process, "Failed to start DAMS simulator")
+        time.sleep(6)  # Give it time to initialize
+
+        # Start the Consumer
+        consumer_process = self.run_consumer()
+        self.assertIsNotNone(consumer_process, "Failed to start Consumer")
         time.sleep(2)  # Give it time to initialize
 
-        # Wait before sending the start command
-        time.sleep(5)
-        # Send start command
+        # Send start command to system components
         start_process = self.send_start_command()
         self.assertIsNotNone(start_process, "Failed to send start command")
         

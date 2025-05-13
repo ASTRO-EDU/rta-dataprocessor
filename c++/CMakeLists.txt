@@ -16,8 +16,37 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(PC_ZeroMQ REQUIRED libzmq)
 
 # Avro libraries (avrocpp is the common name)
-find_library(AVRO_CPP_LIBRARY avro REQUIRED)
-find_library(AVROCPP_LIBRARY avrocpp REQUIRED)
+# Try to use pkg-config first, but fallback if not available
+set(AVRO_DIR /usr/local/lib)
+set(AVRO_INCLUDE_DIR /usr/local/include)
+set(AVRO_VERSION 1.11.0)
+
+pkg_check_modules(AVRO avro-cpp>=${AVRO_VERSION})
+if(NOT AVRO_FOUND)
+    message(STATUS "avro-cpp pkg-config module not found, using direct library paths")
+    set(AVRO_LIBRARY_DIRS ${AVRO_DIR})
+    set(AVRO_INCLUDE_DIRS ${AVRO_INCLUDE_DIR})
+endif()
+
+find_library(AVRO_CPP_LIBRARY 
+    NAMES 
+        avro
+        libavro.so.${AVRO_VERSION}
+    PATHS
+        ${AVRO_LIBRARY_DIRS}
+        ${AVRO_DIR}
+    REQUIRED)
+find_library(AVROCPP_LIBRARY 
+    NAMES 
+        avrocpp
+        libavrocpp.so.${AVRO_VERSION}
+    PATHS
+        ${AVRO_LIBRARY_DIRS}
+        ${AVRO_DIR}
+    REQUIRED)
+
+include_directories(${AVRO_INCLUDE_DIRS})
+link_directories(${AVRO_LIBRARY_DIRS})
 
 # Directory locali
 set(GS_COMM ${PROJECT_SOURCE_DIR}/gs_examples_communication)
@@ -96,4 +125,3 @@ target_link_libraries(ProcessDataConsumer2 PRIVATE
     GSccsds
     spdlog::spdlog
 )
-
