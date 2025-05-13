@@ -63,7 +63,7 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
     if (dataflow_type == "binary") {
         // Check minimum dimension
         if (data.size() < sizeof(int32_t)) {
-            std::cerr << "Error: Received data size is smaller than expected." << std::endl;
+            std::cerr << "[Worker1] Error: Received data size is smaller than expected." << std::endl;
             return binary_result; // Return an empty vector
         }
 
@@ -73,7 +73,7 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
 
         // Size has to be non-negative and does not exceed the available data in data
         if (size <= 0 || size > data.size() - sizeof(int32_t)) {
-            std::cerr << "Invalid size value: " << size << std::endl;
+            std::cerr << "[Worker1] Invalid size value: " << size << std::endl;
         }
 
         std::vector<uint8_t> vec(size);
@@ -90,10 +90,10 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
         uint8_t packet_type = receivedPayload->type;  // Store type in a variable
 
         if (packet_type == Data_WaveData::TYPE) {  // WF Packet
-            std::cout << "Waveform packet received. Printing infos: " << std::endl;
+            std::cout << "[Worker1] Waveform packet received. Printing infos: " << std::endl;
         }
         else if (packet_type == Data_HkDams::TYPE) { // HK Packet
-            std::cout << "Housekeeping packet received. Printing infos: " << std::endl;
+            std::cout << "[Worker1] Housekeeping packet received. Printing infos: " << std::endl;
         }
 
         // Extract the header of the packet to print some infos

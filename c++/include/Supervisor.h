@@ -82,7 +82,7 @@ public:
     void send_result(WorkerManager *manager, int indexmanager);
 
     // Listen for low priority data
-    void listen_for_lp_data();
+    virtual void listen_for_lp_data();
 
     // Listen for high priority data
     void listen_for_hp_data();
