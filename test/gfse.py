@@ -282,7 +282,7 @@ def create_hk(state, flags, wform_count, crc_table):
 
 
 class SendThread(Thread):
-    def __init__(self, pub_socket, crc_table, dname, rpid, wform_dt, hk_rel_no, pkt_delay):
+    def __init__(self, pub_socket, crc_table, dname, rpid, wform_dt, hk_rel_no, pkt_delay, restart=True):
         Thread.__init__(self)
         self.pub_socket = pub_socket
         self.crc_table = crc_table
@@ -294,6 +294,7 @@ class SendThread(Thread):
         self.hk_rel_no = hk_rel_no
         self.pkt_delay = pkt_delay
         self.running = True
+        self.restart = restart  # Whether to restart when finished
 
         # Performance counters
         self.packets_sent = 0
@@ -303,22 +304,22 @@ class SendThread(Thread):
         npkt = 0
         self.packets_sent = 0
         self.start_time = time.time()
+
+        # Get all files, don't limit to just 3
+        files = sorted(os.listdir(self.dname))
+        if not files:
+            print(f'ERROR: No files found in directory {self.dname}')
+            return
         
-        # Get all files and select only the first 3
-        all_files = sorted(os.listdir(self.dname))
-        files = all_files[:3]
-        if len(files) < 3:
-            print(f'WARNING: Only {len(files)} files found in directory, will use all available files')
-        else:
-            print(f'INFO: Using these 3 files for streaming: {files}')
+        print(f'[GFSE] INFO: Using all {len(files)} files for streaming')
 
         while self.running:
-            # Loop through the 3 files continuously
+            # Loop through all files continuously
             for file in files:
                 if not self.running:
                     break
                 fname = os.path.join(self.dname, file)
-                print('INFO: Send: Open', fname)
+                print('[GFSE] INFO: Send: Open', fname)
                 try:
                     with h5py.File(fname, 'r') as fin:
                         group = fin['waveforms']
@@ -353,7 +354,13 @@ class SendThread(Thread):
                                 self.start_time = now
                 except Exception as e:
                     print('ERROR: Send: File not valid:', e)
-            print('INFO: Completed one cycle of 3 files, starting over...')
+            
+            if not self.restart:
+                print('[GFSE] INFO: Completed one cycle of all files. Restart is disabled, stopping...')
+                self.running = False
+                break
+            
+            print('[GFSE] INFO: Completed one cycle of all files, starting over from the beginning...')
 
     def stop(self):
         self.running = False
@@ -374,6 +381,7 @@ if __name__ == '__main__':
     parser.add_argument('--wform-sec', type=float, help='Number of waveform per second', required=False, default=10.0)
     parser.add_argument('--hk-sec', type=float, help='Number of hk per second', required=False, default=0.2)
     parser.add_argument('--pkt-delay-sec', type=float, help='Delay between packets in seconds', required=False, default=0.00001)
+    parser.add_argument('--restart', action='store_true', help='Whether to restart when finished sending the files')
 
     # Parse arguments and stop in case of help
     args = parser.parse_args(sys.argv[1:])
@@ -383,9 +391,10 @@ if __name__ == '__main__':
     hk_dt = 1/args.hk_sec
     hk_rel_no = round(hk_dt / wform_dt)
 
-    print("INFO: Main: Waveform x sec %f (%f s)" % (args.wform_sec, wform_dt))
-    print("INFO: Main: HK x sec %f (%f s, %d wform period)" % (args.hk_sec, hk_dt, hk_rel_no))
-    print("INFO: Main: Packet delay %f s" % args.pkt_delay_sec)
+    print("[GFSE] INFO: Main: Waveform x sec %f (%f s)" % (args.wform_sec, wform_dt))
+    print("[GFSE] INFO: Main: HK x sec %f (%f s, %d wform period)" % (args.hk_sec, hk_dt, hk_rel_no))
+    print("[GFSE] INFO: Main: Packet delay %f s" % args.pkt_delay_sec)
+    print("[GFSE] INFO: Main: Restart when finished: %s" % ("Yes" if args.restart else "No"))
 
     print(DESCRIPTION)
 
@@ -396,20 +405,20 @@ if __name__ == '__main__':
     crc_table = crc32_fill_table(0x05D7B3A1)
     count = 0
 
-    print("INFO: Main: Listen on ", args.port)
+    print("[GFSE] INFO: Main: Listen on ", args.port)
 
     # Create a ZMQ socket
     context = zmq.Context()
     pub_socket = context.socket(zmq.PUB)
     pub_socket.bind(f"tcp://{args.addr}:{args.port}")
-    print("INFO: Main: Publisher running")
+    print("[GFSE] INFO: Main: Publisher running")
 
 
     # Create the control PULL socket for receiving control commands
     ctrl_port = args.port + 1  # control port; note: consumer will bind a PUSH here
     ctrl_socket = context.socket(zmq.PULL)
     ctrl_socket.bind(f"tcp://{args.addr}:{ctrl_port}")
-    print(f"INFO: Control socket (PULL) connected to port {ctrl_port}")
+    print(f"[GFSE] INFO: Control socket (PULL) connected to port {ctrl_port}")
 
     # Allow some time for connection if necessary
     sleep(1)
@@ -428,30 +437,30 @@ if __name__ == '__main__':
             socks = dict(poller.poll(100))  # timeout 100ms
             if ctrl_socket in socks and socks[ctrl_socket] == zmq.POLLIN:
                 msg = ctrl_socket.recv_string(flags=zmq.NOBLOCK)
-                print(f"INFO: Control received: {msg}")
+                print(f"[GFSE] INFO: Control received: {msg}")
                 if msg == "START":
                     acquisition_running = True
                     if not send_thread or not send_thread.is_alive():
-                        send_thread = SendThread(pub_socket, crc_table, args.indir, args.rpid, wform_dt, hk_rel_no, args.pkt_delay_sec)
+                        send_thread = SendThread(pub_socket, crc_table, args.indir, args.rpid, wform_dt, hk_rel_no, args.pkt_delay_sec, args.restart)
                         send_thread.start()
                     else:
-                        print("INFO: Send thread already running.")
+                        print("[GFSE] INFO: Send thread already running.")
                 elif msg == "STOP":
                     acquisition_running = False
                     if send_thread and send_thread.is_alive():
-                        print("INFO: Main: Stop acquisition")
+                        print("[GFSE] INFO: Main: Stop acquisition")
                         send_thread.stop()
                         send_thread.join()
                         send_thread = None
-                        print("INFO: Main: Acquisition stopped")
+                        print("[GFSE] INFO: Main: Acquisition stopped")
                 else:
-                    print("INFO: Unknown control command:", msg)
+                    print("[GFSE] INFO: Unknown control command:", msg)
             else:
                 if not acquisition_running:
                     print("INFO: No control message received yet, trying again...")
             sleep(1)
         except KeyboardInterrupt:
-            print("INFO: KeyboardInterrupt caught, stopping...")
+            print("[GFSE] INFO: KeyboardInterrupt caught, stopping...")
             if send_thread and send_thread.is_alive():
                 send_thread.stop()
                 send_thread.join()

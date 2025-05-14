@@ -22,14 +22,14 @@ class TestIntegration(unittest.TestCase):
     def setUp(self):
         logger.info('Setting up integration test environment')
         # Get the RTACONFIG environment variable or use default
-        self.rtaconfig = os.environ.get('RTACONFIG', '/home/worker/workspace/c++/config.json')
+        self.rtaconfig = os.environ.get('RTACONFIG', '/home/worker/workspace/rtadp-c/c++/config.json')
         
         # Store process handles
         self.processes = []
         
         # Create a flag for graceful shutdown
         self.should_stop = False
-
+    
     def tearDown(self):
         logger.info('Tearing down integration test environment')
         # Set the stop flag
@@ -40,7 +40,7 @@ class TestIntegration(unittest.TestCase):
             if process.poll() is None:  # If process is still running
                 process.terminate()
                 process.wait()
-
+    
     def run_process_monitoring(self):
         logger.info('Starting ProcessMonitoring')
         os.makedirs('/home/worker/logs', exist_ok=True)
@@ -48,12 +48,13 @@ class TestIntegration(unittest.TestCase):
         cmd = ['python3', 'ProcessMonitoring.py', self.rtaconfig]
         process = subprocess.Popen(
             cmd,
-            cwd='/home/worker/workspace/workers',
+            cwd='/home/worker/workspace/rtadp-c/workers',
             stdout=log_file,
             stderr=log_file
         )
         self.processes.append(process)
         logger.info(f'ProcessMonitoring started with PID {process.pid}')
+
         return process
 
     def run_consumer(self):
@@ -61,18 +62,23 @@ class TestIntegration(unittest.TestCase):
         cmd = ['./ProcessDataConsumer1', self.rtaconfig]
         process = subprocess.Popen(
             cmd,
-            cwd='/home/worker/workspace/c++/build',
+            cwd='/home/worker/workspace/rtadp-c/c++/build',
             stdout=None,
             stderr=None
         )
         self.processes.append(process)
         logger.info(f'Consumer started with PID {process.pid}')
+
         return process
 
-    def run_dams_simulator(self, addr, port, indir, rpid, wform_sec):
+    def run_dams_simulator(self, addr, port, indir, rpid, wform_sec, restart=False):
         logger.info('Starting DAMS simulator')
+        
+        # Set restart to True to enable continuous processing
+        restart = False  # Enable/DISABLE restart. Modify this line to change behavior
+        
         cmd = [
-            'python3', '/home/worker/workspace/gfse.py',
+            'python3', '/home/worker/workspace/rtadp-c/test/gfse.py',
             '--addr', addr,
             '--port', str(port),
             '--indir', indir,
@@ -80,12 +86,17 @@ class TestIntegration(unittest.TestCase):
             '--wform-sec', str(wform_sec)
         ]
         
+        # Add restart flag if requested
+        if restart:
+            cmd.append('--restart')
+            logger.info('DAMS simulator configured to restart when finished')
+        
         # Give the simulator time to initialize
-        time.sleep(8)
+        # time.sleep(8)
 
         process = subprocess.Popen(
             cmd,
-            cwd='/home/worker/workspace/dl0_simulated',
+            cwd='/home/worker/workspace/rtadp-c/test/dl0_simulated',
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
@@ -100,7 +111,7 @@ class TestIntegration(unittest.TestCase):
         cmd = ['python3', 'SendCommand.py', self.rtaconfig, 'start', 'all']
         process = subprocess.Popen(
             cmd,
-            cwd='/home/worker/workspace/workers',
+            cwd='/home/worker/workspace/rtadp-c/workers',
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
@@ -109,18 +120,6 @@ class TestIntegration(unittest.TestCase):
         logger.info(f'SendCommand output: {stdout.decode().strip()}')
         if stderr:
             logger.error(f'SendCommand error: {stderr.decode().strip()}')
-
-        # The control port is port+1 according to gfse.py
-        # control_port = port + 1
-        
-        # Send START command directly to control socket
-        context = zmq.Context()
-        control_socket = context.socket(zmq.PUSH)
-        control_socket.connect(f"tcp://127.0.0.1:1235")
-        control_socket.send_string("START")
-        logger.info(f"Sent START command to control port 1235")
-        control_socket.close()
-        context.term()
 
         return process
 
@@ -131,11 +130,11 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNotNone(monitoring_process, "Failed to start ProcessMonitoring")
         time.sleep(2)  # Give it time to initialize
 
-        # Start DAMS simulator (which also sends the START command to it)
+        # Start DAMS simulator
         simulator_process = self.run_dams_simulator(
             addr='127.0.0.1',
             port=1234,
-            indir='/home/worker/workspace/dl0_simulated',
+            indir='/home/worker/workspace/rtadp-c/test/dl0_simulated',
             rpid=1,
             wform_sec=100
         )
@@ -145,15 +144,18 @@ class TestIntegration(unittest.TestCase):
         # Start the Consumer
         consumer_process = self.run_consumer()
         self.assertIsNotNone(consumer_process, "Failed to start Consumer")
-        time.sleep(2)  # Give it time to initialize
+        # time.sleep(2)  # Give it time to initialize
 
+        # Wait before sending the start command to system components
+        time.sleep(3)
         # Send start command to system components
         start_process = self.send_start_command()
         self.assertIsNotNone(start_process, "Failed to send start command")
         
         # Wait for some time to let the system process data
-        logger.info('Waiting for system to process data (30s)')
-        time.sleep(30)  # Adjust this time based on your needs
+        
+        logger.info('Waiting for system to process data (10s)')
+        time.sleep(10)  # Adjust this time based on your needs
 
         # Check if processes are still running
         logger.info('Checking if main processes are still running')
