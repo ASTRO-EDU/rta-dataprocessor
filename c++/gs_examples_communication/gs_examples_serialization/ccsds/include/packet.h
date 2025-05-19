@@ -196,11 +196,11 @@ public:
 
 class WfPacketDams {
 public:
-    struct __attribute__((packed)) {
-        HeaderDams h;
-        Data_WaveHeader w;
-        Data_WaveData d;
-    };
+    struct __attribute__((packed)) Body {
+        HeaderDams       h;
+        Data_WaveHeader  w;
+        Data_WaveData    d;
+    } body;
 };
 ////////////////////////////////////
 

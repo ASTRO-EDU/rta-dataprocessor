@@ -21,6 +21,9 @@ public:
     // Override the start_managers method
     void start_managers();
 
+    // Override listen_for_lp_data to handle DAMS packets
+    void listen_for_lp_data();
+
     // To be reimplemented ####
     // Decode the data before loading it into the queue. For "dataflowtype": "binary"
     zmq::message_t& decode_data(zmq::message_t& data);

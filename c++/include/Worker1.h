@@ -13,11 +13,15 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <time.h>
 #include <random>
 #include <sstream>
 #include <string>
 #include <vector>
 #include "Supervisor.h"
+#include "tensorflow/lite/c/c_api.h"
+#include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
+
 
 class Worker1 : public WorkerBase {
 private:
@@ -26,9 +30,20 @@ private:
     // Helper function to generate random duration between 0 and 100 milliseconds
     double random_duration();
 
+    TfLiteInterpreter* interp_ = nullptr;
+    TfLiteTensor* input_tensor_ = nullptr;
+    const TfLiteTensor* output_tensor_ = nullptr;
+
+    TfLiteInterpreter* loadInterpreter(const std::string& model_path);
+
+    double timespec_diff(struct timespec* start, struct timespec* end);
+
 public:
     // Constructor
     Worker1();
+
+    // Destructor
+    ~Worker1() override;
 
     // Override the config method
     void config(const nlohmann::json& configuration);
