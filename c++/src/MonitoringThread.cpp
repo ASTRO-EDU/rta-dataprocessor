@@ -45,7 +45,6 @@ void MonitoringThread::run() {
         zmq::message_t message(monitoring_data_str.begin(), monitoring_data_str.end());  // Create ZMQ message
 
         socket_monitoring.send(message, zmq::send_flags::none);  // Send the message through the socket
-            
 
         std::this_thread::sleep_for(std::chrono::seconds(1));  // Sleep for 1 second
     }

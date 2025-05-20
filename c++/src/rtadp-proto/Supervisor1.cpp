@@ -39,6 +39,10 @@ void Supervisor1::listen_for_lp_data() {
                 if (!result) {
                     // std::cout << "Waiting for a producer" << std::endl;
 
+                    // No data received, sleep to reduce CPU usage
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+
                     /*
                     while (err_code == EAGAIN) {   // Continue if no commands were received
                         // std::cout << "Waiting" << std::endl;
@@ -108,7 +112,7 @@ void Supervisor1::listen_for_lp_data() {
                 const Data_WaveHeader* w_ptr = reinterpret_cast<const Data_WaveHeader*>(rp + 4 + sizeof(HeaderDams));   // Then follows Data_WaveHeader
 
                 // At the moment the true area size is stored inside the usec field of Data_WaveHeader for simplicity in order to be compared to the predicted one
-                std::cout << "\n[Supervisor1] REAL AREA: " << w_ptr->us << std::endl;   
+                // std::cout << "\n[Supervisor1] REAL AREA: " << w_ptr->us << std::endl;   
 
                 // Manually build the WfPacketDams (the full waveform packet)
                 WfPacketDams full_packet;
@@ -132,6 +136,10 @@ void Supervisor1::listen_for_lp_data() {
             else {
                 std::cout << "[Supervisor1] Unknown packet type: " << packet_type << std::endl;
             }
+        }
+        else {
+            // Data processing stopped, sleep to reduce CPU
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 

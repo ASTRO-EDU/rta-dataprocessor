@@ -77,11 +77,15 @@ void WorkerThread::run() {
                     process_data(low_priority_data, 0);
                 }
                 else {
-                    // std::cout << "WorkerThread::run: both queues are empty, waiting for new data" << std::endl;
+                    // Both queues empty, sleep to reduce CPU usage
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                     status = 2; // waiting for new data
                 }
         } 
         else {
+            // Not currently processing, sleep to reduce CPU usage
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
             if (tokenreading != 0 && status != 4) {
                 status = 4; // waiting for reading from queue
             }

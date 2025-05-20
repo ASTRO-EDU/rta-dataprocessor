@@ -19,6 +19,10 @@ constexpr float in_max = 3821.0f;   // 3500.0
 constexpr float out_min = 3418.73f;
 constexpr float out_max = 149944.45f;
 
+std::atomic<int> Worker1::global_inference_count{ 0 };
+std::atomic<double> Worker1::global_total_time{ 0.0 };
+std::mutex Worker1::global_stats_mutex;
+
 
 // Helper: load & prepare the interpreter
 TfLiteInterpreter* Worker1::loadInterpreter(const std::string& model_path) {
@@ -34,6 +38,11 @@ TfLiteInterpreter* Worker1::loadInterpreter(const std::string& model_path) {
 
     TfLiteInterpreterOptions* opts = TfLiteInterpreterOptionsCreate();
     TfLiteInterpreterOptionsAddDelegate(opts, xnnpack);
+    // TfLiteInterpreterOptionsSetNumThreads(opts, 6);
+ 
+    // Litert uses per se a single thread to run inference. Notably even when telling the interpreter to use all 6 core the inference time doesn't change possibily due 
+    // to the model being too small and the overheads dominate
+
 
     TfLiteInterpreter* interp = TfLiteInterpreterCreate(model, opts);
     TfLiteInterpreterOptionsDelete(opts);
@@ -48,7 +57,7 @@ TfLiteInterpreter* Worker1::loadInterpreter(const std::string& model_path) {
 // Constructor
 Worker1::Worker1() : WorkerBase() {
     // adjust path as needed
-    const std::string model_file = "/home/gamma/float_16.tflite";
+    const std::string model_file = "/home/gamma/original.tflite";
     interp_ = loadInterpreter(model_file);
     input_tensor_ = TfLiteInterpreterGetInputTensor(interp_, 0);
     output_tensor_ = TfLiteInterpreterGetOutputTensor(interp_, 0);
@@ -63,8 +72,14 @@ void Worker1::config(const nlohmann::json& configuration) {
     WorkerBase::config(configuration);
 }
 
-double Worker1::timespec_diff(struct timespec* start, struct timespec* end) {
-    return (double)(end->tv_sec - start->tv_sec) + (double)(end->tv_nsec - start->tv_nsec) / 1e9;
+double Worker1::timespec_diff(const struct timespec* start, const struct timespec* end) {
+    time_t sec = end->tv_sec - start->tv_sec;
+    long   nsec = end->tv_nsec - start->tv_nsec;
+    if (nsec < 0) {
+        --sec;
+        nsec += 1'000'000'000L;
+    }
+    return double(sec) + double(nsec) / 1e9;
 }
 
 ////////////////////////////////////////////
@@ -192,10 +207,10 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
             std::cout << std::endl;
 	        */
 
-            float inference_time;
+            double inference_time;
             struct timespec start, end;
 
-            clock_gettime(CLOCK_MONOTONIC, &start);
+            clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
             // Run inference
             if (TfLiteInterpreterInvoke(interp_) != kTfLiteOk) {
@@ -203,21 +218,44 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
                 return binary_result;
             }
 
-            clock_gettime(CLOCK_MONOTONIC, &end);
-            inference_time= timespec_diff(&start, &end);
+            clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+            inference_time = timespec_diff(&start, &end);
+
+
+            // Update running statistics
+            // total_inference_time += inference_time;
+            // int current_count = ++inference_count;
+
 
             // Read raw prediction and inverse-scale
             const float* model_out = reinterpret_cast<const float*>(TfLiteTensorData(output_tensor_));
             float y_pred = model_out[0];
-            float y_orig = (y_pred + 1.f) * 0.5f * (out_max - out_min) + out_min;       // Inverse MinMax Scaling from[-1, 1]
+            float y_orig = (y_pred + 1.f) * 0.5f * (out_max - out_min) + out_min;       // Inverse MinMax Scaling from [-1, 1]
             
-            std::cout << "[Worker1] Predicted model output (inverse-scaled area): " << y_orig << "\n";
-            std::cout << "[Worker1] Predicted model output (scaled area ([-1, 1])): " << y_pred << "\n";
-            std::cout << "[Worker1] Output scaling details: min_area_value=" << out_min << ", max_area_value=" << out_max << ", scale=" << ((out_max - out_min) * 0.5f) << "\n";
-            std::cout << "[Worker1] Waveform value range: min=" << min_val << ", max=" << max_val << ", avg=" << avg_val << std::endl;
+            // std::cout << "[Worker1] Predicted model output (inverse-scaled area): " << y_orig << "\n";
+            // std::cout << "[Worker1] Predicted model output (scaled area ([-1, 1])): " << y_pred << "\n";
+            // std::cout << "[Worker1] Output scaling details: min_area_value=" << out_min << ", max_area_value=" << out_max << ", scale=" << ((out_max - out_min) * 0.5f) << "\n";
+            // std::cout << "[Worker1] Waveform value range: min=" << min_val << ", max=" << max_val << ", avg=" << avg_val << std::endl;
+            // std::cout << "[Worker1] Total inference time: " << inference_time << "s\n";
 
-            std::cout << "[Worker1] Total inference time: " << inference_time << std::endl;
+            {
+                std::lock_guard<std::mutex> lock(global_stats_mutex);
+                global_total_time.store(global_total_time.load() + inference_time);
+                global_inference_count++;
 
+                if (global_inference_count >= REPORT_INTERVAL) {
+                    double avg_time = global_total_time.load() / global_inference_count.load();
+                    std::cout << "[Worker1] ===== INFERENCE STATISTICS =====\n";
+                    std::cout << "[Worker1] Processed " << global_inference_count.load() << " waveforms\n";
+                    std::cout << "[Worker1] Average inference time: " << avg_time << "s\n";
+                    std::cout << "[Worker1] Inference rate: " << (1.0 / avg_time) << " Hz\n";
+                    std::cout << "[Worker1] ================================\n";
+
+                    // Reset counters
+                    global_total_time.store(0.0);
+                    global_inference_count.store(0);
+                }
+            }
 
             // Pack the final un-scaled area into the return vector
             binary_result.resize(sizeof(float));
