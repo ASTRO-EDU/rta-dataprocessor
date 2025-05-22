@@ -13,30 +13,7 @@
 
 // Constructor
 Worker2::Worker2() : WorkerBase() {
-    // Load Avro schema from the provided schema string
-    std::string avro_schema_str = R"({
-        "type": "record",
-        "name": "AvroMonitoringPoint",
-        "namespace": "astri.mon.kafka",
-        "fields": [
-            {"name": "assembly", "type": "string"},
-            {"name": "name", "type": "string"},
-            {"name": "serial_number", "type": "string"},
-            {"name": "timestamp", "type": "double"},
-            {"name": "source_timestamp", "type": ["null", "long"]},
-            {"name": "units", "type": "string"},
-            {"name": "archive_suppress", "type": "boolean"},
-            {"name": "env_id", "type": "string"},
-            {"name": "eng_gui", "type": "boolean"},
-            {"name": "op_gui", "type": "boolean"},
-            {"name": "data", "type": {"type": "array", "items": ["double", "int", "long", "string", "boolean"]}}
-        ]
-    })";
 
-    std::istringstream schema_stream(avro_schema_str);
-    avro::compileJsonSchema(schema_stream, avro_schema);
-
-    this->avro_schema = avro_schema;
 }
 
 // Override the config method
@@ -79,7 +56,6 @@ std::vector<uint8_t> Worker2::processData(const std::vector<uint8_t>& data, int 
     std::cout << "  Counter: " << receivedPacket->counter << std::endl;
     std::cout << "  Type: " << receivedPacket->type << std::endl;
     std::cout << "  Absolute Time: " << receivedPacket->abstime << std::endl;
-
 
     return {};
 }

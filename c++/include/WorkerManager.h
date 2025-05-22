@@ -28,7 +28,7 @@
 
 
 using json = nlohmann::json;
-class WorkerProcess;
+// class WorkerProcess;
 class WorkerThread;
  
 class WorkerManager {
@@ -71,8 +71,8 @@ private:
 
     MonitoringPoint* monitoringpoint;
     MonitoringThread* monitoringthread;
-    std::vector<std::shared_ptr<WorkerThread>> workerprocesses;
-    std::vector<std::shared_ptr<WorkerProcess>> worker_processes;
+    // std::vector<std::shared_ptr<WorkerThread>> workerprocesses;
+    // std::vector<std::shared_ptr<WorkerProcess>> worker_processes;
     std::thread worker_thread;  // Thread object for running the manager
     int num_workers;
     int workersstatus;
@@ -120,7 +120,7 @@ public:
     virtual void start_worker_threads(int num_threads);
  
     // Function to start worker processes (to be reimplemented)
-    virtual void start_worker_processes(int num_processes);
+    // virtual void start_worker_processes(int num_processes);
  
     // Main run function
     void run();
@@ -208,9 +208,9 @@ public:
     std::string getProcessingType() const;
 
     // Getter for worker_processes
-    std::vector<std::shared_ptr<WorkerThread>> getWorkerProcesses();
+    // std::vector<std::shared_ptr<WorkerThread>> getWorkerProcesses();
 
-    std::vector<std::shared_ptr<WorkerProcess>> getWorker_Processes();
+    // std::vector<std::shared_ptr<WorkerProcess>> getWorker_Processes();
 
     // Getter for processing_rates_shared
     std::vector<std::atomic<double>>& getProcessingRatesShared();

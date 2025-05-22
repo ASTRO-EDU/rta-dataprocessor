@@ -18,7 +18,7 @@ public:
     void start_worker_threads(int num_threads);
 
     // Override to start worker processes
-    void start_worker_processes(int num_processes);
+    // void start_worker_processes(int num_processes);
 
 private:
     int manager_id;

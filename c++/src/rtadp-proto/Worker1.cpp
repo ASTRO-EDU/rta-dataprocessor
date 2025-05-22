@@ -22,6 +22,7 @@ constexpr float out_max = 149944.45f;
 std::atomic<int> Worker1::global_inference_count{ 0 };
 std::atomic<double> Worker1::global_total_time{ 0.0 };
 std::mutex Worker1::global_stats_mutex;
+std::atomic<int> Worker1::peak_memory_kb{ 0 };
 
 
 // Helper: load & prepare the interpreter
@@ -56,8 +57,7 @@ TfLiteInterpreter* Worker1::loadInterpreter(const std::string& model_path) {
 
 // Constructor
 Worker1::Worker1() : WorkerBase() {
-    // adjust path as needed
-    const std::string model_file = "/home/gamma/original.tflite";
+    const std::string model_file = "/home/gamma/float_16.tflite";
     interp_ = loadInterpreter(model_file);
     input_tensor_ = TfLiteInterpreterGetInputTensor(interp_, 0);
     output_tensor_ = TfLiteInterpreterGetOutputTensor(interp_, 0);
@@ -80,6 +80,13 @@ double Worker1::timespec_diff(const struct timespec* start, const struct timespe
         nsec += 1'000'000'000L;
     }
     return double(sec) + double(nsec) / 1e9;
+}
+
+int Worker1::getMemoryUsage() {
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+ 
+    return usage.ru_maxrss;  // Returns memory usage in kilobytes
 }
 
 ////////////////////////////////////////////
@@ -221,10 +228,13 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
             clock_gettime(CLOCK_MONOTONIC_RAW, &end);
             inference_time = timespec_diff(&start, &end);
 
-
-            // Update running statistics
-            // total_inference_time += inference_time;
-            // int current_count = ++inference_count;
+            int current_memory = getMemoryUsage();
+            int previous_peak = peak_memory_kb.load();
+            while (current_memory > previous_peak) {
+                if (peak_memory_kb.compare_exchange_weak(previous_peak, current_memory)) {
+                    break;
+                }
+            }
 
 
             // Read raw prediction and inverse-scale
@@ -249,11 +259,13 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
                     std::cout << "[Worker1] Processed " << global_inference_count.load() << " waveforms\n";
                     std::cout << "[Worker1] Average inference time: " << avg_time << "s\n";
                     std::cout << "[Worker1] Inference rate: " << (1.0 / avg_time) << " Hz\n";
+                    std::cout << "[Worker1] Peak memory usage: " << peak_memory_kb.load() << " KB\n";
                     std::cout << "[Worker1] ================================\n";
 
                     // Reset counters
                     global_total_time.store(0.0);
                     global_inference_count.store(0);
+                    peak_memory_kb.store(0);
                 }
             }
 

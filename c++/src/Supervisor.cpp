@@ -41,7 +41,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
     context = zmq::context_t(1);
 
     try {
-        int timeout = 15000;    // 1000
+        int timeout = 300;    // 1000
 
         // Retrieve and log configuration
         processingtype = config["processing_type"].get<std::string>();
@@ -60,7 +60,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
             socket_lp_data->bind(config["data_lp_socket"].get<std::string>());
 
             //////////////////
-            // socket_lp_data->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+            socket_lp_data->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
             //////////////////
 
             socket_hp_data = new zmq::socket_t(context, ZMQ_PULL);
@@ -96,9 +96,8 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         socket_lp_result.resize(100, nullptr);
         socket_hp_result.resize(100, nullptr);
 
-
         ctrl_socket = new zmq::socket_t(context, ZMQ_PUSH);
-        std::string ctrl_address = "tcp://192.168.166.127:1235";  // Bind on all interfaces, port 1235
+        std::string ctrl_address = "tcp://192.168.166.127:1235";  // Bind on port 1235
         ctrl_socket->connect(ctrl_address);
     } 
     catch (const std::exception &e) {
@@ -132,10 +131,6 @@ Supervisor::Supervisor(std::string config_file, std::string name)
 
     std::cout << globalname << " started" << std::endl;
     logger->info(globalname + " started", globalname);
-
-
-    std::ifstream ifs("../../rtadp-proto/avro_schema.json");
-    avro::compileJsonSchema(ifs, avro_schema);
 }
 
 //////////////////////////////////
@@ -222,6 +217,16 @@ Supervisor::~Supervisor() {
         }
         delete socket_monitoring;
         socket_monitoring = nullptr;
+    }
+    if (ctrl_socket) {
+        try {
+            ctrl_socket->close();
+        }
+        catch (const zmq::error_t& e) {
+            logger->error("Error while closing ctrl_socket: {}", e.what());
+        }
+        delete ctrl_socket;
+        ctrl_socket = nullptr;
     }
 
     zmq_ctx_shutdown(context.handle()); 
@@ -338,7 +343,6 @@ void Supervisor::start_managers() {
     manager->run();
     manager_workers.push_back(manager);
     logger->info("BASE SUP manager started.");
-
 }
 
 // Start workers
@@ -398,8 +402,7 @@ void Supervisor::handle_signals(int signum) {
 void Supervisor::listen_for_result() {
     try {
         while (continueall) {
-            // std::cout << "DENTRO Supervisor::listen_for_result\n" << std::endl;
-
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
             int indexmanager = 0;
 
             for (auto& manager : manager_workers) {
@@ -535,6 +538,7 @@ void Supervisor::send_result(WorkerManager *manager, int indexmanager) {
 // Listen for low priority data
 void Supervisor::listen_for_lp_data() {
     while (continueall) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
         std::cout << "[Supervisor] Inside listen_for_lp_data" << std::endl;
 
         if (!stopdata) {
@@ -551,6 +555,8 @@ void Supervisor::listen_for_lp_data() {
 // Listen for high priority binary data
 void Supervisor::listen_for_hp_data() {
     while (continueall) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
+
         if (!stopdata) {
             zmq::message_t data;
             socket_hp_data->recv(data);
@@ -564,6 +570,8 @@ void Supervisor::listen_for_hp_data() {
 // Listen for low priority strings
 void Supervisor::listen_for_lp_string() {
     while (continueall) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
+
         if (!stopdata) {
             zmq::message_t data;
             socket_lp_data->recv(data);
@@ -583,6 +591,8 @@ void Supervisor::listen_for_lp_string() {
 // Listen for high priority strings
 void Supervisor::listen_for_hp_string() {
     while (continueall) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
+
         if (!stopdata) {
             zmq::message_t data;
             socket_hp_data->recv(data);
@@ -602,6 +612,8 @@ void Supervisor::listen_for_hp_string() {
 // Listen for low priority files
 void Supervisor::listen_for_lp_file() {
     while (continueall) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
+
         if (!stopdata) {
             zmq::message_t filename_msg;
             socket_lp_data->recv(filename_msg);
@@ -640,7 +652,8 @@ std::pair<std::vector<json>, int> Supervisor::open_file(const std::string &filen
                 size++;
             }
         }
-    } catch (const std::exception &e) {
+    } 
+    catch (const std::exception &e) {
         std::cerr << "Error while reading file: " << e.what() << std::endl;
         logger->error("Error while reading file: " + std::string(e.what()), globalname);
     }
@@ -652,6 +665,8 @@ std::pair<std::vector<json>, int> Supervisor::open_file(const std::string &filen
 // Listen for high priority files
 void Supervisor::listen_for_hp_file() {
     while (continueall) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
+
         if (!stopdata) {
             zmq::message_t filename_msg;
             socket_hp_data->recv(filename_msg);
@@ -729,7 +744,7 @@ void Supervisor::listen_for_commands() {
                 throw;
             }
         }
-        // std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Avoids extensive CPU use
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
     }
 
     std::cout << "End listen_for_commands" << std::endl;

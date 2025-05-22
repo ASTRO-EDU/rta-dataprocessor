@@ -98,6 +98,7 @@ std::string WorkerManager::getProcessingType() const {
     return processingtype;
 }
 
+/*
  std::vector<std::shared_ptr<WorkerThread>> WorkerManager::getWorkerProcesses() {
     return workerprocesses;
 }
@@ -105,6 +106,7 @@ std::string WorkerManager::getProcessingType() const {
 std::vector<std::shared_ptr<WorkerProcess>> WorkerManager::getWorker_Processes() {
 	return worker_processes;
 }
+*/
 
 std::vector<std::atomic<double>>& WorkerManager::getProcessingRatesShared() {
     return processing_rates_shared;
@@ -248,6 +250,7 @@ void WorkerManager::start_service_threads() {
 void WorkerManager::start_worker_threads(int num_threads) {
 }
 
+/*
 // Function to start worker processes
 void WorkerManager::start_worker_processes(int num_processes) {
     if (num_processes > max_workers) {
@@ -256,6 +259,7 @@ void WorkerManager::start_worker_processes(int num_processes) {
     }
     num_workers = num_processes;    
 }
+*/
 
 void WorkerManager::start() {
     // Start the thread with the run() method
@@ -272,7 +276,7 @@ void WorkerManager::run() {
 
     try {
         while (!continueall) {      
-            // std::this_thread::sleep_for(std::chrono::seconds(1)); // To avoid 100% CPU consumption
+            std::this_thread::sleep_for(std::chrono::seconds(1)); // To avoid 100% CPU consumption
 
             // Check the status of the workers
             workersstatus = 0;

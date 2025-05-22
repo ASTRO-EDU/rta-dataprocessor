@@ -14,6 +14,7 @@
 #include <thread>
 #include <chrono>
 #include <time.h>
+#include <sys/resource.h>
 #include <random>
 #include <sstream>
 #include <string>
@@ -33,6 +34,8 @@ private:
     static std::mutex global_stats_mutex;
     const int REPORT_INTERVAL = 10000; // Report average after every 10000 inferences
 
+    static std::atomic<int> peak_memory_kb;
+
     // Helper function to generate random duration between 0 and 100 milliseconds
     double random_duration();
 
@@ -43,6 +46,8 @@ private:
     TfLiteInterpreter* loadInterpreter(const std::string& model_path);
 
     double timespec_diff(const struct timespec* start, const struct timespec* end);
+
+    int getMemoryUsage();  // Returns memory usage in KB
 
 public:
     // Constructor

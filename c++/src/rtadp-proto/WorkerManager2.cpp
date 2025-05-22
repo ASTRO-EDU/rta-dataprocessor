@@ -49,7 +49,7 @@ void WorkerManager2::start_worker_threads(int num_threads) {
     }
     */
 
-
+/*
 // Override to start worker processes
 void WorkerManager2::start_worker_processes(int num_processes) {
     WorkerManager::start_worker_processes(num_processes);
@@ -61,3 +61,4 @@ void WorkerManager2::start_worker_processes(int num_processes) {
         process->run();  // Start the process
     }
 }
+*/

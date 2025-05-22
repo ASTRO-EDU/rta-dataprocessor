@@ -62,7 +62,8 @@ void WorkerThread::run() {
     start_timer(1);
 
     while (!_stop_event) {
-        // std::this_thread::sleep_for(std::chrono::nanoseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         if (processdata == 1 && tokenreading == 0) {
                 // Check and process high-priority queue first
                 if (!high_priority_queue->empty()) {
@@ -76,16 +77,11 @@ void WorkerThread::run() {
                     manager->change_token_reading();
                     process_data(low_priority_data, 0);
                 }
-                else {
-                    // Both queues empty, sleep to reduce CPU usage
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                else if (high_priority_queue->empty() && low_priority_queue->empty()) {
                     status = 2; // waiting for new data
                 }
         } 
         else {
-            // Not currently processing, sleep to reduce CPU usage
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
             if (tokenreading != 0 && status != 4) {
                 status = 4; // waiting for reading from queue
             }
