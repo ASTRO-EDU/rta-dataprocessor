@@ -22,7 +22,7 @@ class TestIntegration(unittest.TestCase):
     def setUp(self):
         logger.info('Setting up integration test environment')
         # Get the RTACONFIG environment variable or use default
-        self.rtaconfig = os.environ.get('RTACONFIG', '/home/worker/workspace/rtadp-c/c++/config.json')
+        self.rtaconfig = os.environ.get('RTACONFIG', '/home/worker/workspace/c++/config.json')
         
         # Store process handles
         self.processes = []
@@ -48,7 +48,7 @@ class TestIntegration(unittest.TestCase):
         cmd = ['python3', 'ProcessMonitoring.py', self.rtaconfig]
         process = subprocess.Popen(
             cmd,
-            cwd='/home/worker/workspace/rtadp-c/workers',
+            cwd='/home/worker/workspace/workers',
             stdout=log_file,
             stderr=log_file
         )
@@ -62,7 +62,7 @@ class TestIntegration(unittest.TestCase):
         cmd = ['./ProcessDataConsumer1', self.rtaconfig]
         process = subprocess.Popen(
             cmd,
-            cwd='/home/worker/workspace/rtadp-c/c++/build',
+            cwd='/home/worker/workspace/c++/build',
             stdout=None,
             stderr=None
         )
@@ -78,7 +78,7 @@ class TestIntegration(unittest.TestCase):
         restart = False  # Enable/DISABLE restart. Modify this line to change behavior
         
         cmd = [
-            'python3', '/home/worker/workspace/rtadp-c/test/gfse.py',
+            'python3', '/home/worker/workspace/test/gfse.py',
             '--addr', addr,
             '--port', str(port),
             '--indir', indir,
@@ -96,7 +96,7 @@ class TestIntegration(unittest.TestCase):
 
         process = subprocess.Popen(
             cmd,
-            cwd='/home/worker/workspace/rtadp-c/test/dl0_simulated',
+            cwd='/home/worker/workspace/test/dl0_simulated',
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
@@ -111,7 +111,7 @@ class TestIntegration(unittest.TestCase):
         cmd = ['python3', 'SendCommand.py', self.rtaconfig, 'start', 'all']
         process = subprocess.Popen(
             cmd,
-            cwd='/home/worker/workspace/rtadp-c/workers',
+            cwd='/home/worker/workspace/workers',
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
@@ -134,7 +134,7 @@ class TestIntegration(unittest.TestCase):
         simulator_process = self.run_dams_simulator(
             addr='127.0.0.1',
             port=1234,
-            indir='/home/worker/workspace/rtadp-c/test/dl0_simulated',
+            indir='/home/worker/workspace/test/dl0_simulated',
             rpid=1,
             wform_sec=100
         )
