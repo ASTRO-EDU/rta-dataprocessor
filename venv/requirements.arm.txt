@@ -1,0 +1,23 @@
+# Development tools
+cmake-format
+cpplint
+conan
+meson
+ninja
+
+# Testing and debugging
+pytest
+pytest-cov
+pytest-mock
+pytest-xdist
+
+# Code quality
+black
+flake8
+mypy
+pylint
+
+# Documentation
+sphinx
+sphinx-rtd-theme
+sphinx-autodoc-typehints 
