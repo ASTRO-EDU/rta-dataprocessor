@@ -78,12 +78,12 @@ void WorkerThread::run() {
                     process_data(low_priority_data, 0);
                 }
                 else if (high_priority_queue->empty() && low_priority_queue->empty()) {
-                    status = 2; // waiting for new data
+                    status = 2; // Waiting for new data
                 }
         } 
         else {
             if (tokenreading != 0 && status != 4) {
-                status = 4; // waiting for reading from queue
+                status = 4; // Waiting for reading from queue
             }
         }
     }
@@ -93,7 +93,7 @@ void WorkerThread::run() {
 //////////////////////////////////////////////////
 // Destructor
 WorkerThread::~WorkerThread(){
-    // Proteggi l'accesso a `worker`
+    // Protect the access to worker
     {
         std::lock_guard<std::mutex> lock(stop_worker_mutex);
         if (worker) {
@@ -105,7 +105,6 @@ WorkerThread::~WorkerThread(){
     if (!_stop_event) {
         stop();
     }
-
 }
 
 //////////////////////////////////////////////////

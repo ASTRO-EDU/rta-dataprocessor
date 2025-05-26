@@ -13,3 +13,4 @@ ProcessDataConsumer
 ProcessDataConsumer1
 lib/
 include/spdlog/
+output/

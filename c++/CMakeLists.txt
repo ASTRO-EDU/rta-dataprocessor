@@ -24,6 +24,24 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;/usr/lib")
 
+
+# Find HDF5 and tinyxml2 packages with C++ component
+find_package(PkgConfig REQUIRED)
+find_package(HDF5 REQUIRED COMPONENTS CXX)
+# Use pkg-config for tinyxml2
+pkg_check_modules(TINYXML2 REQUIRED tinyxml2)
+
+
+message(STATUS "HDF5 version: ${HDF5_VERSION}")
+message(STATUS "HDF5 include dirs: ${HDF5_INCLUDE_DIRS}")
+message(STATUS "HDF5 libraries: ${HDF5_LIBRARIES}")
+message(STATUS "HDF5 CXX libraries: ${HDF5_CXX_LIBRARIES}")
+message(STATUS "tinyxml2 version: ${TINYXML2_VERSION}")
+message(STATUS "tinyxml2 include dirs: ${TINYXML2_INCLUDE_DIRS}")
+message(STATUS "tinyxml2 libraries: ${TINYXML2_LIBRARIES}")
+
+
+
 # ----------------------------
 # TensorFlow Lite C API Setup
 # ----------------------------
@@ -109,6 +127,8 @@ include_directories(
     ${ZeroMQ_INCLUDE_DIRS}
     ${spdlog_INCLUDE_DIRS}
     ${AVRO_CPP_PATH}
+    ${HDF5_INCLUDE_DIRS}
+    ${TINYXML2_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -164,6 +184,9 @@ target_link_libraries(ProcessDataConsumer1 PRIVATE
     GSccsds
     avrocpp
     ${TFLITE_C_LIB}  # Link TFLite C API
+    ${HDF5_LIBRARIES}
+    ${HDF5_CXX_LIBRARIES}
+    ${TINYXML2_LIBRARIES}
 )
 
 target_link_libraries(ProcessDataConsumer2 PRIVATE
@@ -175,4 +198,7 @@ target_link_libraries(ProcessDataConsumer2 PRIVATE
     GSccsds
     avrocpp
     ${TFLITE_C_LIB}  # Link TFLite C API
+    ${HDF5_LIBRARIES}
+    ${HDF5_CXX_LIBRARIES}
+    ${TINYXML2_LIBRARIES}
 )

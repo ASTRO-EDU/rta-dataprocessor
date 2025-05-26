@@ -264,7 +264,6 @@ public:
         Data_Wf d;
     };
 
-
     static void print(const HeaderWF& packet);
     static void print(const HeaderWF& packet, const int limit_print);
 };

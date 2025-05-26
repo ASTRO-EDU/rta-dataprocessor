@@ -28,34 +28,6 @@ std::vector<uint8_t> Worker2::processData(const std::vector<uint8_t>& data, int 
 
     std::cout << "\n RICEZIONE DI Worker2::processData():" << std::endl;
 
-    // Verifica dimensione minima
-    if (data.size() < sizeof(int32_t)) {
-        std::cerr << "Error: Received data size is smaller than expected." << std::endl;
-    }
-
-    // Extract the size of the packet (first 4 bytes)
-    int32_t size;
-    std::memcpy(&size, data.data(), sizeof(int32_t));  // Read the size from the buffer
-
-    if (size <= 0 || size > static_cast<int32_t>(data.size() - sizeof(int32_t))) {
-        std::cerr << "Invalid size value2: " << size << std::endl;
-    }
-
-    std::vector<uint8_t> vec(size);
-    vec.resize(size);    // Resize the data vector to hold the full payload
-
-    // Store into vec only the actual packet data, excluding the size field
-    memcpy(vec.data(), static_cast<const uint8_t*>(data.data()), size);
-
-    // Transform the raw data into the Header struct
-    const Header* receivedPacket = reinterpret_cast<const Header*>(vec.data());
-    uint32_t packet_type = receivedPacket->type;  // Get the type of the received packet
-
-    // Access the Header fields
-    std::cout << "  APID: " << receivedPacket->apid << std::endl;
-    std::cout << "  Counter: " << receivedPacket->counter << std::endl;
-    std::cout << "  Type: " << receivedPacket->type << std::endl;
-    std::cout << "  Absolute Time: " << receivedPacket->abstime << std::endl;
 
     return {};
 }
