@@ -4,16 +4,16 @@
 #include "../include/utils2.hh"
 
 // Constructor
-Supervisor1::Supervisor1(const std::string& config_file, const std::string& name) 
+Supervisor1::Supervisor1(const std::string& config_file, const std::string& name)
     : Supervisor(config_file, name) {
 }
 
 // Destructor
 Supervisor1::~Supervisor1() {
-    for (WorkerManager* m: manager_workers)
+    for (WorkerManager* m : manager_workers)
         delete m;
 }
-    
+
 // Override the start_managers method
 void Supervisor1::start_managers() {
     int indexmanager = 0;
@@ -140,6 +140,6 @@ void Supervisor1::listen_for_lp_data() {
 // For "dataflowtype": "file", open the file before loading it into the queue. 
 // Return an array of data and the size of the array
 std::pair<std::vector<std::string>, int> Supervisor1::open_file(const std::string& filename) {
-    std::vector<std::string> f = {filename};
-    return {f, 1};
+    std::vector<std::string> f = { filename };
+    return { f, 1 };
 }

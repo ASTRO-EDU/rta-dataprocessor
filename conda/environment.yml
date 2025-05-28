@@ -1,0 +1,27 @@
+name: worker
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - numpy
+  - scipy
+  - matplotlib
+  - ipython
+  - jupyter
+  - pytest
+  - black
+  - flake8
+  - mypy
+  - cmake
+  - ninja
+  - pip:
+    - cmake-format
+    - cpplint
+    - conan
+    - meson
+    - ninja
+    - gcovr
+    - bear
+    - pre-commit 

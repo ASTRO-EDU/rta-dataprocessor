@@ -239,7 +239,7 @@ double Worker1::timespec_diff(const struct timespec* start, const struct timespe
 int Worker1::getMemoryUsage() {
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
- 
+
     return usage.ru_maxrss;  // Returns memory usage in kilobytes
 }
 
@@ -261,7 +261,7 @@ int Worker1::getDL2Rows() {
 }
 
 std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int priority) {
-    std::vector<uint8_t> binary_result;    
+    std::vector<uint8_t> binary_result;
     std::string dataflow_type = get_supervisor()->dataflowtype;
 
     if (dataflow_type == "binary") {
@@ -273,7 +273,7 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
 
         // Extract the size of the packet (first 4 bytes)
         int32_t size;
-        std::memcpy(&size, data.data(), sizeof(int32_t));  
+        std::memcpy(&size, data.data(), sizeof(int32_t));
 
         // Size has to be non-negative and does not exceed the available data in data
         if (size <= 0 || size > data.size() - sizeof(int32_t)) {
@@ -322,8 +322,8 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
             }
 
             int64_t raw_sum = 0;
-            for (float x : float_wave) raw_sum += x;            
-	        // std::cout << "[Worker1] Raw sum = " << raw_sum << "\n";
+            for (float x : float_wave) raw_sum += x;
+            // std::cout << "[Worker1] Raw sum = " << raw_sum << "\n";
 
             // Diagnostic info to understand value distribution
             float min_val = *std::min_element(float_wave.begin(), float_wave.end());
@@ -365,7 +365,7 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
             const float* model_out = reinterpret_cast<const float*>(TfLiteTensorData(output_tensor_));
             float y_pred = model_out[0];
             float y_orig = (y_pred + 1.f) * 0.5f * (out_max - out_min) + out_min;       // Inverse MinMax Scaling from [-1, 1]
-            
+
             // std::cout << "[Worker1] Predicted model output (inverse-scaled area): " << y_orig << "\n";
             // std::cout << "[Worker1] Predicted model output (scaled area ([-1, 1])): " << y_pred << "\n";
             // std::cout << "[Worker1] Output scaling details: min_area_value=" << out_min << ", max_area_value=" << out_max << ", scale=" << ((out_max - out_min) * 0.5f) << "\n";
@@ -435,7 +435,7 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
         }
 
         binary_result.insert(binary_result.end(), vec.begin(), vec.end());  // Append data at the end
-    } 
+    }
     else if (dataflow_type == "filename") {
         
     }
