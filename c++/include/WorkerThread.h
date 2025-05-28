@@ -24,7 +24,6 @@
 using json = nlohmann::json;
 
 class WorkerThread {
-
     int worker_id;
     WorkerManager* manager;
     Supervisor* supervisor;
@@ -35,10 +34,8 @@ class WorkerThread {
     std::string globalname;
     WorkerLogger* logger;
 
-    //////////////////////
     std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> low_priority_queue;
     std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> high_priority_queue;
-    /////////////////////
 
     MonitoringPoint* monitoringpoint;
 

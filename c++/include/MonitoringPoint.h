@@ -10,12 +10,14 @@
 #include <unistd.h>
 #include "json.hpp"  
 #include <sys/sysinfo.h>  
+#include "WorkerLogger.h"
 
 
+class Supervisor;
 class WorkerManager;
 
 class MonitoringPoint {
-
+    Supervisor* supervisor;
     WorkerManager* manager;  // Pointer to the WorkerManager
     pid_t processOS;  // Process ID of the current process
     nlohmann::json data;  // JSON object to store data
@@ -23,6 +25,7 @@ class MonitoringPoint {
     std::unordered_map<int, int> processing_tot_events;  // Map of total processing events
     std::unordered_map<int, int> worker_status;  // Map of worker statuses
     std::mutex data_mutex;  // Mutex for thread-safe access to data
+    WorkerLogger* logger;
 
     // Monitors and updates system resources (CPU, memory)
     void resource_monitor();

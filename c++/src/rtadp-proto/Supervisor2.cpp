@@ -21,11 +21,6 @@ void Supervisor2::start_managers() {
     logger->info("DER SUP2 manager started");
 }
 
-// For "dataflowtype": "binary", decode the data before loading it into the queue.
-zmq::message_t& Supervisor2::decode_data(zmq::message_t& data) {
-    return data;
-}
-
 // For "dataflowtype": "file", open the file before loading it into the queue. 
 // Return an array of data and the size of the array
 std::pair<std::vector<std::string>, int> Supervisor2::open_file(const std::string& filename) {

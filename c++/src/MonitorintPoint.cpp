@@ -21,8 +21,10 @@ MonitoringPoint::MonitoringPoint(WorkerManager* manager)
     data["procinfo"]["memory_usage"] = 0;  // Initial memory usage
     data["queue_lp_size"] = 0;  // Initial low priority queue size
     data["queue_hp_size"] = 0;  // Initial high priority queue size
-
-    std::cout << "MonitoringPoint initialised" << std::endl;
+    
+    supervisor = manager->getSupervisor();
+    logger = supervisor->logger;
+    logger->info("MonitoringPoint initialised");
 }
 
 // Updates the data map with a new key-value pair
@@ -63,6 +65,7 @@ nlohmann::json MonitoringPoint::get_data() {
     data["worker_rates"] = processing_rates;
     data["worker_tot_events"] = processing_tot_events;
     data["worker_status"] = worker_status;
+
     return data;
 }
 

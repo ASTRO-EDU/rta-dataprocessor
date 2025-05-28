@@ -30,10 +30,8 @@
 using json = nlohmann::json;
 // class WorkerProcess;
 class WorkerThread;
- 
+
 class WorkerManager {
-
-
 private:
     int manager_id;
     Supervisor* supervisor;
@@ -41,7 +39,6 @@ private:
     std::string status;
     std::string workersname;
     std::shared_ptr<json> config;
-    WorkerLogger* logger;
     std::string fullname;
     std::string globalname;
     std::string processingtype;
@@ -56,18 +53,10 @@ private:
     zmq::context_t&  context;
     zmq::socket_t* socket_monitoring;
 
-
-    ////////////////////////////////////////////
     std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> low_priority_queue;
     std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> high_priority_queue;
     std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> result_lp_queue;
     std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> result_hp_queue;
-
-    // std::shared_ptr<std::queue<std::string>> low_priority_queue;
-    // std::shared_ptr<std::queue<std::string>> high_priority_queue;
-    // std::shared_ptr<std::queue<std::string>> result_lp_queue;
-    // std::shared_ptr<std::queue<std::string>> result_hp_queue;
-    ////////////////////////////////////////////
 
     MonitoringPoint* monitoringpoint;
     MonitoringThread* monitoringthread;
@@ -95,6 +84,8 @@ private:
     void close_queue(std::shared_ptr<std::queue<std::string>>& queue, const std::string& queue_name);
 
 public:
+    WorkerLogger* logger;
+
     // Constructor
     WorkerManager(int manager_id, Supervisor* supervisor, const std::string& name = "None");
  
@@ -150,31 +141,15 @@ public:
 
     std::string getName() const;
 
-    // std::shared_ptr<std::queue<json>> 
-    // Queue() const;
-    // std::shared_ptr<std::queue<json>> getResultHpQueue() const;
-    // std::shared_ptr<std::queue<json>> getLowPriorityQueue() const;
-    // std::shared_ptr<std::queue<json>> getHighPriorityQueue() const;
     MonitoringPoint* getMonitoringPoint() const;
     MonitoringThread* getMonitoringThread() const;
     
-    
-    // std::thread monitoring_thread;
     MonitoringThread* monitoring_thread;
 
-
-    /////////////////////////////////////////
     std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> getLowPriorityQueue() const;
     std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> getHighPriorityQueue() const;
     std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> getResultLpQueue() const;
     std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> getResultHpQueue() const;
-
-    // std::shared_ptr<std::queue<std::string>> getLowPriorityQueue() const;
-    // std::shared_ptr<std::queue<std::string>> getHighPriorityQueue() const;
-    // std::shared_ptr<std::queue<std::string>> getResultLpQueue() const;
-    // std::shared_ptr<std::queue<std::string>> getResultHpQueue() const;
-    /////////////////////////////////////////
-
  
     // Getters for result sockets
     std::string get_result_lp_socket() const { return result_lp_socket; }
@@ -223,8 +198,6 @@ public:
 
     // Getter for worker_threads
     std::vector<std::shared_ptr<WorkerThread>> getWorkerThreads();
-
-
 };
  
 #endif // WORKERMANAGER_H#

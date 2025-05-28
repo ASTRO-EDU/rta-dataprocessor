@@ -21,10 +21,6 @@
 
 class Worker2 : public WorkerBase {
 private:
-    avro::ValidSchema avro_schema; // Store schema
-
-    // Helper function to generate random duration between 0 and 100 milliseconds
-    double random_duration();
 
 public:
     // Constructor

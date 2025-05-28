@@ -21,7 +21,6 @@
 #include <vector>
 #include <atomic>
 #include <mutex>
-#include <filesystem>
 #include "Supervisor.h"
 #include "tensorflow/lite/c/c_api.h"
 #include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
@@ -68,9 +67,10 @@ private:
     static std::mutex init_mutex;
     static bool model_initialized;
 
-
-    // Helper function to generate random duration between 0 and 100 milliseconds
-    double random_duration();
+    // Path helper methods
+    static std::string getModelPath();
+    static std::string getOutputPath();
+    static int getDL2Rows();
 
     TfLiteInterpreter* interp_ = nullptr;
     TfLiteTensor* input_tensor_ = nullptr;
@@ -97,10 +97,7 @@ public:
     // Override the config method
     void config(const nlohmann::json& configuration);
 
-    // void printGenericDatum(const avro::GenericDatum& datum, int indent);
-
     // Override the process_data method
-    // std::string process_data(const std::string& data);
     std::vector<uint8_t> processData(const std::vector<uint8_t>& data, int priority);
 };
 

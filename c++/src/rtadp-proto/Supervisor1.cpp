@@ -21,10 +21,9 @@ void Supervisor1::start_managers() {
     setup_result_channel(manager1, indexmanager);
     manager1->run();
     manager_workers.push_back(manager1);
-    logger->info("DER SUP1 manager started");
+    logger->info("[Supervisor1] DER SUP1 manager started");
 }
 
-///////////////////////////////////////////////////////////////////
 // Override listen_for_lp_data to handle DAMS packets
 void Supervisor1::listen_for_lp_data() {
     while (continueall) {
@@ -63,17 +62,11 @@ void Supervisor1::listen_for_lp_data() {
                         std::cerr << "[Supervisor1] Invalid size value: " << size << std::endl;
                         continue;
                     }
-                    // std::cout << "[Supervisor1] Extracted packet size: " << std::dec << (int)size << " (0x" << std::hex << (int)size << ")" << std::endl;
 
+                    logger->info(fmt::format("[Supervisor1] Extracted packet size: {}", (int)size));
 
                     // std::cout << "Received Raw Packet: ";
                     const uint8_t* raw_packet = static_cast<const uint8_t*>(data.data());
-                    /*
-                    for (size_t i = 0; i < data.size(); ++i) {
-                        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)raw_packet[i] << " ";
-                    }
-                    std::cout << std::dec << std::endl;
-                    */
 
                     uint8_t packet_type = raw_packet[4 + sizeof(HeaderDams)]; // 4 bytes for size + header bytes (gs_examples_communication/gs_examples_serialization/ccsds/include/packet.h)
                     uint8_t subtype = raw_packet[4 + sizeof(HeaderDams) + 1];
@@ -114,7 +107,7 @@ void Supervisor1::listen_for_lp_data() {
                         // std::cout << "Finished pushing into the queue" << std::endl;
                     }
                     else if (packet_type == Data_HkDams::TYPE) {  // HK Packet
-                        std::cout << "[Supervisor1] Housekeeping packet received." << std::endl;
+                        std::cout << "[Supervisor1] Housekeeping packet received" << std::endl;
                     }
                     else {
                         std::cout << "[Supervisor1] Unknown packet type: " << packet_type << std::endl;
@@ -142,12 +135,6 @@ void Supervisor1::listen_for_lp_data() {
 
     std::cout << "[Supervisor1] End listen_for_lp_data" << std::endl;
     logger->info("[Supervisor1] End listen_for_lp_data", globalname);
-}
-///////////////////////////////////////////////////////////////////
-
-// For "dataflowtype": "binary", decode the data before loading it into the queue.
-zmq::message_t& Supervisor1::decode_data(zmq::message_t& data) {
-    return data;
 }
 
 // For "dataflowtype": "file", open the file before loading it into the queue. 

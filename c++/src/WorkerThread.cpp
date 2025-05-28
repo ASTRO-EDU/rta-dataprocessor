@@ -12,19 +12,16 @@
 #include "ccsds/include/packet.h"
 #include "../include/utils2.hh"
 #include <iostream>
-
 #include "WorkerThread.h"
 
 
 using json = nlohmann::json;
 
-//////////////////////////////////////////////////
 WorkerThread::WorkerThread(int worker_id, WorkerManager* manager, const std::string& name, WorkerBase* worker)
     : worker_id(worker_id), manager(manager), name(name), worker(worker),
      processdata(0), status(0), tokenresult(worker_id), tokenreading(worker_id), _stop_event(false) {
 
-    std::cout << "Creating a WorkerThread with name: " << name << std::endl;
-
+    logger->info("Creating a WorkerThread with name: ", name);
     supervisor = manager->getSupervisor();
     workersname = supervisor->name + "-" + manager->getName() + "-" + name;
     fullname = workersname + "-" + std::to_string(worker_id);
@@ -47,7 +44,6 @@ WorkerThread::WorkerThread(int worker_id, WorkerManager* manager, const std::str
 
     internal_thread = std::make_unique<std::thread>(&WorkerThread::run, this);
 }
-//////////////////////////////////////////////////
 
 void WorkerThread::config(const json& configuration) {
     worker->config(configuration);
@@ -57,7 +53,6 @@ void WorkerThread::set_processdata(int processdata1) {
     processdata = processdata1;
 }
 
-//////////////////////////////////////////////////
 void WorkerThread::run() {
     start_timer(1);
 
@@ -90,7 +85,6 @@ void WorkerThread::run() {
 
 }
 
-//////////////////////////////////////////////////
 // Destructor
 WorkerThread::~WorkerThread(){
     // Protect the access to worker
@@ -107,7 +101,6 @@ WorkerThread::~WorkerThread(){
     }
 }
 
-//////////////////////////////////////////////////
 void WorkerThread::stop() {
     if (_stop_event) {
         return;
@@ -129,7 +122,6 @@ void WorkerThread::stop() {
 
     status = 16; // Thread is terminated
 }
-//////////////////////////////////////////////////
 
 int WorkerThread::get_tokenresult() const {
     return tokenresult;
@@ -195,7 +187,6 @@ void WorkerThread::workerop(int interval) {
     }
 }
 
-////////////////////////////////////////////
 void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) {
     status = 8; // processing new data
     processed_data_count++;
@@ -212,28 +203,23 @@ void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) 
         // Push the received data into queue according to the packet type
         if (priority == 0) {
             /*
-            if (packet_type == 1) {  // WF Packet
-                std::cout << "\nWorkerThread::process_data: Waveform packet received" << std::endl;
+            if (!dataresult.empty() && tokenresult == 0) {
+                std::cout << "WorkerThread::process_data: pusho sulla coda" << std::endl;
 
-                // Extract the HeaderWF struct from the raw bytes
-                const HeaderWF* packet_wf = reinterpret_cast<const HeaderWF*>(vec.data());
-
-                // for (auto& manager : manager_workers) {
-                manager->getResultLpQueue()->push(serializePacket(*packet_wf));
-                // }
-            }
-            else if (packet_type == 20) {  // HK Packet
-                std::cout << "\nWorkerThread::process_data: Housekeeping packet received" << std::endl;
-
-                // Extract the HeaderHK struct from the raw bytes
-                const HeaderHK* packet_hk = reinterpret_cast<const HeaderHK*>(vec.data());
-
-                // for (auto& manager : manager_workers) {
-                manager->getResultLpQueue()->push(serializePacket(*packet_hk));
-                // }
+                if (priority == 0) {
+                    for (auto& manager : manager_workers) {
+                        manager->getResultLpQueue()->push(dataresult);
+                    }
+                }
+                else {
+                    for (auto& manager : manager_workers) {
+                        manager->getResultHpQueue()->push(dataresult);
+                    }
+                }
+                manager->change_token_results();
             }
             else {
-                std::cerr << "Unknown packet type: " << packet_type << std::endl;
+                std::cout << "WorkerThread::process_data: dataresult EMPTY" << std::endl;
             }
             */
         } 
@@ -247,22 +233,4 @@ void WorkerThread::process_data(const std::vector<uint8_t>& data, int priority) 
         logger->info("WorkerThread::process_data: dataresult EMPTY");
 
     }
-
-    /*
-    if (!dataresult.empty() && tokenresult == 0) {
-        std::cout << "WorkerThread::process_data: pusho sulla coda" << std::endl;
-
-        if (priority == 0) {
-            manager->getResultLpQueue()->push(dataresult);
-        } 
-        else {
-            manager->getResultHpQueue()->push(dataresult);
-        }
-        manager->change_token_results();
-    }
-    else {
-        std::cout << "WorkerThread::process_data: dataresult EMPTY" << std::endl;
-    }
-    */
 }
-////////////////////////////////////////////

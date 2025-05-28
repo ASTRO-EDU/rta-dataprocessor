@@ -26,10 +26,6 @@ using json = nlohmann::json;
 
 
 class Supervisor {
-
-    // Helper function to decode data
-    json decode_data(zmq::message_t &data);
-
     // Helper function to open file
     std::pair<std::vector<json>, int> open_file(const std::string &filename);
   

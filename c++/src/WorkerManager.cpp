@@ -32,7 +32,6 @@ WorkerManager::WorkerManager(int manager_id, Supervisor* supervisor, const std::
     pid = getpid();
     socket_monitoring = supervisor->socket_monitoring;
        
-    /////////////////////////////////////////////
     low_priority_queue = std::make_shared<ThreadSafeQueue<std::vector<uint8_t>>>();
     high_priority_queue = std::make_shared<ThreadSafeQueue<std::vector<uint8_t>>>();
     result_lp_queue = std::make_shared<ThreadSafeQueue<std::vector<uint8_t>>>();
@@ -41,9 +40,7 @@ WorkerManager::WorkerManager(int manager_id, Supervisor* supervisor, const std::
     // Initialize monitoring
     monitoringpoint = nullptr;
     monitoringthread = nullptr;
-    //////////////////////////////////
-    num_workers = supervisor->manager_num_workers;  // num_workers = 0;
-    //////////////////////////////////
+    num_workers = supervisor->manager_num_workers;  
     workersstatus = 0;
     workersstatusinit = 0;
 
@@ -124,8 +121,6 @@ std::vector<std::shared_ptr<WorkerThread>> WorkerManager::getWorkerThreads() {
     return worker_threads;
 }
 
-
-/////////////////////////////////////////////
 std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> WorkerManager::getLowPriorityQueue() const {
     return low_priority_queue;
 }
@@ -141,8 +136,6 @@ std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> WorkerManager::getResultL
 std::shared_ptr<ThreadSafeQueue<std::vector<uint8_t>>> WorkerManager::getResultHpQueue() const {
     return result_hp_queue;
 }
-/////////////////////////////////////////////
-
 
 MonitoringPoint* WorkerManager::getMonitoringPoint() const {
     return monitoringpoint;
@@ -163,7 +156,6 @@ void WorkerManager::change_token_results() {
     }
 }
 
-////////////////////////////////////////
 void WorkerManager::change_token_reading() {
     if (!tokenreadinglock) {
         logger->error("tokenreadinglock is null");
@@ -183,7 +175,6 @@ void WorkerManager::change_token_reading() {
         worker->set_tokenreading(token_reading);
     }
 }
-////////////////////////////////////////
 
 void WorkerManager::set_stopdata(bool stopdata) {
     this->stopdata = stopdata;
@@ -268,7 +259,8 @@ void WorkerManager::start() {
 
 // Main run function
 void WorkerManager::run() {   
-	std::cout << "Start WorkerManager run" << std::endl;
+    logger->info("Start WorkerManager run");
+
     start_service_threads();
 
     status = "Initialised";
@@ -316,7 +308,6 @@ void WorkerManager::clean_queue() {
     logger->info("End cleaning queues", globalname);
 }
 
-//////////////////////////////////////////
 // Function to stop the manager
 void WorkerManager::stop(bool fast) {
 
@@ -355,7 +346,6 @@ void WorkerManager::stop_internalthreads() {
     
     logger->info("All Manager internal threads terminated.", globalname);
 }
-//////////////////////////////////////////
 
 // Function to configure workers
 void WorkerManager::configworkers(const json& configuration) {

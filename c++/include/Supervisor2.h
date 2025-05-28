@@ -20,10 +20,6 @@ public:
     void start_managers();
 
     // To be reimplemented ####
-    // Decode the data before loading it into the queue. For "dataflowtype": "binary"
-    zmq::message_t& decode_data(zmq::message_t& data);
-
-    // To be reimplemented ####
     // Open the file before loading it into the queue. For "dataflowtype": "file"
     // Return an array of data and the size of the array
     std::pair<std::vector<std::string>, int> open_file(const std::string& filename);

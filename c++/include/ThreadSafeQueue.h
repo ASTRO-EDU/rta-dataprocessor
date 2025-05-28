@@ -12,7 +12,7 @@ private:
     mutable std::mutex mtx;
     std::condition_variable condvar;
 
-    bool _stop = false; // Flag per indicare l'arresto
+    bool _stop = false; // Flag for stopping
 
 public:
     ThreadSafeQueue() = default;
@@ -53,7 +53,7 @@ public:
         condvar.wait(lock, [this] { return _stop || !queue.empty(); });
 
         if (_stop) {  // if (_stop && queue.empty()) 
-            return; // Esce dalla funzione e termina l'elaborazione
+            return; // Stops and exits
         }
 
         queue.pop();

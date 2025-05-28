@@ -11,16 +11,16 @@
 #include "ccsds/include/packet.h"
 #include <iostream>
 #include <cstring>
-
 #include <H5Cpp.h>
 #include <tinyxml2.h>
+#include <cstdlib> // for getenv
 
 using namespace tinyxml2;
 
 // constants for scaling
 constexpr int kNumSamples = 1000;
-constexpr float in_min = 74.0f;     // 0.0
-constexpr float in_max = 3821.0f;   // 3500.0
+constexpr float in_min = 74.0f;     
+constexpr float in_max = 3821.0f;   
 constexpr float out_min = 3418.73f;
 constexpr float out_max = 149944.45f;
 
@@ -38,13 +38,16 @@ bool Worker1::model_initialized = false;
 
 // Constructor
 Worker1::Worker1() : WorkerBase() {
-    const std::string model_file = "/home/gamma/float_16.tflite";
+    // const std::string model_file = "/home/gamma/float_16.tflite";
+    const std::string model_file = getModelPath();
+    
     interp_ = loadInterpreter(model_file);
     input_tensor_ = TfLiteInterpreterGetInputTensor(interp_, 0);
     output_tensor_ = TfLiteInterpreterGetOutputTensor(interp_, 0);
 
     // Create output directory if it doesn't exist
-    const std::string output_dir = "/home/gamma/rtadp-c/c++/output";
+    //const std::string output_dir = "/home/gamma/rtadp-c/c++/output";
+    const std::string output_dir = getOutputPath();
     if (!std::filesystem::exists(output_dir)) {
         std::filesystem::create_directories(output_dir);
         // std::cout << "[Worker1] Created output directory: " << output_dir << std::endl;
@@ -53,9 +56,9 @@ Worker1::Worker1() : WorkerBase() {
     // Thread-safe initialization of DL2 model
     std::lock_guard<std::mutex> lock(init_mutex);
     if (!model_initialized) {
-        dl2_model = parseDL2Model("/home/gamma/DL2model.xml");
+        dl2_model = parseDL2Model("../DL2model.xml");
         model_initialized = true;
-        std::cout << "[Worker1] DL2 model initialized with group '" << dl2_model.groupName << "' and dataset '" << dl2_model.datasetName << "'" << std::endl;
+        // std::cout << "[Worker1] DL2 model initialized with group '" << dl2_model.groupName << "' and dataset '" << dl2_model.datasetName << "'" << std::endl;
     }
 }
 
@@ -69,7 +72,7 @@ void Worker1::config(const nlohmann::json& configuration) {
 }
 
 DL2ModelDefinition Worker1::parseDL2Model(const std::string& xmlPath) {
-    std::cout << "[Worker1] Parsing DL2 model from: " << xmlPath << std::endl;
+    // std::cout << "[Worker1] Parsing DL2 model from: " << xmlPath << std::endl;
 
     DL2ModelDefinition model;
     XMLDocument doc;
@@ -93,7 +96,6 @@ DL2ModelDefinition Worker1::parseDL2Model(const std::string& xmlPath) {
         throw std::runtime_error("Missing 'name' attribute in group element");
     }
     model.groupName = groupName;
-    std::cout << "[Worker1] Found group name: '" << model.groupName << "'" << std::endl;
 
     XMLElement* datasetElem = groupElem->FirstChildElement("dataset");
     if (!datasetElem) {
@@ -105,7 +107,6 @@ DL2ModelDefinition Worker1::parseDL2Model(const std::string& xmlPath) {
         throw std::runtime_error("Missing 'name' attribute in dataset element");
     }
     model.datasetName = datasetName;
-    std::cout << "[Worker1] Found dataset name: '" << model.datasetName << "'" << std::endl;
 
     XMLElement* fieldsElem = datasetElem->FirstChildElement("fields");
     if (!fieldsElem) {
@@ -125,7 +126,7 @@ DL2ModelDefinition Worker1::parseDL2Model(const std::string& xmlPath) {
         field.name = fieldName;
         field.type = fieldType;
         model.fields.push_back(field);
-        std::cout << "[Worker1] Found field: '" << field.name << "' of type '" << field.type << "'" << std::endl;
+        // std::cout << "[Worker1] Found field: '" << field.name << "' of type '" << field.type << "'" << std::endl;
 
         fieldElem = fieldElem->NextSiblingElement("field");
     }
@@ -133,8 +134,7 @@ DL2ModelDefinition Worker1::parseDL2Model(const std::string& xmlPath) {
     if (model.fields.empty()) {
         throw std::runtime_error("No fields found in XML file");
     }
-
-    std::cout << "[Worker1] Successfully parsed DL2 model with " << model.fields.size() << " fields" << std::endl;
+    // std::cout << "[Worker1] Successfully parsed DL2 model with " << model.fields.size() << " fields" << std::endl;
     return model;
 }
 
@@ -156,7 +156,7 @@ void Worker1::write_dl2_file(const DL2ModelDefinition& model, const std::string&
 
     H5::CompType mtype(sizeof(GFRow));
     for (const auto& field : model.fields) {
-        std::cout << "[Worker1] Processing field: '" << field.name << "' of type '" << field.type << "'" << std::endl;
+        // std::cout << "[Worker1] Processing field: '" << field.name << "' of type '" << field.type << "'" << std::endl;
 
         if (field.name.empty()) {
             throw std::runtime_error("Field name cannot be empty");
@@ -191,9 +191,8 @@ void Worker1::write_dl2_file(const DL2ModelDefinition& model, const std::string&
     H5::DataSet dataset = group.createDataSet(model.datasetName, mtype, dataspace);
 
     dataset.write(data.data(), mtype);
-    std::cout << "[Worker1] Successfully wrote " << data.size() << " rows to HDF5 file" << std::endl;
+    std::cout << "[Worker1] Successfully wrote " << data.size() << " rows to HDF5 file '" << h5filename <<"'" << std::endl;
 }
-
 
 // Helper: load & prepare the interpreter
 TfLiteInterpreter* Worker1::loadInterpreter(const std::string& model_path) {
@@ -213,7 +212,6 @@ TfLiteInterpreter* Worker1::loadInterpreter(const std::string& model_path) {
     // Litert uses per se a single thread to run inference. Notably even when telling the interpreter to use all 6 core the inference time doesn't change possibily due 
     // to the model being too small and the overheads dominate
 
-
     TfLiteInterpreter* interp = TfLiteInterpreterCreate(model, opts);
     TfLiteInterpreterOptionsDelete(opts);
 
@@ -221,19 +219,23 @@ TfLiteInterpreter* Worker1::loadInterpreter(const std::string& model_path) {
         std::cerr << "[Worker1] ERROR: AllocateTensors failed\n";
         std::exit(1);
     }
+
     return interp;
 }
 
 double Worker1::timespec_diff(const struct timespec* start, const struct timespec* end) {
     time_t sec = end->tv_sec - start->tv_sec;
     long   nsec = end->tv_nsec - start->tv_nsec;
+
     if (nsec < 0) {
         --sec;
         nsec += 1'000'000'000L;
     }
+
     return double(sec) + double(nsec) / 1e9;
 }
 
+// Helper function to get RAM usage during inference
 int Worker1::getMemoryUsage() {
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
@@ -241,7 +243,23 @@ int Worker1::getMemoryUsage() {
     return usage.ru_maxrss;  // Returns memory usage in kilobytes
 }
 
-////////////////////////////////////////////
+// Helper functions for path resolution
+std::string Worker1::getModelPath() {
+    const char* env_path = std::getenv("RTADP_MODEL_PATH");     // Read the .bashrc (or temp) defined env var
+    return env_path ? std::string(env_path) : "../../../float_16.tflite";   // Default to a standard path if env var is not set
+}
+
+std::string Worker1::getOutputPath() {
+    const char* env_path = std::getenv("RTADP_DL2_OUTPUT_PATH");    // Read the .bashrc (or temp) defined env var
+    return env_path ? std::string(env_path) : "../output";      // Default to a standard path if env var is not set
+}
+
+// Helper function that reads the length of the DL2 file to write
+int Worker1::getDL2Rows() {
+    const char* env_rows = std::getenv("RTADP_DL2_ROWS");   // Read the .bashrc (or temp) defined env var
+    return env_rows ? std::stoi(env_rows) : 1000; // Default to 1000 if env var is not set
+}
+
 std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int priority) {
     std::vector<uint8_t> binary_result;    
     std::string dataflow_type = get_supervisor()->dataflowtype;
@@ -284,7 +302,7 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
         std::memcpy(aligned_buf, packet->body.d.buff, sizeof(aligned_buf));
 
         if (packet_type == Data_HkDams::TYPE) { // HK Packet
-            std::cout << "[Worker1] Housekeeping packet received. Printing infos: " << std::endl;
+            std::cout << "[Worker1] Housekeeping packet received." << std::endl;
         }
         else if (packet_type == Data_WaveData::TYPE) {
             // std::cout << "[Worker1] Waveform packet received. Starting inference.\n";
@@ -359,39 +377,20 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
                 global_total_time.store(global_total_time.load() + inference_time);
                 global_inference_count++;
 
-
                 // DL2 data collection
                 GFRow row;
                 row.n_waveform = dl2_data.size() + 1;  // 1-based index
                 row.mult = -1.0;
-
-                // const Data_WaveHeader* packet2 = reinterpret_cast<const Data_WaveHeader*>(raw_data);
                 row.tstart = static_cast<float>(packet->body.w.ts.tv_sec);  // Convert nanoseconds to float
-                
                 row.index_peak = -1.0f;
-                row.peak = -1.0;    // max_val could be used
+                row.peak = -1.0;    
                 row.integral1 = y_orig;  
                 row.integral2 = -1.0f;
                 row.integral3 = -1.0f;
                 row.halflife = -1.0f;
                 row.temp = -1.0f;        
 
-                dl2_data.push_back(row);
-
-                // If we've collected 1000 waveforms, write to file
-                if (dl2_data.size() >= REPORT_INTERVAL) {
-                    std::string filename = "/home/gamma/rtadp-c/c++/output/dl2_output_batch" + std::to_string(batch_counter++) + ".dl2.h5";
-
-                    try {
-                        write_dl2_file(dl2_model, filename, dl2_data);
-                        std::cout << "[Worker1] Wrote DL2 file: " << filename << " with " << dl2_data.size() << " rows\n";
-                        dl2_data.clear();  // Clear the vector after writing
-                    }
-                    catch (const std::exception& e) {
-                        std::cerr << "[Worker1] Error writing DL2 file: " << e.what() << "\n";
-                    }
-                }
-                    
+                dl2_data.push_back(row); 
 
                 if (global_inference_count >= REPORT_INTERVAL) {
                     double avg_time = global_total_time.load() / global_inference_count.load();
@@ -408,6 +407,21 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
                     global_inference_count.store(0);
                     peak_memory_kb.store(0);
                 }
+
+                // If we've collected RTADP_DL2_ROWS (env var) waveforms, write to file
+                if (dl2_data.size() >= getDL2Rows()) {
+                    if (getDL2Rows() > 0) {
+                        std::string filename = getOutputPath() + "/dl2_output_batch" + std::to_string(batch_counter++) + ".dl2.h5";
+
+                        try {
+                            write_dl2_file(dl2_model, filename, dl2_data);
+                            dl2_data.clear();  // Clear the vector after writing
+                        }
+                        catch (const std::exception& e) {
+                            std::cerr << "[Worker1] Error writing DL2 file: " << e.what() << "\n";
+                        }
+                    }
+                }
             }
 
             // Pack the final un-scaled area into the return vector
@@ -423,50 +437,12 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
         binary_result.insert(binary_result.end(), vec.begin(), vec.end());  // Append data at the end
     } 
     else if (dataflow_type == "filename") {
-        /*
-        nlohmann::json result;
-
-        const std::string filename(data.begin(), data.end());
-        // Simulate processing
-        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(random_duration())));
-        std::cout << "Processed file: " << filename << std::endl;
-
-        result["filename"] = filename;
-
-        std::string current_time = get_current_time_as_string();
-        result["timestamp"] = current_time;
-
-        std::string json_str = result.dump();
-        binary_result = std::vector<uint8_t>(json_str.begin(), json_str.end());
-        */
+        
     }
     else if (dataflow_type == "string") {
-        /*
-        nlohmann::json result;
 
-        const std::string str_data(data.begin(), data.end());
-        std::cout << "\nProcessed string data: " << str_data << std::endl;
-
-        result["data"] = str_data;
-
-        std::string current_time = get_current_time_as_string();
-        result["timestamp"] = current_time;
-
-        std::string json_str = result.dump();
-        binary_result = std::vector<uint8_t>(json_str.begin(), json_str.end());
-
-        std::cout << "binary_result: " << binary_result.size() << std::endl;
-        */
     }
 
     return binary_result;
 }
-////////////////////////////////////////////
 
-// Helper function to generate random duration between 0 and 100 milliseconds
-double Worker1::random_duration() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0.0, 100.0);
-    return dis(gen);
-}

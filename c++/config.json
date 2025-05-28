@@ -31,7 +31,7 @@
         }
     ],
     "logs_path": "/tmp/",
-    "logging": "both",
+    "logging": "file",
     "logs_level": 5,
     "comment": "datasockettype=pushpull|pubsub|custom dataflowtype=binary|filename|string processingtype=process|thread logging=file|console|both|none"
   },

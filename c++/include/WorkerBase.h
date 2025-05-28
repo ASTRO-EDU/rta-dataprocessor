@@ -5,24 +5,23 @@
 #include <iostream>
 #include "json.hpp" 
 #include <zmq.hpp>     
+#include "WorkerLogger.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/fmt/fmt.h"
 
 
-class WorkerManager;
 class Supervisor;
-
+class WorkerManager;
 
 class WorkerBase {
-
-    WorkerManager* manager = nullptr;
     Supervisor* supervisor = nullptr;
-    std::shared_ptr<spdlog::logger> logger; 
+    WorkerManager* manager = nullptr;
     std::string fullname;
 
 public:
     std::string workersname;
+    WorkerLogger* logger;
 
     WorkerBase();
     virtual ~WorkerBase();

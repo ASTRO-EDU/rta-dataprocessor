@@ -46,11 +46,9 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         // Retrieve and log configuration
         processingtype = config["processing_type"].get<std::string>();
         dataflowtype = config["dataflow_type"].get<std::string>();
-        std::cout << "\n\n\ndataflowtype: " << dataflowtype << std::endl;
+        logger->info("dataflowtype:", dataflowtype);
         datasockettype = config["datasocket_type"].get<std::string>();
 
-        std::cout << "Supervisor: " << globalname << " / " << dataflowtype << " / " 
-                  << processingtype << " / " << datasockettype << std::endl;
         logger->info("Supervisor: " + globalname + " / " + dataflowtype + " / " 
                        + processingtype + " / " + datasockettype, globalname);
 
@@ -58,11 +56,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         if (datasockettype == "pushpull") {
             socket_lp_data = new zmq::socket_t(context, ZMQ_PULL);
             socket_lp_data->bind(config["data_lp_socket"].get<std::string>());
-
-            //////////////////
             socket_lp_data->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
-            //////////////////
-
             socket_hp_data = new zmq::socket_t(context, ZMQ_PULL);
             socket_hp_data->bind(config["data_hp_socket"].get<std::string>());
         } 
@@ -129,11 +123,9 @@ Supervisor::Supervisor(std::string config_file, std::string name)
     status = "Initialised";
     send_info(1, status, fullname, 1, "Low");
 
-    std::cout << globalname << " started" << std::endl;
     logger->info(globalname + " started", globalname);
 }
 
-//////////////////////////////////
 // Destructor to clean up resources
 Supervisor::~Supervisor() {
     if (lp_data_thread.joinable()) {
@@ -243,7 +235,6 @@ Supervisor::~Supervisor() {
         logger = nullptr;
     }
 }
-//////////////////////////////////
 
 // Static method to set the current instance
 void Supervisor::set_instance(Supervisor *instance) {
@@ -259,7 +250,6 @@ std::vector<std::string> Supervisor::getNameWorkers() const {
     return worker_names;
 }
 
-//////////////////////////////////////////////////
 // Load configuration from the specified file and name
 void Supervisor::load_configuration(const std::string &config_file, const std::string &name) {
     config_manager = new ConfigurationManager(config_file);
@@ -276,7 +266,6 @@ void Supervisor::load_configuration(const std::string &config_file, const std::s
     workername = std::get<5>(workers_config)[0]; // assuming single value
     name_workers = std::get<6>(workers_config);
 }
-//////////////////////////////////////////////////
 
 // Start service threads for data handling
 void Supervisor::start_service_threads() {
@@ -342,7 +331,7 @@ void Supervisor::start_managers() {
     setup_result_channel(manager, indexmanager);
     manager->run();
     manager_workers.push_back(manager);
-    logger->info("BASE SUP manager started.");
+    logger->info("[Supervisor] BASE SUP manager started.");
 }
 
 // Start workers
@@ -351,15 +340,14 @@ void Supervisor::start_workers() {
 
     for (auto &manager : manager_workers) {
         manager->start_worker_threads(manager_num_workers);
-        logger->info("BASE SUP start_worker_threads");
+        logger->info("[Supervisor] BASE SUP start_worker_threads");
         indexmanager++;
     }
 }
 
-///////////////////////////////////////
-// Start Supervisor operation
+// Start Supervisor operations
 void Supervisor::start() {
-    logger->info("Starting managers and workers");
+    logger->info("[Supervisor] Starting managers and workers");
     start_managers();
     start_workers();
     start_service_threads();
@@ -372,7 +360,6 @@ void Supervisor::start() {
         std::this_thread::sleep_for(std::chrono::seconds(1)); // To avoid 100% CPU
     }
 }
-//////////////////////////////////////
 
 // Static function to handle signals
 void Supervisor::handle_signals(int signum) {
@@ -380,24 +367,23 @@ void Supervisor::handle_signals(int signum) {
 
     if (instance) {
         if (signum == SIGTERM) {
-            std::cerr << "\nSIGTERM received in main thread. Terminating with cleaned shutdown." << std::endl;
-            instance->logger->warning("SIGTERM received in main thread. Terminating with cleaned shutdown", instance->globalname);
+            std::cout << "\n[Supervisor] SIGTERM received in main thread. Terminating with cleaned shutdown." << std::endl;
+            instance->logger->warning("[Supervisor] SIGTERM received in main thread. Terminating with cleaned shutdown", instance->globalname);
             instance->command_cleanedshutdown();
         } 
         else if (signum == SIGINT) {
-            std::cerr << "\nSIGINT received in main thread. Terminating with shutdown." << std::endl;
-            instance->logger->warning("SIGINT received in main thread. Terminating with shutdown", instance->globalname);
+            std::cout << "\n[Supervisor] SIGINT received in main thread. Terminating with shutdown." << std::endl;
+            instance->logger->warning("[Supervisor] SIGINT received in main thread. Terminating with shutdown", instance->globalname);
             instance->command_shutdown();
         } 
         else {
-            std::cerr << "\nReceived signal " << signum << "in main thread. Terminating." << std::endl;
-            instance->logger->warning("Received signal " + std::to_string(signum) + "in main thread. Terminating", instance->globalname);
+            std::cout << "\n[Supervisor] Received signal " << signum << "in main thread. Terminating." << std::endl;
+            instance->logger->warning("[Supervisor] Received signal " + std::to_string(signum) + "in main thread. Terminating", instance->globalname);
             instance->command_shutdown();
         }
     }
 }
 
-///////////////////////////////////////////////////////////////////
 // Listen for result data
 void Supervisor::listen_for_result() {
     try {
@@ -406,20 +392,19 @@ void Supervisor::listen_for_result() {
             int indexmanager = 0;
 
             for (auto& manager : manager_workers) {
-                int attempt = 0;  // Contatore per i tentativi
+                int attempt = 0;  
 
                 while (manager == nullptr && attempt < 10) {
-                    std::this_thread::sleep_for(std::chrono::seconds(1));  // Sleep for 1 second
+                    std::this_thread::sleep_for(std::chrono::seconds(1));  // Sleep for 1 second to avoid 100% CPU 
                     attempt++;
                 }
 
                 if (manager == nullptr) {
                     logger->error(fmt::format("Manager worker not initialized after maximum attempts, skipping index {}", indexmanager));
-                    continue;  // Salta l'invio dei risultati se `manager` è ancora nullo
+                    continue;  // Skip sending results if manager is still null 
                 }
 
                 try {
-                    // std::cout << "SEND RESULT\n" << std::endl;
                     send_result(manager, indexmanager);
                 }
                 catch (const std::exception& e) {
@@ -442,11 +427,10 @@ void Supervisor::listen_for_result() {
         continueall = false;
     }
 
-    std::cout << "End listen_for_result\n" << std::endl;
-    logger->info("End listen_for_result", globalname);
+    std::cout << "[Supervisor] End listen_for_result" << std::endl;
+    logger->info("[Supervisor] End listen_for_result", globalname);
 }
 
-//////////////////////////////////////////////////
 // Send result data
 void Supervisor::send_result(WorkerManager *manager, int indexmanager) {
     if (manager->getResultLpQueue()->empty() && manager->getResultHpQueue()->empty()) {
@@ -534,7 +518,6 @@ void Supervisor::send_result(WorkerManager *manager, int indexmanager) {
     }
 }
 
-///////////////////////////////////////////////////////////////////
 // Listen for low priority data
 void Supervisor::listen_for_lp_data() {
     while (continueall) {
@@ -550,7 +533,6 @@ void Supervisor::listen_for_lp_data() {
     std::cout << "[Supervisor] End listen_for_lp_data" << std::endl;
     logger->info("[Supervisor] End listen_for_lp_data", globalname);
 }
-///////////////////////////////////////////////////////////////////
 
 // Listen for high priority binary data
 void Supervisor::listen_for_hp_data() {
@@ -563,8 +545,8 @@ void Supervisor::listen_for_hp_data() {
         }
     }
 
-    std::cout << "End listen_for_hp_data" << std::endl;
-    logger->info("End listen_for_hp_data", globalname);
+    std::cout << "[Supervisor] End listen_for_hp_data" << std::endl;
+    logger->info("[Supervisor] End listen_for_hp_data", globalname);
 }
 
 // Listen for low priority strings
@@ -584,7 +566,7 @@ void Supervisor::listen_for_lp_string() {
         }
     }
 
-    std::cout << "End listen_for_lp_string\n" << std::endl;
+    std::cout << "End listen_for_lp_string" << std::endl;
     logger->info("End listen_for_lp_string", globalname);
 }
 
@@ -605,7 +587,7 @@ void Supervisor::listen_for_hp_string() {
         }
     }
 
-    std::cout << "End listen_for_hp_string\n" << std::endl;
+    std::cout << "End listen_for_hp_string" << std::endl;
     logger->info("End listen_for_hp_string", globalname);
 }
 
@@ -628,7 +610,7 @@ void Supervisor::listen_for_lp_file() {
         }
     }
 
-    std::cout << "End listen_for_lp_file\n" << std::endl;
+    std::cout << "End listen_for_lp_file" << std::endl;
     logger->info("End listen_for_lp_file", globalname);
 }
 
@@ -681,13 +663,12 @@ void Supervisor::listen_for_hp_file() {
         }
     }
 
-    std::cout << "End listen_for_hp_file\n" << std::endl;
+    std::cout << "End listen_for_hp_file" << std::endl;
     logger->info("End listen_for_hp_file", globalname);
 }
 
-///////////////////////////////////
 void Supervisor::listen_for_commands() {
-    std::cout << "Waiting for commands..." << std::endl;
+    std::cout << "[Supervisor] Waiting for commands..." << std::endl;
 
     if (!socket_command) {
         logger->error("Socket is null or invalid in listen_for_commands");
@@ -695,8 +676,6 @@ void Supervisor::listen_for_commands() {
     }
 
     while (continueall) {
-        logger->info("Waiting for commands...", globalname);
-
         zmq::recv_flags flags = zmq::recv_flags::none;
         zmq::message_t command_msg;
         int err_code = zmq_errno();
@@ -708,7 +687,7 @@ void Supervisor::listen_for_commands() {
                 if (err_code == EAGAIN) {   // Continue if no commands were received
                     continue;
                 }
-                else if (err_code == EINTR) {   // Si può rimuovere
+                else if (err_code == EINTR) {   
                     break;
                 }
                 else {
@@ -719,7 +698,7 @@ void Supervisor::listen_for_commands() {
                 continue; // Keep looking for commands
             }
             else {
-                if (err_code == EINTR) {    // Si può rimuovere
+                if (err_code == EINTR) {    
                     break;
                 }
 
@@ -747,10 +726,9 @@ void Supervisor::listen_for_commands() {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
     }
 
-    std::cout << "End listen_for_commands" << std::endl;
-    logger->info("End listen_for_commands", globalname);
+    std::cout << "[Supervisor] End listen_for_commands" << std::endl;
+    logger->info("[Supervisor] End listen_for_commands", globalname);
 }
-///////////////////////////////////
 
 // Shutdown command
 void Supervisor::command_shutdown() {
@@ -822,11 +800,12 @@ void Supervisor::command_reset() {
 
 // Start command
 void Supervisor::command_start() {
+    // We send a start signal to the listening producer (gfse.py) in order for it to start sending data
     {
-        std::string command = "START"; // or "STOP"
+        std::string command = "START"; 
         zmq::message_t msg(command.data(), command.size());
         ctrl_socket->send(msg, zmq::send_flags::none);
-        std::cout << "INFO: Sent control command: " << command << std::endl;
+        logger->info("[Supervisor] Sent control command: ", command);
     }
 
     command_startprocessing();
@@ -886,7 +865,7 @@ void Supervisor::process_command(const json &command) {
 
     if (type_value == 0) { // command
         if (pidtarget == name || pidtarget == "all" || pidtarget == "*") {
-            std::cout << "\nReceived command: " << command << std::endl;
+            std::cout << "\n[Supervisor] Received command: " << command << std::endl;
             if (subtype_value == "shutdown") {
                 command_shutdown();
             } else if (subtype_value == "cleanedshutdown") {
@@ -963,19 +942,19 @@ void Supervisor::send_info(int level, const std::string &message, const std::str
     socket_monitoring->send(zmq::buffer(msg.dump()));
 }
 
-//////////////////////////////////////////////////
 // Stop all threads and processes
 void Supervisor::stop_all(bool fast) {
     continueall = false;
 
-    std::cout << "Stopping all workers and managers..." << std::endl;
-    logger->info("Stopping all workers and managers...", globalname);
+    std::cout << "[Supervisor] Stopping all workers and managers..." << std::endl;
+    logger->info("[Supervisor] Stopping all workers and managers...", globalname);
 
+    // We send a stop signal to the listening producer (gfse.py) in order for it to stop sending data
     {
         std::string command = "STOP"; // or "STOP"
         zmq::message_t msg(command.data(), command.size());
         ctrl_socket->send(msg, zmq::send_flags::none);
-        std::cout << "INFO: Sent control command: " << command << std::endl;
+        logger->info("[Supervisor] Sent control command: ", command);
     }
 
     command_stop();
@@ -987,7 +966,6 @@ void Supervisor::stop_all(bool fast) {
 
     // continueall = false;
 
-    std::cout << "All Supervisor workers and managers and internal threads terminated." << std::endl;
-    logger->info("All Supervisor workers and managers and internal threads terminated.", globalname);
+    std::cout << "[Supervisor] All Supervisor workers and managers and internal threads terminated." << std::endl;
+    logger->info("[Supervisor] All Supervisor workers and managers and internal threads terminated.", globalname);
 }
-//////////////////////////////////////////////////
