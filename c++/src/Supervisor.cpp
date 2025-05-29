@@ -49,15 +49,8 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         logger->info("dataflowtype:", dataflowtype);
         datasockettype = config["datasocket_type"].get<std::string>();
 
-<<<<<<< HEAD
         logger->info("Supervisor: " + globalname + " / " + dataflowtype + " / " 
                        + processingtype + " / " + datasockettype, globalname);
-=======
-        std::cout << "Supervisor: " << globalname << " / " << dataflowtype << " / "
-            << processingtype << " / " << datasockettype << std::endl;
-        logger->info("Supervisor: " + globalname + " / " + dataflowtype + " / "
-            + processingtype + " / " + datasockettype, globalname);
->>>>>>> c61c2030fa011054cb0c531c20f077e126b548ae
 
         // Set up data sockets based on configuration
         if (datasockettype == "pushpull") {
@@ -971,7 +964,7 @@ void Supervisor::stop_all(bool fast) {
 
     // We send a stop signal to the listening producer (gfse.py) in order for it to stop sending data
     {
-        std::string command = "STOP"; // or "STOP"
+        std::string command = "STOP"; 
         zmq::message_t msg(command.data(), command.size());
         ctrl_socket->send(msg, zmq::send_flags::none);
         logger->info("[Supervisor] Sent control command: ", command);
