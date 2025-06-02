@@ -1,67 +1,76 @@
-# gammaflash-env
-gammaflash-env
+# gammasky-env
+gammasky-env
 
-## Install and run the environment
+# RTADP-C++ Environment Setup and Execution Guide
 
-1. Install python3 (current supported version 3.8.8)
+## Setup Docker
 
-2. Create the environment
+### Option 1: Use the prebuilt docker image
+```bash
+# Login to the registry
+docker login git.ia2.inaf.it:5050
 
+# Pull the image
+docker pull git.ia2.inaf.it:5050/gammasky/gammasky-cimone/git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor:1.0.1
+
+# Run the container
+docker run -dt --platform linux/amd64 \
+    -v "$(pwd)/..:/home/worker/workspace" \
+    -v "$(pwd)/../shared_dir:/shared_dir" \
+    -v "$(pwd)/./data01:/data01" \
+    -v "$(pwd)/../data02:/data02" \
+    --name rtadataprocessor \
+    git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor:1.0.1
+
+# Enter the container
+docker exec -it -u0 rtadataprocessor bash
 ```
-python3 -m venv /path/to/new/virtual/environment
+
+### Option 2: Build it yourself
+```bash
+# Navigate to the C++ directory
+cd rta-dataprocessor/c++
+
+# Build the Docker image
+docker build -t rta-dataprocessor:1.0.1 -f ../env/Dockerfile.ubuntu ..
+
+# Run the container
+docker run -dt --platform linux/amd64 \
+    -v "$(pwd)/..:/home/worker/workspace" \
+    -v "$(pwd)/../shared_dir:/shared_dir" \
+    -v "$(pwd)/./data01:/data01" \
+    -v "$(pwd)/../data02:/data02" \
+    --name rtadataprocessor \
+    rta-dataprocessor:1.0.1
+
+# Enter the container
+docker exec -it -u0 rtadataprocessor bash
 ```
 
-3. Install requirements
+## Build and Compile Project
+Once inside the container, follow these steps to build the project:
+```bash
+# Navigate to the C++ directory
+cd rta-dataprocessor/c++
 
+# Clean and create build directory
+rm -rf build
+mkdir build && cd build
+
+# Configure with CMake
+cmake -DENABLE_LOGGING=OFF ..
+
+# Build the project
+make -j4
 ```
-pip install -r venv/requirements.txt
+
+## Run Pipeline Test
+To run the integration test:
+```bash
+# Navigate to the test directory
+cd rta-dataprocessor/test
+
+# Run the integration test
+python3 test_integration.py
 ```
-
-4. Run the activate script
-
-```
-source /path/to/new/virtual/environment/bin/activate
-```
-
-=============
-Docker image
-
-docker system prune
-
------
-
-On MAC platform
-docker build --platform linux/amd64 -t worker:1.0.0 -f ./Dockerfile.amd .
-docker build --platform linux/arm64 -t worker:1.0.0 -f ./Dockerfile.arm .
-
-
-On Linux platform
-docker build -t worker:1.0.0 -f ./Dockerfile.amd .
-
------
-
-docker build -t worker:1.0.0 .
-
-./bootstrap.sh worker:1.0.0 agileobs
-
-docker run -it -d -v /home/agileobs/worker/workspace:/home/worker/workspace -v /data02/:/data02/  -p 8001:8001 --name rtadp1 worker:1.0.0_agileobs /bin/bash
-
-docker exec -it rtadp1 /bin/bash
-cd
-. entrypoint.sh
-
-nohup jupyter-lab --ip="*" --port 8001 --no-browser --autoreload --NotebookApp.token='worker2024#'  --notebook-dir=/home/worker/workspace --allow-root > jupyterlab_start.log 2>&1 &
-
-SETUP ENV DEV
-------------
-
-docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name rtadp1 worker:1.0.0 /bin/bash
-
-docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name rtadp2 worker:1.0.0 /bin/bash
-
-docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name rtadp3 worker:1.0.0 /bin/bash
-
-docker exec -it rtadp1 bash
-docker exec -it rtadp2 bash
-docker exec -it rtadp3 bash
 

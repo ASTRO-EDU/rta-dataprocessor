@@ -91,7 +91,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         socket_hp_result.resize(100, nullptr);
 
         ctrl_socket = new zmq::socket_t(context, ZMQ_PUSH);
-        std::string ctrl_address = "tcp://192.168.166.127:1235";  // Bind on port 1235
+        std::string ctrl_address = "tcp://127.0.0.1:1235";  // Bind on port 1235
         ctrl_socket->connect(ctrl_address);
     }
     catch (const std::exception& e) {
@@ -746,22 +746,22 @@ void Supervisor::command_cleanedshutdown() {
         command_stopdata();
 
         for (auto& manager : manager_workers) {
-            std::cout << "Trying to stop " << manager->get_globalname() << "..." << std::endl;
-            logger->info("Trying to stop " + manager->get_globalname() + "...", globalname);
+            std::cout << "[Supervisor] Trying to stop " << manager->get_globalname() << "..." << std::endl;
+            logger->info("[Supervisor] Trying to stop " + manager->get_globalname() + "...", globalname);
 
             while (manager->getLowPriorityQueue()->size() != 0 || manager->getHighPriorityQueue()->size() != 0) {
-                std::cout << "Queues data of manager " << manager->get_globalname() << " have size "
+                std::cout << "[Supervisor] Queues data of manager " << manager->get_globalname() << " have size "
                     << manager->getLowPriorityQueue()->size() << " " << manager->getHighPriorityQueue()->size() << std::endl;
-                logger->info("Queues data of manager " + manager->get_globalname() + " have size "
+                logger->info("[Supervisor] Queues data of manager " + manager->get_globalname() + " have size "
                     + std::to_string(manager->getLowPriorityQueue()->size()) + " "
                     + std::to_string(manager->getHighPriorityQueue()->size()), globalname);
                 std::this_thread::sleep_for(std::chrono::milliseconds(200));
             }
 
             while (manager->getResultLpQueue()->size() != 0 || manager->getResultHpQueue()->size() != 0) {
-                std::cout << "Queues result of manager " << manager->get_globalname() << " have size "
+                std::cout << "[Supervisor] Queues result of manager " << manager->get_globalname() << " have size "
                     << manager->getResultLpQueue()->size() << " " << manager->getResultHpQueue()->size() << std::endl;
-                logger->info("Queues result of manager " + manager->get_globalname() + " have size "
+                logger->info("[Supervisor] Queues result of manager " + manager->get_globalname() + " have size "
                     + std::to_string(manager->getResultLpQueue()->size()) + " "
                     + std::to_string(manager->getResultHpQueue()->size()), globalname);
                 std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -769,8 +769,8 @@ void Supervisor::command_cleanedshutdown() {
         }
     }
     else {
-        std::cerr << "WARNING! Not in Processing state for a clean shutdown. Force the shutdown." << std::endl;
-        logger->warning("WARNING! Not in Processing state for a clean shutdown. Force the shutdown.", globalname);
+        std::cerr << "[Supervisor] WARNING! Not in Processing state for a clean shutdown. Force the shutdown." << std::endl;
+        logger->warning("[Supervisor] WARNING! Not in Processing state for a clean shutdown. Force the shutdown.", globalname);
     }
 
     status = "Shutdown";

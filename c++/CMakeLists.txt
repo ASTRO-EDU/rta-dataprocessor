@@ -1,10 +1,40 @@
-# ------ Optimization flags for Jetson Nano inference ------
-set(OPT_FLAGS
-  -O2
-  -mcpu=cortex-a78
-  -ftree-vectorize
-  -funsafe-math-optimizations
-)
+# ------ Optimization flags ------
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+    # Jetson (ARM) Configuration
+    message(STATUS "Configuring for Jetson (ARM) platform")
+    set(OPT_FLAGS
+        -O2
+        -mcpu=cortex-a78
+        -ftree-vectorize
+        -funsafe-math-optimizations
+    )
+    # Jetson-specific TFLite paths
+    set(TFLITE_C_BUILD_DIR "$ENV{HOME}/tflite_build" CACHE PATH "Path to TFLite C API build directory")
+    set(TFLITE_INCLUDE_DIRS
+        "$ENV{HOME}/tflite_build/include"
+        "$ENV{HOME}/tensorflow_src"
+    )
+else()
+    # x86_64 (Docker) Configuration
+    message(STATUS "Configuring for x86_64 platform")
+    set(OPT_FLAGS
+        -O2
+        -march=x86-64
+        -mtune=generic
+        -ftree-vectorize
+        -funsafe-math-optimizations
+    )
+    # Docker-specific TFLite paths
+    set(TFLITE_C_BUILD_DIR "/usr/local" CACHE PATH "Path to TFLite C API installation directory")
+    set(TFLITE_INCLUDE_DIRS
+        "/usr/local/include"
+        "/usr/local/include/tensorflow/lite"
+        "/usr/local/include/tensorflow/lite/c"
+        "/tmp/tensorflow"
+        "/tmp/tensorflow/tensorflow/lite/c"
+        "/tmp/tensorflow/tensorflow/lite/core/c"
+    )
+endif()
 add_compile_options(${OPT_FLAGS})
 
 cmake_minimum_required(VERSION 3.10)

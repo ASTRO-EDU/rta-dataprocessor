@@ -3,8 +3,14 @@ FROM --platform=linux/amd64 ubuntu:22.04
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies with GCC 11
-RUN apt-get update && apt-get install -y \
+# Configure apt to retry downloads and use alternative mirrors
+RUN echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries && \
+    echo "deb mirror://mirrors.ubuntu.com/mirrors.txt jammy main restricted universe multiverse" > /etc/apt/sources.list && \
+    echo "deb mirror://mirrors.ubuntu.com/mirrors.txt jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list
+
+# Update and upgrade system packages, then install dependencies
+RUN apt-get update && \
+    apt-get install -y \
     build-essential \
     gcc-11 \
     g++-11 \
@@ -21,6 +27,8 @@ RUN apt-get update && apt-get install -y \
     libavro-dev \
     libjsoncpp-dev \
     libhdf5-dev \
+    libhdf5-hl-cpp-100 \
+    libtinyxml2-dev \
     libssl-dev \
     liblzma-dev \
     wget \
@@ -30,6 +38,7 @@ RUN apt-get update && apt-get install -y \
     chrony \
     pkg-config \
     ninja-build \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Set GCC 11 as default
@@ -73,22 +82,48 @@ RUN cd /tmp && \
     make install && \ 
     cd /tmp && rm -rf spdlog
 
+# Build and install TFLite
+RUN cd /tmp && \
+    git clone https://github.com/tensorflow/tensorflow.git && \
+    cd tensorflow && \
+    git checkout v2.19.0 && \
+    mkdir tflite_build && \
+    cd tflite_build && \
+    cmake ../tensorflow/lite/c && \
+    cmake --build . -j$(nproc) && \
+    # Install the built library and headers to system directories
+    cp libtensorflowlite_c.so /usr/local/lib/ && \
+    # Create all necessary directories for headers
+    mkdir -p /usr/local/include/tensorflow/lite/c && \
+    mkdir -p /usr/local/include/tensorflow/lite/core/c && \
+    # Copy all necessary header files
+    cp -r ../tensorflow/lite/c/*.h /usr/local/include/tensorflow/lite/c/ && \
+    cp -r ../tensorflow/lite/core/c/*.h /usr/local/include/tensorflow/lite/core/c/ && \
+    # Also copy the entire tensorflow directory for complete header structure
+    cp -r ../tensorflow /usr/local/include/ && \
+    ldconfig && \
+    # Create a symlink in /root/tflite_build for compatibility
+    mkdir -p /root/tflite_build && \
+    ln -s /usr/local/lib/libtensorflowlite_c.so /root/tflite_build/libtensorflowlite_c.so
+
 # Create worker user and workspace
 RUN useradd -m -s /bin/bash worker
-USER worker
 WORKDIR /home/worker
 RUN mkdir -p /home/worker/workspace /home/worker/dependencies
 
-# Remove Miniconda setup (we don't use it anymore)
+# Copy Python requirements
+COPY env/venv/requirements.txt /tmp/requirements.txt
+
+# Fix permissions and install Python dependencies for worker
+RUN chown -R worker:worker /tmp/requirements.txt && \
+    pip3 install --user --no-cache-dir -r /tmp/requirements.txt && \
+    rm -f /tmp/requirements.txt
+
+# Switch to worker user
+USER worker
 
 # Mount point for workspace
 VOLUME /home/worker/workspace
-
-# Copy Python requirements
-COPY env/venv/requirements.amd.txt /tmp/requirements.txt
-
-# Install Python dependencies
-RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 
 # Default command to keep container running
 CMD ["bash"]
