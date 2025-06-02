@@ -64,6 +64,17 @@ cmake -DENABLE_LOGGING=OFF ..
 make -j4
 ```
 
+## Set Up Model Environment
+Before running the tests, set up the environment variable for the inference model:
+```bash
+# Set the model path environment variable
+echo 'export RTADP_MODEL_PATH="/path/to/model/float_16.tflite"' >> ~/.bashrc
+
+# Reload the bash configuration
+source ~/.bashrc
+```
+Note: Make sure the model file is uploaded to the specified path before running the tests.
+
 ## Run Pipeline Test
 To run the integration test:
 ```bash
@@ -73,4 +84,3 @@ cd rta-dataprocessor/test
 # Run the integration test
 python3 test_integration.py
 ```
-
