@@ -84,3 +84,7 @@ cd rta-dataprocessor/test
 # Run the integration test
 python3 test_integration.py
 ```
+
+## Run the Components Separately
+To run the 4 components individually follow the guide: https://github.com/ASTRO-EDU/rta-dataprocessor/tree/rta-dp-c%2B%2B/c%2B%2B#running-the-components
+
