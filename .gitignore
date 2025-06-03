@@ -4,7 +4,6 @@ build/*
 *.inl
 *.log
 core.*
-*.tflite
 rtadp-proto/ACS/lib/
 rtadp-proto/ACS/object/
 

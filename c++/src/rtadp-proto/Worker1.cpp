@@ -246,7 +246,7 @@ int Worker1::getMemoryUsage() {
 // Helper functions for path resolution
 std::string Worker1::getModelPath() {
     const char* env_path = std::getenv("RTADP_MODEL_PATH");     // Read the .bashrc (or temp) defined env var
-    return env_path ? std::string(env_path) : "../../../float_16.tflite";   // Default to a standard path if env var is not set
+    return env_path ? std::string(env_path) : "../../test/ml_models/float_16.tflite";   // Default to a standard path if env var is not set
 }
 
 std::string Worker1::getOutputPath() {

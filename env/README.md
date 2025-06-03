@@ -73,7 +73,7 @@ echo 'export RTADP_MODEL_PATH="/path/to/model/float_16.tflite"' >> ~/.bashrc
 # Reload the bash configuration
 source ~/.bashrc
 ```
-Note: Make sure the model file is uploaded to the specified path before running the tests.
+Note: By default the float 16 quantized model (float_16.tflite) can be found under rta-dataprocessor/test/ml_models
 
 ## Run Pipeline Test
 To run the integration test:
