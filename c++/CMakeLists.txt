@@ -1,5 +1,27 @@
-# ------ Optimization flags ------
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+# ------ Optimization flags for Jetson Nano inference ------
+set(OPT_FLAGS
+  -O2
+  -mcpu=cortex-a78
+  -ftree-vectorize
+  -funsafe-math-optimizations
+)
+# Add these flags globally
+add_compile_options(${OPT_FLAGS})
+
+cmake_minimum_required(VERSION 3.10)
+project(DataProcessor C CXX)
+
+# Debug output for platform detection
+execute_process(
+    COMMAND uname -m
+    OUTPUT_VARIABLE HOST_SYSTEM_PROCESSOR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+message(STATUS "Host system processor: ${HOST_SYSTEM_PROCESSOR}")
+message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+
+# Platform detection
+if(HOST_SYSTEM_PROCESSOR MATCHES "aarch64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
     # Jetson (ARM) Configuration
     message(STATUS "Configuring for Jetson (ARM) platform")
     set(OPT_FLAGS
@@ -63,20 +85,20 @@ message(STATUS "tinyxml2 libraries: ${TINYXML2_LIBRARIES}")
 # ----------------------------
 # TensorFlow Lite C API Setup
 # ----------------------------
-set(TFLITE_C_BUILD_DIR "$ENV{HOME}/tflite_build" CACHE PATH "Path to your TFLite C API build directory")
 find_library(TFLITE_C_LIB
     NAMES tensorflowlite_c
-    PATHS "${TFLITE_C_BUILD_DIR}/lib" "${TFLITE_C_BUILD_DIR}"
+    PATHS 
+        "${TFLITE_C_BUILD_DIR}/lib"
+        "${TFLITE_C_BUILD_DIR}"
+        "$ENV{HOME}/tflite_build/lib"
     NO_DEFAULT_PATH
 )
+
 if(NOT TFLITE_C_LIB)
-    message(FATAL_ERROR "Could not find libtensorflowlite_c.so in ${TFLITE_C_BUILD_DIR}")
+    message(FATAL_ERROR "Could not find libtensorflowlite_c.so in search paths: ${TFLITE_C_BUILD_DIR}/lib, ${TFLITE_C_BUILD_DIR}, $ENV{HOME}/tflite_build/lib")
 endif()
 
-include_directories(
-    "${TFLITE_C_BUILD_DIR}/include"
-    "$ENV{HOME}/tensorflow_src"
-)
+include_directories(${TFLITE_INCLUDE_DIRS})
 
 option(ENABLE_LOGGING "Enable logging" OFF)
 
