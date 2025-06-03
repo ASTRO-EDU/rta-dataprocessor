@@ -11,7 +11,7 @@ gammasky-env
 docker login git.ia2.inaf.it:5050
 
 # Pull the image
-docker pull git.ia2.inaf.it:5050/gammasky/gammasky-cimone/git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor:1.0.1
+docker pull git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor:1.0.1
 
 # Run the container
 docker run -dt --platform linux/amd64 \
