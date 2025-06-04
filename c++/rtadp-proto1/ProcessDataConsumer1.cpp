@@ -10,6 +10,7 @@ void main_function(const std::string& json_file_path, const std::string& consume
         // Create an instance of Supervisor1
         // Supervisor1 supervisor_instance(json_file_path, consumername);
         // std::unique_ptr<Supervisor> supervisor_instance = std::make_unique<Supervisor1>(json_file_path, consumername);
+
         Supervisor* supervisor_instance = new Supervisor1(json_file_path, consumername);
 
         // Start the supervisor

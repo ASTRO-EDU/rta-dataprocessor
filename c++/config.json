@@ -10,54 +10,54 @@
         "processname": "CommandCenter",
         "command_socket": "tcp://127.0.0.1:5568"      
     },
-  {
-    "processname": "RTADP1",
-    "dataflow_type": "binary",
-    "processing_type": "thread",
-    "datasocket_type": "pubsub",
-    "data_lp_socket": "tcp://127.0.0.1:1234",
-    "data_hp_socket": "tcp://127.0.0.1:5565",
-    "command_socket": "tcp://127.0.0.1:5568",
-    "monitoring_socket": "tcp://127.0.0.1:5561",
-    "manager": [
-        {
-            "result_socket_type": "pushpull",
-            "result_dataflow_type": "binary",
-            "result_lp_socket": "tcp://192.168.166.127:5566",
-            "result_hp_socket": "tcp://127.0.0.1:5567",
-            "num_workers": 5,
-            "name": "Rate",
-            "name_workers": "worker"
-        }
-    ],
-    "logs_path": "/tmp/",
-    "logging": "file",
-    "logs_level": 5,
-    "comment": "datasockettype=pushpull|pubsub|custom dataflowtype=binary|filename|string processingtype=process|thread logging=file|console|both|none"
-  },
     {
-        "processname": "RTADP2",
+        "processname": "RTADP1",
         "dataflow_type": "binary",
         "processing_type": "thread",
-        "datasocket_type": "pushpull",
-        "data_lp_socket": "tcp://tcp://192.168.166.127:5566",
-        "data_hp_socket": "tcp://127.0.0.1:5567",
+        "datasocket_type": "pubsub",
+        "data_lp_socket": "tcp://127.0.0.1:1234",
+        "data_hp_socket": "tcp://127.0.0.1:5565",
         "command_socket": "tcp://127.0.0.1:5568",
         "monitoring_socket": "tcp://127.0.0.1:5561",
         "manager": [
             {
-                "result_socket_type": "none",
-                "result_dataflow_type": "none",
-                "result_lp_socket": "none",
-                "result_hp_socket": "none",
+                "result_socket_type": "pushpull",
+                "result_dataflow_type": "binary",
+                "result_lp_socket": "tcp://127.0.0.1:5566",
+                "result_hp_socket": "tcp://127.0.0.1:5567",
+                "num_workers": 5,
+                "name": "Rate",
+                "name_workers": "worker"
+            }
+        ],
+        "logs_path": "/tmp/",
+        "logging": "file",
+        "logs_level": 5,
+        "comment": "datasockettype=pushpull|pubsub|custom dataflowtype=binary|filename|string processingtype=process|thread logging=file|console|both|none"
+    },
+    {
+        "processname": "RTADP2",
+        "dataflow_type": "binary",
+        "processing_type": "thread",
+        "datasocket_type": "pubsub",
+        "data_lp_socket": "tcp://127.0.0.1:1234",
+        "data_hp_socket": "tcp://127.0.0.1:5565",
+        "command_socket": "tcp://127.0.0.1:5568",
+        "monitoring_socket": "tcp://127.0.0.1:5561",
+        "manager": [
+            {
+                "result_socket_type": "pushpull",
+                "result_dataflow_type": "binary",
+                "result_lp_socket": "tcp://127.0.0.1:5566",
+                "result_hp_socket": "tcp://127.0.0.1:5567",
                 "num_workers": 2,
                 "name": "Rate",
                 "name_workers": "worker"
             }
         ],
         "logs_path": "/tmp/",
-        "logging": "both",
+        "logging": "file",
         "logs_level": 5,
-        "comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
+        "comment": "datasockettype=pushpull|pubsub|custom dataflowtype=binary|filename|string processingtype=process|thread logging=file|console|both|none"
     }
 ]

@@ -96,8 +96,8 @@ Supervisor::Supervisor(std::string config_file, std::string name)
     }
     catch (const std::exception& e) {
         // Handle any other unexpected exceptions
-        std::cerr << "ERROR: An unexpected error occurred: " << e.what() << std::endl;
-        logger->warning("ERROR: An unexpected error occurred: " + std::string(e.what()), globalname);
+        std::cerr << "[Supervisor] ERROR: An unexpected error occurred: " << e.what() << std::endl;
+        logger->warning("[Supervisor] ERROR: An unexpected error occurred: " + std::string(e.what()), globalname);
         exit(1);
     }
 

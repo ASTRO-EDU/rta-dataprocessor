@@ -1,31 +1,30 @@
-#include "Supervisor1.h"
-
+#include "Supervisor2.h"
 #include "ccsds/include/packet.h"
 #include "../include/utils2.hh"
 
 // Constructor
-Supervisor1::Supervisor1(const std::string& config_file, const std::string& name)
+Supervisor2::Supervisor2(const std::string& config_file, const std::string& name)
     : Supervisor(config_file, name) {
 }
 
 // Destructor
-Supervisor1::~Supervisor1() {
-    for (WorkerManager* m : manager_workers)
+Supervisor2::~Supervisor2() {
+    for (WorkerManager* m: manager_workers)
         delete m;
 }
 
 // Override the start_managers method
-void Supervisor1::start_managers() {
+void Supervisor2::start_managers() {
     int indexmanager = 0;
-    WorkerManager* manager1 = new WorkerManager1(indexmanager, this, workername);
-    setup_result_channel(manager1, indexmanager);
-    manager1->run();
-    manager_workers.push_back(manager1);
-    logger->info("[Supervisor1] DER SUP1 manager started");
+    WorkerManager* manager2 = new WorkerManager2(indexmanager, this, workername);
+    setup_result_channel(manager2, indexmanager);
+    manager2->run();
+    manager_workers.push_back(manager2);
+    logger->info("[Supervisor2] DER SUP2 manager started");
 }
 
 // Override listen_for_lp_data to handle DAMS packets
-void Supervisor1::listen_for_lp_data() {
+void Supervisor2::listen_for_lp_data() {
     while (continueall) {
         if (!stopdata) {
             zmq::message_t data;
@@ -49,7 +48,7 @@ void Supervisor1::listen_for_lp_data() {
                 }
                 else {
                     if (data.size() < sizeof(int32_t)) {
-                        // std::cerr << "[Supervisor1] ERROR: Packet too small to contain size prefix" << std::endl;
+                        // std::cerr << "[Supervisor2] ERROR: Packet too small to contain size prefix" << std::endl;
                         continue;  // skip to next packet
                     }
 
@@ -59,11 +58,11 @@ void Supervisor1::listen_for_lp_data() {
                     // Verify that the size prefix is positive and matches the actual payload size. The total message should be exactly 4 bytes (prefix) 
                     // + "size" bytes (payload).
                     if (size <= 0 || size != static_cast<int32_t>(data.size() - sizeof(uint32_t))) {
-                        std::cerr << "[Supervisor1] Invalid size value: " << size << std::endl;
+                        std::cerr << "[Supervisor2] Invalid size value: " << size << std::endl;
                         continue;
                     }
 
-                    logger->info(fmt::format("[Supervisor1] Extracted packet size: {}", (int)size));
+                    std::cout << "Extracted packet size: " << std::dec << (int)size << " (0x" << std::hex << (int)size << ")" << std::endl;
 
                     // std::cout << "Received Raw Packet: ";
                     const uint8_t* raw_packet = static_cast<const uint8_t*>(data.data());
@@ -77,40 +76,22 @@ void Supervisor1::listen_for_lp_data() {
                     // std::cout << "TYPE: " << std::hex << static_cast<int>(packet_type) << ", SUBTYPE: " << static_cast<int>(subtype) << std::dec << std::endl;
 
                     if (packet_type == Data_WaveHeader::TYPE) {  // WF Packet
-                        // std::cout << "[Supervisor1] Waveform packet received. Pushing into the queue" << std::endl;
+                        // std::cout << "[Supervisor2] Waveform packet received. Pushing into the queue" << std::endl;
 
-                        // const WfPacketDams* packet_wf = reinterpret_cast<const WfPacketDams*>(raw_packet + sizeof(uint32_t));
+                        // Extract the WfPacketDams struct from the raw bytesAdd commentMore actions
+                        const WfPacketDams* packet_wf = reinterpret_cast<const WfPacketDams*>(raw_packet + sizeof(uint32_t));
 
-                        const uint8_t* rp = raw_packet;
-
-                        // Cast to header+waveheader only 
-                        const HeaderDams* h_ptr = reinterpret_cast<const HeaderDams*>(rp + 4);  // The generic header starts after the first 4 bytes (which contain the size)
-                        const Data_WaveHeader* w_ptr = reinterpret_cast<const Data_WaveHeader*>(rp + 4 + sizeof(HeaderDams));   // Then follows Data_WaveHeader
-
-                        // At the moment the true area size is stored inside the usec field of Data_WaveHeader for simplicity in order to be compared to the predicted one
-                        // std::cout << "\n[Supervisor1] REAL AREA: " << w_ptr->us << std::endl;
-
-                        // Manually build the WfPacketDams (the full waveform packet)
-                        WfPacketDams full_packet;
-                        full_packet.body.h = *h_ptr;
-                        full_packet.body.w = *w_ptr;
-                        full_packet.body.d.type = Data_WaveData::TYPE;
-                        full_packet.body.d.subType = Data_WaveData::SUB_TYPE;
-                        // The waveform buffer (actual waveform values that will be handled in Worker1)
-                        std::memcpy(full_packet.body.d.buff, rp + 4 + sizeof(HeaderDams) + sizeof(Data_WaveHeader), U32_X_PACKET * sizeof(uint32_t));
-
-                        // Push into the queue the serialized packet
                         for (auto& manager : manager_workers) {
-                            manager->getLowPriorityQueue()->push(serializePacket(full_packet));
+                            manager->getLowPriorityQueue()->push(serializePacket(*packet_wf));
                         }
 
                         // std::cout << "Finished pushing into the queue" << std::endl;
                     }
                     else if (packet_type == Data_HkDams::TYPE) {  // HK Packet
-                        std::cout << "[Supervisor1] Housekeeping packet received" << std::endl;
+                        std::cout << "[Supervisor2] Housekeeping packet received" << std::endl;
                     }
                     else {
-                        std::cout << "[Supervisor1] Unknown packet type: " << packet_type << std::endl;
+                        std::cout << "[Supervisor2] Unknown packet type: " << packet_type << std::endl;
                     }
                 }
             }
@@ -121,8 +102,8 @@ void Supervisor1::listen_for_lp_data() {
                     break;
                 }
                 else {
-                    std::cerr << "[Supervisor1] ZMQ exception in listen_for_lp_data: " << e.what() << std::endl;
-                    logger->error("[Supervisor1] ZMQ exception in listen_for_lp_data: {}", e.what());
+                    std::cerr << "[Supervisor2] ZMQ exception in listen_for_lp_data: " << e.what() << std::endl;
+                    logger->error("[Supervisor2] ZMQ exception in listen_for_lp_data: {}", e.what());
                     throw;
                 }
             }
@@ -133,13 +114,13 @@ void Supervisor1::listen_for_lp_data() {
         }
     }
 
-    std::cout << "[Supervisor1] End listen_for_lp_data" << std::endl;
-    logger->info("[Supervisor1] End listen_for_lp_data", globalname);
+    std::cout << "[Supervisor2] End listen_for_lp_data" << std::endl;
+    logger->info("[Supervisor2] End listen_for_lp_data", globalname);
 }
 
 // For "dataflowtype": "file", open the file before loading it into the queue. 
 // Return an array of data and the size of the array
-std::pair<std::vector<std::string>, int> Supervisor1::open_file(const std::string& filename) {
-    std::vector<std::string> f = { filename };
-    return { f, 1 };
+std::pair<std::vector<std::string>, int> Supervisor2::open_file(const std::string& filename) {
+    std::vector<std::string> f = {filename};
+    return {f, 1};
 }

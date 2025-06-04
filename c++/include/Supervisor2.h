@@ -15,9 +15,14 @@ class Supervisor2 : public Supervisor {
 public:
     // Constructor
     Supervisor2(const std::string& config_file = "config.json", const std::string& name = "RTADP2");
+
     ~Supervisor2();
+    
     // Override the start_managers method
     void start_managers();
+
+    // Override listen_for_lp_data to handle DAMS packets
+    void listen_for_lp_data();
 
     // To be reimplemented ####
     // Open the file before loading it into the queue. For "dataflowtype": "file"

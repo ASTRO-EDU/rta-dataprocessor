@@ -30,7 +30,6 @@ public:
     void config(const nlohmann::json& configuration);
 
     // Override the process_data method
-    //std::string process_data(const std::string& data);
     std::vector<uint8_t> processData(const std::vector<uint8_t>& data, int priority);
 };
 

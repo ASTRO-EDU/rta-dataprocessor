@@ -75,14 +75,23 @@ source ~/.bashrc
 ```
 Note: By default the float 16 quantized model (float_16.tflite) can be found under rta-dataprocessor/test/ml_models
 
-## Run Pipeline Test
-To run the integration test:
+## Run Pipeline Tests
+1. To run the integration test of ProcessDataConsumer1 (inference + DL2 writing):
 ```bash
 # Navigate to the test directory
 cd rta-dataprocessor/test
 
 # Run the integration test
-python3 test_integration.py
+python3 test_integration_rtadp1.py
+```
+
+2. To run the integration test of ProcessDataConsumer2 (basic data processing):
+```bash
+# Navigate to the test directory
+cd rta-dataprocessor/test
+
+# Run the integration test
+python3 test_integration_rtadp2.py
 ```
 
 ## Run the Components Separately

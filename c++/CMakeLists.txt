@@ -135,7 +135,6 @@ link_directories(${AVRO_LIBRARY_DIRS})
 # Directory locali
 set(GS_COMM ${PROJECT_SOURCE_DIR}/gs_examples_communication)
 set(GS_SER ${GS_COMM}/gs_examples_serialization)
-set(RTADPPROTODIR "${CMAKE_SOURCE_DIR}/src/rtadp-proto/")
 
 set(BOOST_ROOT "/usr")
 set(BOOST_LIBRARYDIR "/usr/lib/x86_64-linux-gnu")
@@ -187,21 +186,23 @@ link_directories(
 
 add_subdirectory(${GS_COMM})
 
-set(RTADPPROTODIR "${CMAKE_SOURCE_DIR}/src/rtadp-proto/")
+# Add source directories
+set(RTADP_PROTO1_DIR "${CMAKE_SOURCE_DIR}/rtadp-proto1")
+set(RTADP_PROTO2_DIR "${CMAKE_SOURCE_DIR}/rtadp-proto2")
 file(GLOB SRC_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
 list(APPEND RTADPPROTO1FILES
-    ${RTADPPROTODIR}/ProcessDataConsumer1.cpp
-    ${RTADPPROTODIR}/Supervisor1.cpp
-    ${RTADPPROTODIR}/Worker1.cpp
-    ${RTADPPROTODIR}/WorkerManager1.cpp
+    ${RTADP_PROTO1_DIR}/ProcessDataConsumer1.cpp
+    ${RTADP_PROTO1_DIR}/Supervisor1.cpp
+    ${RTADP_PROTO1_DIR}/Worker1.cpp
+    ${RTADP_PROTO1_DIR}/WorkerManager1.cpp
 )
 
 list(APPEND RTADPPROTO2FILES
-    ${RTADPPROTODIR}/ProcessDataConsumer2.cpp
-    ${RTADPPROTODIR}/Supervisor2.cpp
-    ${RTADPPROTODIR}/Worker2.cpp
-    ${RTADPPROTODIR}/WorkerManager2.cpp
+    ${RTADP_PROTO2_DIR}/ProcessDataConsumer2.cpp
+    ${RTADP_PROTO2_DIR}/Supervisor2.cpp
+    ${RTADP_PROTO2_DIR}/Worker2.cpp
+    ${RTADP_PROTO2_DIR}/WorkerManager2.cpp
 )
 
 add_executable(ProcessDataConsumer1 ${RTADPPROTO1FILES} ${SRC_FILES})
@@ -239,7 +240,6 @@ target_link_libraries(ProcessDataConsumer2 PRIVATE
     pthread
     GSccsds
     ${AVROCPP_LIBRARY}
-    ${TFLITE_C_LIB}
     ${HDF5_LIBRARIES}
     ${HDF5_CXX_LIBRARIES}
     ${TINYXML2_LIBRARIES}

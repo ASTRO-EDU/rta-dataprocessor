@@ -1,9 +1,8 @@
-// main.cpp
-
 #include <iostream>
 #include <string>
 #include <thread>
 #include <exception>
+#include <memory>
 #include "Supervisor2.h"
 
 void main_function(const std::string& json_file_path, const std::string& consumername) {

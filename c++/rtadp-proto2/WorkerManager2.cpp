@@ -6,7 +6,7 @@ WorkerManager2::WorkerManager2(int manager_id, Supervisor* supervisor, const std
 
 // Override to start worker threads
 void WorkerManager2::start_worker_threads(int num_threads) {
-    logger->info("[RTADP2] Number of worker threads: ", std::to_string(num_threads));
+    logger->info("[WorkerManager2] Number of worker threads: ", std::to_string(num_threads));
 
     // Creating worker threads
     for (int i = 0; i < num_threads; ++i) {
@@ -15,18 +15,18 @@ void WorkerManager2::start_worker_threads(int num_threads) {
         const auto name_workers = getSupervisor()->name_workers;
 
         if (manager_id >= name_workers.size()) {
-            logger->error(fmt::format("manager_id {} is out of bounds for name_workers size {}", manager_id, name_workers.size()));
+            logger->error(fmt::format("[WorkerManager2] manager_id {} is out of bounds for name_workers size {}", manager_id, name_workers.size()));
             continue;  // Skip thread creation
         }
 
         // Check worker name
         std::string worker_name = name_workers[manager_id];
         if (worker_name.empty()) {
-            logger->error("Worker name is empty for manager_id {} ", std::to_string(manager_id));
+            logger->error("[WorkerManager2] Worker name is empty for manager_id {} ", std::to_string(manager_id));
             continue;  // Skip thread creation
         }
         else {
-            logger->info("[RTADP2] A WorkerThread has been created for manager_id: ", std::to_string(manager_id));
+            logger->info("[WorkerManager2] A WorkerThread has been created for manager_id: ", std::to_string(manager_id));
         }
 
         auto worker_instance = std::make_shared<WorkerThread>(i, this, worker_name, processor);
