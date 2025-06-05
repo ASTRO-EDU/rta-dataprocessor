@@ -16,19 +16,7 @@ git clone --branch rta-dp-c++ https://github.com/ASTRO-EDU/rta-dataprocessor.git
 docker login git.ia2.inaf.it:5050
 
 # Pull the image
-docker pull git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor:1.0.1
-
-# Run the container
-docker run -dt --platform linux/amd64 \
-    -v "$(pwd)/..:/home/worker/workspace" \
-    -v "$(pwd)/../shared_dir:/shared_dir" \
-    -v "$(pwd)/./data01:/data01" \
-    -v "$(pwd)/../data02:/data02" \
-    --name rtadataprocessor \
-    git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor:1.0.1
-
-# Enter the container
-docker exec -it -u0 rtadataprocessor bash
+docker pull git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor:1.0.2
 ```
 
 ### Option 2: Build it yourself
@@ -38,7 +26,16 @@ cd rta-dataprocessor/c++
 
 # Build the Docker image
 docker build -t rta-dataprocessor:1.0.1 -f ../env/Dockerfile.ubuntu ..
+```
 
+### Run bootstrap
+```bash
+# Bootstrap the iamge to allow the container standard user to write on user host
+./bootstrap.sh rta-dataprocessor:1.0.2 $USER
+```
+
+### Run and enter the container
+```bash
 # Run the container
 docker run -dt --platform linux/amd64 \
     -v "$(pwd)/..:/home/worker/workspace" \
@@ -46,10 +43,10 @@ docker run -dt --platform linux/amd64 \
     -v "$(pwd)/./data01:/data01" \
     -v "$(pwd)/../data02:/data02" \
     --name rtadataprocessor \
-    rta-dataprocessor:1.0.1
+    rta-dataprocessor:1.0.2
 
 # Enter the container
-docker exec -it -u0 rtadataprocessor bash
+docker exec -it rtadataprocessor bash
 ```
 
 ## Build and Compile Project
