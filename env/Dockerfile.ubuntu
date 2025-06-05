@@ -121,7 +121,6 @@ RUN pip3 install --no-cache-dir -r /tmp/requirements.txt && \
 # Switch to worker user
 USER worker
 
-
 # Mount point for workspace
 VOLUME /home/worker/workspace
 
