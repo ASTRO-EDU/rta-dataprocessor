@@ -1,7 +1,7 @@
 #ifndef SUPERVISOR1_H
 #define SUPERVISOR1_H
 
-#include "Supervisor.h"
+#include "SupervisorCtrlServer.h"
 #include "WorkerManager1.h"
 #include <zmq.hpp>
 #include <thread>
@@ -11,12 +11,12 @@
 #include <iostream>
 #include <fstream>
 
-class Supervisor1 : public Supervisor {
+class Supervisor1 : public SupervisorCtrlServer {
 public:
     // Constructor
     Supervisor1(const std::string& config_file = "config.json", const std::string& name = "RTADP1");
 
-    ~Supervisor1();
+    ~Supervisor1() override;
 
     // Override the start_managers method
     void start_managers();

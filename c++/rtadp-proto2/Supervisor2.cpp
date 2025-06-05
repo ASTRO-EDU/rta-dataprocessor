@@ -4,7 +4,7 @@
 
 // Constructor
 Supervisor2::Supervisor2(const std::string& config_file, const std::string& name)
-    : Supervisor(config_file, name) {
+    : SupervisorCtrlServer(config_file, name) {
 }
 
 // Destructor

@@ -10,6 +10,7 @@ void main_function(const std::string& json_file_path, const std::string& consume
         // Create an instance of Supervisor2
         Supervisor* supervisor_instance = new Supervisor2(json_file_path, consumername);
 
+        setup_signal_handlers(supervisor_instance);
         // Start the supervisor
         supervisor_instance->start();
 

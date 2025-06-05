@@ -4,11 +4,12 @@
 
 // Constructor
 Supervisor1::Supervisor1(const std::string& config_file, const std::string& name)
-    : Supervisor(config_file, name) {
+    : SupervisorCtrlServer(config_file, name) {
 }
 
 // Destructor
 Supervisor1::~Supervisor1() {
+    std::cout << "[Supervisor1] Cleaning up Supervisor1 resources..." << std::endl;
     for (WorkerManager* m: manager_workers)
         delete m;
 }
