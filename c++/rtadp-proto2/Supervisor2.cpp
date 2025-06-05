@@ -76,16 +76,12 @@ void Supervisor2::listen_for_lp_data() {
                     // std::cout << "TYPE: " << std::hex << static_cast<int>(packet_type) << ", SUBTYPE: " << static_cast<int>(subtype) << std::dec << std::endl;
 
                     if (packet_type == Data_WaveHeader::TYPE) {  // WF Packet
-                        // std::cout << "[Supervisor2] Waveform packet received. Pushing into the queue" << std::endl;
-
                         // Extract the WfPacketDams struct from the raw bytesAdd commentMore actions
                         const WfPacketDams* packet_wf = reinterpret_cast<const WfPacketDams*>(raw_packet + sizeof(uint32_t));
 
                         for (auto& manager : manager_workers) {
                             manager->getLowPriorityQueue()->push(serializePacket(*packet_wf));
                         }
-
-                        // std::cout << "Finished pushing into the queue" << std::endl;
                     }
                     else if (packet_type == Data_HkDams::TYPE) {  // HK Packet
                         std::cout << "[Supervisor2] Housekeeping packet received" << std::endl;

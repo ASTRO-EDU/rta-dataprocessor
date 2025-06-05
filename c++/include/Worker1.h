@@ -26,18 +26,20 @@
 #include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
 
 
-// Struct definitions for DL2 file handling
+// Struct definitions for DL2 XML file handling
 struct FieldDefinition {
     std::string name;
-    std::string type;  // e.g., "int32", "float32"
+    std::string type;  
 };
 
+// Struct that is used as a type
 struct DL2ModelDefinition {
     std::string groupName;
     std::string datasetName;
     std::vector<FieldDefinition> fields;
 };
 
+// Structure used to group data that will be written on the DL2 file
 struct GFRow {
     float n_waveform;
     float mult;
@@ -53,7 +55,7 @@ struct GFRow {
 
 class Worker1 : public WorkerBase {
 private:
-    // Inference time tracking
+    // Static members for tracking shared statistics during inference across all workers
     static std::atomic<int> global_inference_count;
     static std::atomic<double> global_total_time;
     static std::mutex global_stats_mutex;

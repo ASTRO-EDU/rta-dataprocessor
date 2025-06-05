@@ -64,7 +64,6 @@ void Supervisor1::listen_for_lp_data() {
 
                     logger->info(fmt::format("[Supervisor1] Extracted packet size: {}", (int)size));
 
-                    // std::cout << "Received Raw Packet: ";
                     const uint8_t* raw_packet = static_cast<const uint8_t*>(data.data());
 
                     uint8_t packet_type = raw_packet[4 + sizeof(HeaderDams)]; // 4 bytes for size + header bytes (gs_examples_communication/gs_examples_serialization/ccsds/include/packet.h)

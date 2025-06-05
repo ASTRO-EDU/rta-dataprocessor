@@ -29,7 +29,7 @@ public:
     // Override the config method
     void config(const nlohmann::json& configuration);
 
-    // Override the process_data method
+    // Override the processData method
     std::vector<uint8_t> processData(const std::vector<uint8_t>& data, int priority);
 };
 

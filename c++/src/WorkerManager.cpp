@@ -310,10 +310,9 @@ void WorkerManager::clean_queue() {
 
 // Function to stop the manager
 void WorkerManager::stop(bool fast) {
-
     _stop_event = true;
 
-    // Notifica tutti i thread che stanno aspettando sulle code
+    // Notify all threads that are waiting (locked) on the queues
     low_priority_queue->notify_all();
     high_priority_queue->notify_all();
     result_lp_queue->notify_all();

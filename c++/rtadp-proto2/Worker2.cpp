@@ -21,6 +21,7 @@ void Worker2::config(const nlohmann::json& configuration) {
     WorkerBase::config(configuration);
 }
 
+// Process the data extracted from the queue
 std::vector<uint8_t> Worker2::processData(const std::vector<uint8_t>& data, int priority) {
     std::vector<uint8_t> binary_result;    
     std::string dataflow_type = get_supervisor()->dataflowtype;

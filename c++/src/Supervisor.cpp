@@ -7,8 +7,6 @@
 //
 
 #include "Supervisor.h"
-
-
 #include "avro/Generic.hh"
 #include "avro/Schema.hh"
 #include "avro/ValidSchema.hh"
@@ -18,8 +16,6 @@
 #include "avro/Decoder.hh"
 #include "avro/Specific.hh"
 #include "ccsds/include/packet.h"
-// #include "Packet2.h"
-
 #include "../include/utils2.hh"
 
 
@@ -91,7 +87,8 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         socket_hp_result.resize(100, nullptr);
 
         ctrl_socket = new zmq::socket_t(context, ZMQ_PUSH);
-        std::string ctrl_address = "tcp://127.0.0.1:1235";  // Bind on port 1235
+        // If the pipeline is running on the Jetson use 192.168.166.127, if it is running on a local machine then use 127.0.0.1
+        std::string ctrl_address = "tcp://127.0.0.1:1235";  
         ctrl_socket->connect(ctrl_address);
     }
     catch (const std::exception& e) {
@@ -423,7 +420,7 @@ void Supervisor::listen_for_result() {
     }
     catch (const std::exception& e) {
         logger->critical("Exception in listen_for_result: {}", e.what());
-        continueall = false;  // Interrompi il ciclo per evitare ulteriori errori
+        continueall = false;  
     }
     catch (...) {
         logger->critical("Unknown exception in listen_for_result, terminating thread");
@@ -449,13 +446,10 @@ void Supervisor::send_result(WorkerManager* manager, int indexmanager) {
     }
     else if (!manager->getResultLpQueue()->empty()) {
         channel = 0;
-        std::cout << "Supervisor::send_result: getting results." << std::endl;
         data = manager->getResultLpQueue()->get();
-        std::cout << "Supervisor::send_result: finished getting results." << std::endl;
-
     }
     else {
-        std::cout << "Both queues are empty, can't send results." << std::endl;
+        std::cerr << "Both queues are empty, can't send results." << std::endl;
         logger->warning("Both queues are empty, can't send results.");
         return;
     }
@@ -464,7 +458,7 @@ void Supervisor::send_result(WorkerManager* manager, int indexmanager) {
         logger->info("Sending lp results.");
 
         if (manager->get_result_lp_socket() == "none") {
-            std::cout << "Lp socket is empty, can't send results." << std::endl;
+            std::cerr << "Lp socket is empty, can't send results." << std::endl;
             logger->warning("Lp socket is empty, can't send results.");
             return;
         }
@@ -480,9 +474,9 @@ void Supervisor::send_result(WorkerManager* manager, int indexmanager) {
         }
         else if (manager->get_result_dataflow_type() == "binary") {
             try {
-                std::cout << "Supervisor::send_result: sending binary lp results." << std::endl;
+                logger->info("Supervisor::send_result: sending binary lp results.");
                 socket_lp_result[indexmanager]->send(zmq::buffer(data.dump()));
-                std::cout << "Supervisor::send_result: finished sending binary lp results." << std::endl;
+                logger->info("Supervisor::send_result: finished sending binary lp results.");
             }
             catch (const std::exception& e) {
                 std::cerr << "ERROR: data not in binary format to be sent to socket_result: " << e.what() << std::endl;
@@ -495,7 +489,7 @@ void Supervisor::send_result(WorkerManager* manager, int indexmanager) {
         logger->info("Sending hp results.");
 
         if (manager->get_result_hp_socket() == "none") {
-            std::cout << "Hp socket is empty, can't send results." << std::endl;
+            std::cerr << "Hp socket is empty, can't send results." << std::endl;
             logger->warning("Hp socket is empty, can't send results.");
             return;
         }
@@ -521,11 +515,10 @@ void Supervisor::send_result(WorkerManager* manager, int indexmanager) {
     }
 }
 
-// Listen for low priority data
+// Listen for low priority data (method is overridden in Supervisor1 and Supervisor2)
 void Supervisor::listen_for_lp_data() {
     while (continueall) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
-        std::cout << "[Supervisor] Inside listen_for_lp_data" << std::endl;
 
         if (!stopdata) {
             zmq::message_t data;
@@ -859,7 +852,7 @@ void Supervisor::command_stopdata() {
     }
 }
 
-// Process received command
+// Process received commands
 void Supervisor::process_command(const json& command) {
     int type_value = command["header"]["type"].get<int>();
     std::string subtype_value = command["header"]["subtype"].get<std::string>();

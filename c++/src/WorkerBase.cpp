@@ -38,6 +38,7 @@ void WorkerBase::config(const nlohmann::json& configuration) {
     }
 }
 
+// Method is overridden in Worker1 and Worker2
 std::vector<uint8_t> WorkerBase::processData(const std::vector<uint8_t>& data, int priority) {
     return {};
 }

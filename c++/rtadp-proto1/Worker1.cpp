@@ -17,18 +17,21 @@
 
 using namespace tinyxml2;
 
-// constants for scaling
-constexpr int kNumSamples = 1000;
+// Constants for scaling according to how the model was trained
 constexpr float in_min = 74.0f;     
 constexpr float in_max = 3821.0f;   
 constexpr float out_min = 3418.73f;
 constexpr float out_max = 149944.45f;
 
+constexpr int kNumSamples = 1000;
+
+// Members for tracking shared statistics during inference across all workers 
 std::atomic<int> Worker1::global_inference_count{ 0 };
 std::atomic<double> Worker1::global_total_time{ 0.0 };
 std::mutex Worker1::global_stats_mutex;
 std::atomic<int> Worker1::peak_memory_kb{ 0 };
 
+// Members for shared DL2 file writing across all workers
 std::atomic<int> Worker1::batch_counter{ 0 };
 std::vector<GFRow> Worker1::dl2_data;
 DL2ModelDefinition Worker1::dl2_model;
@@ -56,7 +59,7 @@ Worker1::Worker1() : WorkerBase() {
     // Thread-safe initialization of DL2 model
     std::lock_guard<std::mutex> lock(init_mutex);
     if (!model_initialized) {
-        dl2_model = parseDL2Model("../DL2model.xml");
+        dl2_model = parseDL2Model("../DL2model.xml");   // Read and parse the xml model
         model_initialized = true;
         // std::cout << "[Worker1] DL2 model initialized with group '" << dl2_model.groupName << "' and dataset '" << dl2_model.datasetName << "'" << std::endl;
     }
@@ -134,6 +137,7 @@ DL2ModelDefinition Worker1::parseDL2Model(const std::string& xmlPath) {
     if (model.fields.empty()) {
         throw std::runtime_error("No fields found in XML file");
     }
+
     // std::cout << "[Worker1] Successfully parsed DL2 model with " << model.fields.size() << " fields" << std::endl;
     return model;
 }
@@ -194,7 +198,7 @@ void Worker1::write_dl2_file(const DL2ModelDefinition& model, const std::string&
     std::cout << "[Worker1] Successfully wrote " << data.size() << " rows to HDF5 file '" << h5filename <<"'" << std::endl;
 }
 
-// Helper: load & prepare the interpreter
+// Load and prepare the interpreter
 TfLiteInterpreter* Worker1::loadInterpreter(const std::string& model_path) {
     TfLiteModel* model = TfLiteModelCreateFromFile(model_path.c_str());
     if (!model) {
@@ -243,12 +247,13 @@ int Worker1::getMemoryUsage() {
     return usage.ru_maxrss;  // Returns memory usage in kilobytes
 }
 
-// Helper functions for path resolution
+// Helper function for defining the path of the model used for inference
 std::string Worker1::getModelPath() {
     const char* env_path = std::getenv("RTADP_MODEL_PATH");     // Read the .bashrc (or temp) defined env var
     return env_path ? std::string(env_path) : "../../test/ml_models/float_16.tflite";   // Default to a standard path if env var is not set
 }
 
+// Helper function for defining the path of the folder where DL2 files will be saved
 std::string Worker1::getOutputPath() {
     const char* env_path = std::getenv("RTADP_DL2_OUTPUT_PATH");    // Read the .bashrc (or temp) defined env var
     return env_path ? std::string(env_path) : "../output";      // Default to a standard path if env var is not set
@@ -260,6 +265,7 @@ int Worker1::getDL2Rows() {
     return env_rows ? std::stoi(env_rows) : 1000; // Default to 1000 if env var is not set
 }
 
+// Process the data extracted from the queue
 std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int priority) {
     std::vector<uint8_t> binary_result;
     std::string dataflow_type = get_supervisor()->dataflowtype;
@@ -325,11 +331,6 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
             for (float x : float_wave) raw_sum += x;
             // std::cout << "[Worker1] Raw sum = " << raw_sum << "\n";
 
-            // Diagnostic info to understand value distribution
-            float min_val = *std::min_element(float_wave.begin(), float_wave.end());
-            float max_val = *std::max_element(float_wave.begin(), float_wave.end());
-            float avg_val = static_cast<float>(raw_sum) / float_wave.size();
-
             // Pre-scale into the input tensor using the MinMax Scaling used for the model definition
             float* model_in = reinterpret_cast<float*>(TfLiteTensorData(input_tensor_));
             for (int i = 0; i < 2 * kNumSamples; ++i) {
@@ -366,11 +367,18 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
             float y_pred = model_out[0];
             float y_orig = (y_pred + 1.f) * 0.5f * (out_max - out_min) + out_min;       // Inverse MinMax Scaling from [-1, 1]
 
-            // std::cout << "[Worker1] Predicted model output (inverse-scaled area): " << y_orig << "\n";
-            // std::cout << "[Worker1] Predicted model output (scaled area ([-1, 1])): " << y_pred << "\n";
-            // std::cout << "[Worker1] Output scaling details: min_area_value=" << out_min << ", max_area_value=" << out_max << ", scale=" << ((out_max - out_min) * 0.5f) << "\n";
-            // std::cout << "[Worker1] Waveform value range: min=" << min_val << ", max=" << max_val << ", avg=" << avg_val << std::endl;
-            // std::cout << "[Worker1] Total inference time: " << inference_time << "s\n";
+            /*
+            // Diagnostic info to understand value distribution
+            float min_val = *std::min_element(float_wave.begin(), float_wave.end());
+            float max_val = *std::max_element(float_wave.begin(), float_wave.end());
+            float avg_val = static_cast<float>(raw_sum) / float_wave.size();
+
+            std::cout << "[Worker1] Predicted model output (inverse-scaled area): " << y_orig << "\n";
+            std::cout << "[Worker1] Predicted model output (scaled area ([-1, 1])): " << y_pred << "\n";
+            std::cout << "[Worker1] Output scaling details: min_area_value=" << out_min << ", max_area_value=" << out_max << ", scale=" << ((out_max - out_min) * 0.5f) << "\n";
+            std::cout << "[Worker1] Waveform value range: min=" << min_val << ", max=" << max_val << ", avg=" << avg_val << std::endl;
+            std::cout << "[Worker1] Total inference time: " << inference_time << "s\n";
+            */
 
             {
                 std::lock_guard<std::mutex> lock(global_stats_mutex);
