@@ -27,6 +27,9 @@ using json = nlohmann::json;
 void setup_signal_handlers(Supervisor* supervisor);
 
 class Supervisor {
+
+    // Static pointer to the current instance
+    static Supervisor* instance;
     // Helper function to open file
     std::pair<std::vector<json>, int> open_file(const std::string &filename);
 
@@ -142,7 +145,11 @@ public:
     // Stop all threads and processes
     void virtual stop_all(bool fast = false);
 
+   // Static method to set the current instance
+   static void set_instance(Supervisor *instance);
 
+   // Static method to get the current instance
+   static Supervisor* get_instance();
 
     WorkerLogger* getLogger() const {return logger; }
 
