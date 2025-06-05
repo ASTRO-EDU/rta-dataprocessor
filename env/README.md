@@ -5,6 +5,11 @@ gammasky-env
 
 ## Setup Docker
 
+### Clone the repository:
+```bash
+git clone --branch rta-dp-c++ https://github.com/ASTRO-EDU/rta-dataprocessor.git
+```
+
 ### Option 1: Use the prebuilt docker image
 ```bash
 # Login to the registry

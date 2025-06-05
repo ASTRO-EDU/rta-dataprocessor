@@ -87,7 +87,7 @@ class TestIntegration(unittest.TestCase):
 
             try:
                 logger.info(f'Sending SIGINT to {name} (PID: {process.pid})')
-                process.send_signal(signal.SIGINT)
+                os.killpg(process.pid, signal.SIGINT)
                 
                 # Poll for process termination
                 start_time = time.time()
@@ -180,7 +180,8 @@ class TestIntegration(unittest.TestCase):
             cmd,
             cwd=str(WORKERS_DIR),
             stdout=log_file,
-            stderr=log_file
+            stderr=log_file,
+            preexec_fn=os.setsid
         )
         self.processes.append(process)
         logger.info(f'ProcessMonitoring started with PID {process.pid}')
@@ -194,7 +195,9 @@ class TestIntegration(unittest.TestCase):
             cmd,
             cwd=str(CPP_DIR / 'build'),
             stdout=None,
-            stderr=None
+            stderr=None,
+            preexec_fn=os.setsid
+
         )
         self.processes.append(process)
         logger.info(f'Consumer started with PID {process.pid}')
@@ -228,7 +231,8 @@ class TestIntegration(unittest.TestCase):
             cmd,
             cwd=str(TEST_DIR / 'dl0_simulated'),
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            preexec_fn=os.setsid
         )
         self.processes.append(process)
         logger.info(f'DAMS simulator started with PID {process.pid}')
@@ -243,7 +247,8 @@ class TestIntegration(unittest.TestCase):
             cmd,
             cwd=str(WORKERS_DIR),
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            preexec_fn=os.setsid
         )
         self.processes.append(process)
         stdout, stderr = process.communicate()

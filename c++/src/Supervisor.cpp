@@ -87,8 +87,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         socket_hp_result.resize(100, nullptr);
 
         ctrl_socket = new zmq::socket_t(context, ZMQ_PUSH);
-        // If the pipeline is running on the Jetson use 192.168.166.127, if it is running on a local machine then use 127.0.0.1
-        std::string ctrl_address = "tcp://127.0.0.1:1235";  
+        std::string ctrl_address = "tcp://127.0.0.1:1235";     // Connect with gfse on port 1235
         ctrl_socket->connect(ctrl_address);
     }
     catch (const std::exception& e) {
