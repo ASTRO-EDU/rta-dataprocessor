@@ -18,7 +18,6 @@
 #include "ccsds/include/packet.h"
 #include "../include/utils2.hh"
 
-Supervisor* Supervisor::instance = nullptr;
 
 Supervisor::Supervisor(std::string config_file, std::string name)
     : name(name), continueall(true), config_manager(nullptr), manager_num_workers(0) {
@@ -106,6 +105,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
 
 // Destructor to clean up resources
 Supervisor::~Supervisor() {
+    std::cout << "[Supervisor] Cleaning up Supervisor resources..." << std::endl;
     if (lp_data_thread.joinable()) {
         lp_data_thread.join();
     }
@@ -205,15 +205,16 @@ Supervisor::~Supervisor() {
     }
 }
 
+static Supervisor* signal_supervisor_instance = nullptr;
 // Static method to set the current instance
-void Supervisor::set_instance(Supervisor* instance) {
-    Supervisor::instance = instance;
-}
+// void Supervisor::set_instance(Supervisor* instance) {
+//     Supervisor::instance = instance;
+// }
 
-// Static method to get the current instance
-Supervisor* Supervisor::get_instance() {
-    return Supervisor::instance;
-}
+// // Static method to get the current instance
+// Supervisor* Supervisor::get_instance() {
+//     return Supervisor::instance;
+// }
 
 std::vector<std::string> Supervisor::getNameWorkers() const {
     return worker_names;
@@ -333,16 +334,22 @@ void Supervisor::start() {
 }
 
 
-void signal_handler(int signum) {
-    Supervisor* supervisor = Supervisor::get_instance();
-    if (!supervisor) return;
+// // Handler C-style chiamato dal sistema
+// void signal_handler(int signum) {
+//     if (!Supervisor::get_instance()) return;
 
-    supervisor->handle_signals(signum);
+//     Supervisor::get_instance()->handle_signals(signum);
+// }
+
+void signal_handler(int signum) {
+    if (!signal_supervisor_instance) return;
+
+    signal_supervisor_instance->handle_signals(signum);
 }
 
-// Set up signal handlers in main thread
+// Funzione da chiamare da main()
 void setup_signal_handlers(Supervisor* supervisor) {
-    Supervisor::set_instance(supervisor);  
+    signal_supervisor_instance = supervisor;
 
     struct sigaction sa;
     std::memset(&sa, 0, sizeof(sa));
@@ -364,17 +371,17 @@ void Supervisor::handle_signals(int signum) {
 
     if (signum == SIGTERM) {
         std::cout << "\n[Supervisor] SIGTERM received in main thread. Terminating with cleaned shutdown." << std::endl;
-        logger->warning("[Supervisor] SIGTERM received in main thread. Terminating with cleaned shutdown", instance->globalname);
+        logger->warning("[Supervisor] SIGTERM received in main thread. Terminating with cleaned shutdown", signal_supervisor_instance->globalname);
         command_cleanedshutdown();
     }
     else if (signum == SIGINT) {
         std::cout << "\n[Supervisor] SIGINT received in main thread. Terminating with shutdown." << std::endl;
-        logger->warning("[Supervisor] SIGINT received in main thread. Terminating with shutdown", instance->globalname);
+        logger->warning("[Supervisor] SIGINT received in main thread. Terminating with shutdown", signal_supervisor_instance->globalname);
         command_shutdown();
     }
     else {
         std::cout << "\n[Supervisor] Received signal " << signum << "in main thread. Terminating." << std::endl;
-        logger->warning("[Supervisor] Received signal " + std::to_string(signum) + "in main thread. Terminating", instance->globalname);
+        logger->warning("[Supervisor] Received signal " + std::to_string(signum) + "in main thread. Terminating", signal_supervisor_instance->globalname);
         command_shutdown();
     }
 }
