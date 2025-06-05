@@ -115,8 +115,7 @@ RUN mkdir -p /home/worker/workspace /home/worker/dependencies
 COPY env/venv/requirements.txt /tmp/requirements.txt
 
 # Fix permissions and install Python dependencies for worker
-RUN chown -R worker:worker /tmp/requirements.txt && \
-    pip3 install --user --no-cache-dir -r /tmp/requirements.txt && \
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt && \
     rm -f /tmp/requirements.txt
 
 # Switch to worker user
