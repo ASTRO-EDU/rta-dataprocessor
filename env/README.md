@@ -25,12 +25,13 @@ docker pull git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor:1.0.
 cd rta-dataprocessor/c++
 
 # Build the Docker image
-docker build -t rta-dataprocessor:1.0.1 -f ../env/Dockerfile.ubuntu ..
+docker build -t rta-dataprocessor:1.0.2 -f ../env/Dockerfile.ubuntu ..
 ```
 
 ### Run bootstrap
 ```bash
 # Bootstrap the image to allow the container's standard user to write on user host
+cd ../env
 ./bootstrap.sh rta-dataprocessor:1.0.2 $USER
 ```
 
@@ -53,7 +54,7 @@ docker exec -it rtadataprocessor bash
 Once inside the container, follow these steps to build the project:
 ```bash
 # Navigate to the C++ directory
-cd rta-dataprocessor/c++
+cd workspace/c++
 
 # Clean and create build directory
 rm -rf build
@@ -70,18 +71,18 @@ make -j4
 Before running the tests, set up the environment variable for the inference model:
 ```bash
 # Set the model path environment variable
-echo 'export RTADP_MODEL_PATH="/path/to/model/float_16.tflite"' >> ~/.bashrc
+echo 'export RTADP_MODEL_PATH="/home/worker/workspace/test/ml_models/float_16.tflite"' >> ~/.bashrc
 
 # Reload the bash configuration
 source ~/.bashrc
 ```
-Note: By default the float 16 quantized model (float_16.tflite) can be found under rta-dataprocessor/test/ml_models
+Note: By default the float 16 quantized model (float_16.tflite) can be found under test/ml_models
 
 ## Run Pipeline Tests
 1. To run the integration test of ProcessDataConsumer1 (inference + DL2 writing):
 ```bash
 # Navigate to the test directory
-cd rta-dataprocessor/test
+cd $HOME/workspace/test
 
 # Run the integration test
 python3 test_integration_rtadp1.py
@@ -90,7 +91,7 @@ python3 test_integration_rtadp1.py
 2. To run the integration test of ProcessDataConsumer2 (basic data processing):
 ```bash
 # Navigate to the test directory
-cd rta-dataprocessor/test
+cd $HOME/workspace/test
 
 # Run the integration test
 python3 test_integration_rtadp2.py
