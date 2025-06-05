@@ -30,7 +30,7 @@ docker build -t rta-dataprocessor:1.0.1 -f ../env/Dockerfile.ubuntu ..
 
 ### Run bootstrap
 ```bash
-# Bootstrap the iamge to allow the container standard user to write on user host
+# Bootstrap the image to allow the container's standard user to write on user host
 ./bootstrap.sh rta-dataprocessor:1.0.2 $USER
 ```
 
