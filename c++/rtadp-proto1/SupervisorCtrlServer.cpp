@@ -12,7 +12,6 @@ SupervisorCtrlServer::SupervisorCtrlServer(const std::string& config_file, const
         std::string ctrl_address = "tcp://127.0.0.1:1235";  
         ctrl_socket->connect(ctrl_address);
         logger->info("[SupervisorCtrlServer] Control socket connected to: " + ctrl_address, globalname);
-        std::cout << "[SupervisorCtrlServer] Control socket connected to: " << ctrl_address << std::endl;
     }
     catch (const std::exception& e) {
         // Handle any other unexpected exceptions
@@ -44,7 +43,6 @@ void SupervisorCtrlServer::start_custom() {
     zmq::message_t msg(command.data(), command.size());
     
     ctrl_socket->send(msg, zmq::send_flags::none);
-    std::cout << "[SupervisorCtrlServer] Sent control command: " << command << std::endl;
     logger->info("[SupervisorCtrlServer] Sent control command: ", command);
     
 }
@@ -56,7 +54,6 @@ void SupervisorCtrlServer::stop_custom() {
     std::string command = "STOP"; 
     zmq::message_t msg(command.data(), command.size());
     ctrl_socket->send(msg, zmq::send_flags::none);
-    std::cout << "[Supervisor] Sent control command: " << command << std::endl;
     logger->info("[Supervisor] Sent control command: ", command);
     
 }
