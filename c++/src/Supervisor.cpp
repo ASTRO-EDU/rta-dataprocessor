@@ -106,7 +106,6 @@ Supervisor::Supervisor(std::string config_file, std::string name)
 
 // Destructor to clean up resources
 Supervisor::~Supervisor() {
-    std::cout << "[Supervisor] Cleaning up Supervisor resources..." << std::endl;
     if (lp_data_thread.joinable()) {
         lp_data_thread.join();
     }

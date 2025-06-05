@@ -24,7 +24,6 @@ SupervisorCtrlServer::SupervisorCtrlServer(const std::string& config_file, const
 
 // Destructor
 SupervisorCtrlServer::~SupervisorCtrlServer() {
-    std::cout << "[SupervisorCtrlServer] Cleaning up SupervisorCtrlServer resources..." << std::endl;
     if (ctrl_socket) {
         try {
             ctrl_socket->close();
