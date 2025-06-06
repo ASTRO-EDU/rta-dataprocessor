@@ -1,4 +1,4 @@
-#include "Worker2.h"
+#include "include/Worker2.h"
 #include "Supervisor.h"
 #include "avro/Generic.hh"
 #include "avro/Schema.hh"

@@ -162,8 +162,15 @@ set(JsonDom_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/external/avro/lang/c++/impl")
 set(Spdlog_INCLUDE_DIR "/usr/include")
 set(Boost_INCLUDE_DIR "/usr/include")
 
+# Add source directories
+set(RTADP_PROTO1_DIR "${CMAKE_SOURCE_DIR}/rtadp-proto1")
+set(RTADP_PROTO2_DIR "${CMAKE_SOURCE_DIR}/rtadp-proto2")
+file(GLOB SRC_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp")
+
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
+    ${RTADP_PROTO1_DIR}/include
+    ${RTADP_PROTO2_DIR}/include    
     ${Boost_INCLUDE_DIRS}
     ${Spdlog_INCLUDE_DIR}
     ${INC_DIR}
@@ -185,11 +192,6 @@ link_directories(
 )
 
 add_subdirectory(${GS_COMM})
-
-# Add source directories
-set(RTADP_PROTO1_DIR "${CMAKE_SOURCE_DIR}/rtadp-proto1")
-set(RTADP_PROTO2_DIR "${CMAKE_SOURCE_DIR}/rtadp-proto2")
-file(GLOB SRC_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
 list(APPEND RTADPPROTO1FILES
     ${RTADP_PROTO1_DIR}/ProcessDataConsumer1.cpp

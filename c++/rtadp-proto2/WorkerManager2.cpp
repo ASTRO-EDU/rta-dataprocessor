@@ -1,4 +1,4 @@
-#include "WorkerManager2.h"
+#include "include/WorkerManager2.h"
 
 // Constructor
 WorkerManager2::WorkerManager2(int manager_id, Supervisor* supervisor, const std::string& name)
