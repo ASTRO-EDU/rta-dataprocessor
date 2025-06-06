@@ -38,11 +38,39 @@ void Data_HkDams::print() const  {
 
     printf("  State     : %02X\n", state);
     printf("  Flags     : %02X\n", flags);
+    printf("  Flags     : [");
+    bool first = true;
+    if (flags & FLG_PPS_NOK) {
+        printf("%sPPS_NOK", first ? "" : ", ");
+        first = false;
+    }
+    if (flags & FLG_GPS_NOUART) {
+        printf("%sGPS_NOUART", first ? "" : ", ");
+        first = false;
+    }
+    if (flags & FLG_GPS_OVERTIME) {
+        printf("%sGPS_OVERTIME", first ? "" : ", ");
+        first = false;
+    }
+    if (flags & FLG_GPS_NOTIME) {
+        printf("%sGPS_NOTIME", first ? "" : ", ");
+        first = false;
+    }
+    if (flags & FLG_TRG_ERR) {
+        printf("%sTRG_ERR", first ? "" : ", ");
+        first = false;
+    }
+    if (first) {
+        printf("NONE");
+    }
+    printf("]\n");
 
     printf("  WaveCount : %u\n", waveCount);
 
     printf("  Timestamp : %ld.%09ld seconds (tv_sec.tv_nsec)\n", ts.tv_sec, ts.tv_nsec);
 }
+
+
 
 
 void Data_Wf::print(const Data_Wf& data) {

@@ -99,6 +99,14 @@ public:
 };
 #pragma pack(pop)
 
+enum Flags {
+    FLG_PPS_NOK         = 0x80, // pps not received
+    FLG_GPS_NOUART      = 0x40, // no signal from serial
+    FLG_GPS_OVERTIME    = 0x20, // time between PPS and GGA is more than 1 second
+    FLG_GPS_NOTIME      = 0x10, // invalid time wrt red pitaya time 
+    FLG_TRG_ERR			= 0x01
+};
+
 class Data_HkDams {
 public:
     static const uint8_t TYPE = 0x03;
