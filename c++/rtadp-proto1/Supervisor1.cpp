@@ -2,6 +2,8 @@
 #include "ccsds/include/packet.h"
 #include "../include/utils2.hh"
 
+#define MSG_SIZE_PREFIX 4  // Size prefix for messages
+
 // Constructor
 Supervisor1::Supervisor1(const std::string& config_file, const std::string& name)
     : SupervisorCtrlServer(config_file, name) {
@@ -67,8 +69,8 @@ void Supervisor1::listen_for_lp_data() {
 
                     const uint8_t* raw_packet = static_cast<const uint8_t*>(data.data());
 
-                    uint8_t packet_type = raw_packet[4 + sizeof(HeaderDams)]; // 4 bytes for size + header bytes (gs_examples_communication/gs_examples_serialization/ccsds/include/packet.h)
-                    uint8_t subtype = raw_packet[4 + sizeof(HeaderDams) + 1];
+                    uint8_t packet_type = raw_packet[MSG_SIZE_PREFIX + sizeof(HeaderDams)]; // 4 bytes for size + header bytes (gs_examples_communication/gs_examples_serialization/ccsds/include/packet.h)
+                    uint8_t subtype = raw_packet[MSG_SIZE_PREFIX + sizeof(HeaderDams) + 1];
                     // [4 bytes size prefix]
                     // [12 bytes HeaderDams] 
                     // [44 bytes Data_WaveHeader]
@@ -83,8 +85,8 @@ void Supervisor1::listen_for_lp_data() {
                         const uint8_t* rp = raw_packet;
 
                         // Cast to header+waveheader only 
-                        const HeaderDams* h_ptr = reinterpret_cast<const HeaderDams*>(rp + 4);  // The generic header starts after the first 4 bytes (which contain the size)
-                        const Data_WaveHeader* w_ptr = reinterpret_cast<const Data_WaveHeader*>(rp + 4 + sizeof(HeaderDams));   // Then follows Data_WaveHeader
+                        const HeaderDams* h_ptr = reinterpret_cast<const HeaderDams*>(rp + MSG_SIZE_PREFIX);  // The generic header starts after the first 4 bytes (which contain the size)
+                        const Data_WaveHeader* w_ptr = reinterpret_cast<const Data_WaveHeader*>(rp + MSG_SIZE_PREFIX + sizeof(HeaderDams));   // Then follows Data_WaveHeader
 
                         // At the moment the true area size is stored inside the usec field of Data_WaveHeader for simplicity in order to be compared to the predicted one
                         // std::cout << "\n[Supervisor1] REAL AREA: " << w_ptr->us << std::endl;
@@ -106,7 +108,7 @@ void Supervisor1::listen_for_lp_data() {
                         // std::cout << "Finished pushing into the queue" << std::endl;
                     }
                     else if (packet_type == Data_HkDams::TYPE) {  // HK Packet
-                        const Data_HkDams* hk_ptr = reinterpret_cast<const Data_HkDams*>(raw_packet + 4 + sizeof(Data_HkDams));   // Then follows Data_HkDams
+                        const Data_HkDams* hk_ptr = reinterpret_cast<const Data_HkDams*>(raw_packet + MSG_SIZE_PREFIX + sizeof(HeaderDams));   // Then follows Data_HkDams
                         std::cout << "[Supervisor1] Housekeeping packet received" << std::endl;
                         hk_ptr->print();  // Print the housekeeping packet data
                     }
