@@ -189,7 +189,4 @@ public:
     std::thread result_thread;
 };
 
-
-void buildDefaultA0Packet(uint8_t* buffer, size_t& packetSize, uint16_t runID = 0) ;
-void buildStartAcqPacket(uint8_t* buffer, size_t& packetSize, uint16_t runID = 0) ;
 #endif // SUPERVISOR_H

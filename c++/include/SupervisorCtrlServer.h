@@ -27,4 +27,7 @@ public:
     void start_custom() override; 
 };
 
+void buildDefaultA0Packet(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID)  ;
+void buildStartAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID) ;
+
 #endif // SUPERVISORCTRLSERVER_H

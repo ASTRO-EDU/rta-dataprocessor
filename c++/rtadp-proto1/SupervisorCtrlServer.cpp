@@ -51,9 +51,9 @@ void SupervisorCtrlServer::start_custom() {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     buildStartAcqPacket(buff, buffSz, 0x01);
-    zmq::message_t msg(buff, buffSz);
-    ctrl_socket->send(msg, zmq::send_flags::none);
-    logger->info("[Supervisor] Sent control command: StartAcqPacket")
+    zmq::message_t msg2(buff, buffSz);
+    ctrl_socket->send(msg2, zmq::send_flags::none);
+    logger->info("[Supervisor] Sent control command: StartAcqPacket");
 }
 
 
@@ -66,4 +66,44 @@ void SupervisorCtrlServer::stop_custom() {
     std::cout << "[Supervisor] Sent control command: " << command << std::endl;
     logger->info("[Supervisor] Sent control command: ", command);
     
+}
+
+void buildDefaultA0Packet(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID = 0) {
+    if (maxBufferSize < sizeof(Header) + sizeof(Data_Header)) {
+        printf("Error: buffer too small in buildDefaultA0Packet\n");
+        return;
+    }
+
+    HeaderDams* header = (HeaderDams*)buffer;
+    header->start = HeaderDams::START;
+    header->apid = HeaderDams::CLASS_TC | 0x01;  // SOURCE = 1 esempio
+    header->sequence = HeaderDams::GROUP_STAND_ALONE | 0x0001; // esempio count 1
+    header->runID = runID;
+    header->size = sizeof(Data_Header); // dati utili dopo header
+    header->crc = 0; // se hai CRC calcolalo poi!
+    header->encode();
+
+    Data_Header* data = (Data_Header*)(buffer + sizeof(HeaderDams));
+    data->type = 0xA0;
+    data->subType = 0x99; // caso "non definito" → farà trigger FE
+}
+
+void buildStartAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID = 0) {
+    if (maxBufferSize < sizeof(HeaderDams) + sizeof(Data_Header)) {
+        printf("Error: buffer too small in buildStartAcqPacket\n");
+        return;
+    }
+
+    HeaderDams* header = (HeaderDams*)buffer;
+    header->start = HeaderDams::START;
+    header->apid = HeaderDams::CLASS_TC | 0x01;  // SOURCE = 1 esempio
+    header->sequence = HeaderDams::GROUP_STAND_ALONE | 0x0002; // esempio count 2
+    header->runID = runID;
+    header->size = sizeof(Data_Header);
+    header->crc = 0; // se hai CRC calcolalo poi!
+    header->encode();
+
+    Data_Header* data = (Data_Header*)(buffer + sizeof(HeaderDams));
+    data->type = 0xA0;
+    data->subType = 0x04; // StartAcq
 }
