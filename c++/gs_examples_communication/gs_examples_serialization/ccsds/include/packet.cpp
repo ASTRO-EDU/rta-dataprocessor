@@ -30,7 +30,7 @@ void Data_Hk::print(const Data_Hk& data) {
     std::cout << "  CRC: 0x" << std::hex << data.crc << std::dec << std::endl;
 }
 
-void Data_HkDams::print() {
+void Data_HkDams::print() const  {
     printf("Packet Data_HkDams\n");
 
     printf("  Type      : %02X\n", type);

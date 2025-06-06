@@ -119,7 +119,7 @@ public:
         };
     };
 
-    void print();
+    void print() const;
 };
 
 class Data_WaveHeader {
