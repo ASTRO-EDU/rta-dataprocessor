@@ -41,13 +41,19 @@ void SupervisorCtrlServer::start_custom() {
 
     // We send a start signal to the listening producer (gfse.py) in order for it to start sending data
     
-    std::string command = "START"; 
-    zmq::message_t msg(command.data(), command.size());
-    
+    static const size_t buffSz = 128;
+    uint8_t buff[buffSz];
+    buildDefaultA0Packet(buff, buffSz, 0x01);
+
+    zmq::message_t msg(buff, buffSz);
     ctrl_socket->send(msg, zmq::send_flags::none);
-    std::cout << "[SupervisorCtrlServer] Sent control command: " << command << std::endl;
-    logger->info("[SupervisorCtrlServer] Sent control command: ", command);
+    logger->info("[Supervisor] Sent control command: StartPacket");
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
+    buildStartAcqPacket(buff, buffSz, 0x01);
+    zmq::message_t msg(buff, buffSz);
+    ctrl_socket->send(msg, zmq::send_flags::none);
+    logger->info("[Supervisor] Sent control command: StartAcqPacket")
 }
 
 

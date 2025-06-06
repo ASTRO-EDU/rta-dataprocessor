@@ -96,6 +96,7 @@ public:
             uint32_t crc;
         };
     };
+    void encode();
 };
 #pragma pack(pop)
 
@@ -192,6 +193,7 @@ public:
             uint32_t buff[U32_X_PACKET];
         };
     };
+    
 };
 
 // #pragma pack(push, 1)
@@ -281,5 +283,17 @@ public:
 SerializedTimespec serializeTimespec(const struct timespec& ts);
 struct timespec deserializeTimespec(const SerializedTimespec& sts);
 
-
+class Data_Header {
+    public:
+        // Header data
+        union {
+            uint8_t _p8[4];
+            uint16_t _p16[2];
+            uint32_t _p32[1];
+            struct __attribute__((packed)) {
+                uint8_t type;
+                uint8_t subType;
+            };
+        };  
+    };
 #endif // __PACKET_H__

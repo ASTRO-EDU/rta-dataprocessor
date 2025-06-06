@@ -966,3 +966,43 @@ void Supervisor::stop_all(bool fast) {
     std::cout << "[Supervisor] All Supervisor workers and managers and internal threads terminated." << std::endl;
     logger->info("[Supervisor] All Supervisor workers and managers and internal threads terminated.", globalname);
 }
+
+void buildDefaultA0Packet(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID = 0) {
+    if (maxBufferSize < sizeof(Header) + sizeof(Data_Header)) {
+        printf("Error: buffer too small in buildDefaultA0Packet\n");
+        return;
+    }
+
+    HeaderDams* header = (HeaderDams*)buffer;
+    header->start = HeaderDams::START;
+    header->apid = HeaderDams::CLASS_TC | 0x01;  // SOURCE = 1 esempio
+    header->sequence = HeaderDams::GROUP_STAND_ALONE | 0x0001; // esempio count 1
+    header->runID = runID;
+    header->size = sizeof(Data_Header); // dati utili dopo header
+    header->crc = 0; // se hai CRC calcolalo poi!
+    header->encode();
+
+    Data_Header* data = (Data_Header*)(buffer + sizeof(HeaderDams));
+    data->type = 0xA0;
+    data->subType = 0x99; // caso "non definito" → farà trigger FE
+}
+
+void buildStartAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID = 0) {
+    if (maxBufferSize < sizeof(HeaderDams) + sizeof(Data_Header)) {
+        printf("Error: buffer too small in buildStartAcqPacket\n");
+        return;
+    }
+
+    HeaderDams* header = (HeaderDams*)buffer;
+    header->start = HeaderDams::START;
+    header->apid = HeaderDams::CLASS_TC | 0x01;  // SOURCE = 1 esempio
+    header->sequence = HeaderDams::GROUP_STAND_ALONE | 0x0002; // esempio count 2
+    header->runID = runID;
+    header->size = sizeof(Data_Header);
+    header->crc = 0; // se hai CRC calcolalo poi!
+    header->encode();
+
+    Data_Header* data = (Data_Header*)(buffer + sizeof(HeaderDams));
+    data->type = 0xA0;
+    data->subType = 0x04; // StartAcq
+}
