@@ -106,7 +106,9 @@ void Supervisor1::listen_for_lp_data() {
                         // std::cout << "Finished pushing into the queue" << std::endl;
                     }
                     else if (packet_type == Data_HkDams::TYPE) {  // HK Packet
+                        const Data_HkDams* hk_ptr = reinterpret_cast<const Data_HkDams*>(raw_packet + 4 + sizeof(Data_HkDams));   // Then follows Data_HkDams
                         std::cout << "[Supervisor1] Housekeeping packet received" << std::endl;
+                        hk_ptr->print();  // Print the housekeeping packet data
                     }
                     else {
                         std::cout << "[Supervisor1] Unknown packet type: " << packet_type << std::endl;

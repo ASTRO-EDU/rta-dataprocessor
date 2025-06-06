@@ -118,6 +118,8 @@ public:
             struct timespec ts;
         };
     };
+
+    void print();
 };
 
 class Data_WaveHeader {

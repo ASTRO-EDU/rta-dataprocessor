@@ -30,6 +30,21 @@ void Data_Hk::print(const Data_Hk& data) {
     std::cout << "  CRC: 0x" << std::hex << data.crc << std::dec << std::endl;
 }
 
+void Data_HkDams::print() {
+    printf("Packet Data_HkDams\n");
+
+    printf("  Type      : %02X\n", type);
+    printf("  SubType   : %02X\n", subType);
+
+    printf("  State     : %02X\n", state);
+    printf("  Flags     : %02X\n", flags);
+
+    printf("  WaveCount : %u\n", waveCount);
+
+    printf("  Timestamp : %ld.%09ld seconds (tv_sec.tv_nsec)\n", ts.tv_sec, ts.tv_nsec);
+}
+
+
 void Data_Wf::print(const Data_Wf& data) {
     Data_Wf::print(data, 0);
 }
