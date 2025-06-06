@@ -98,5 +98,34 @@ python3 test_integration_rtadp2.py
 ```
 
 ## Run the Components Separately
-To run the 4 components individually follow the guide: https://github.com/ASTRO-EDU/rta-dataprocessor/tree/rta-dp-c%2B%2B/c%2B%2B#running-the-components
+1. DAMS-side (Terminal 1):
+```bash
+# Launch the simulator/streamer
+cd $HOME/workspace/test/
+python gfse.py --addr 127.0.0.1 --port 1234 --indir dl0_simulated/ --rpid 1 --wform-sec 200
+```
 
+2. RTA-DP C++-side (requires 3 parallel terminals):
+
+Terminal 2 - Process Monitoring:
+```bash
+cd $HOME/workspace/workers
+python ProcessMonitoring.py $RTACONFIG
+```
+
+Terminal 3 - Consumer:
+```bash
+cd $HOME/workspace/c++/build
+./ProcessDataConsumer1 $RTACONFIG
+```
+Or:
+```bash
+cd $HOME/workspace/c++/build
+./ProcessDataConsumer2 $RTACONFIG
+```
+
+Terminal 4 - Send Command:
+```bash
+cd $HOME/workspace/workers
+python SendCommand.py $RTACONFIG start all
+```
