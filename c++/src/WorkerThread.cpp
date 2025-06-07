@@ -20,7 +20,7 @@ using json = nlohmann::json;
 WorkerThread::WorkerThread(int worker_id, WorkerManager* manager, const std::string& name, WorkerBase* worker)
     : worker_id(worker_id), manager(manager), name(name), worker(worker),
      processdata(0), status(0), tokenresult(worker_id), tokenreading(worker_id), _stop_event(false) {
-
+    logger = manager->getSupervisor()->getLogger();
     logger->info("Creating a WorkerThread with name: ", name);
     supervisor = manager->getSupervisor();
     workersname = supervisor->name + "-" + manager->getName() + "-" + name;

@@ -9,7 +9,7 @@ SupervisorCtrlServer::SupervisorCtrlServer(const std::string& config_file, const
     try{
         ctrl_socket = new zmq::socket_t(context, ZMQ_PUSH);
         // If the pipeline is running on the Jetson use 192.168.166.127, if it is running on a local machine then use 127.0.0.1
-        std::string ctrl_address = "tcp://127.0.0.1:1235";  
+        std::string ctrl_address = "tcp://192.168.176.122:1235";  
         ctrl_socket->connect(ctrl_address);
         logger->info("[SupervisorCtrlServer] Control socket connected to: " + ctrl_address, globalname);
         std::cout << "[SupervisorCtrlServer] Control socket connected to: " << ctrl_address << std::endl;

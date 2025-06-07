@@ -25,13 +25,13 @@
                 "result_dataflow_type": "binary",
                 "result_lp_socket": "tcp://127.0.0.1:5566",
                 "result_hp_socket": "tcp://127.0.0.1:5567",
-                "num_workers": 5,
+                "num_workers": 1,
                 "name": "Rate",
                 "name_workers": "worker"
             }
         ],
-        "logs_path": "/tmp/",
-        "logging": "file",
+        "logs_path": "./",
+        "logging": "console",
         "logs_level": 5,
         "comment": "datasockettype=pushpull|pubsub|custom dataflowtype=binary|filename|string processingtype=process|thread logging=file|console|both|none"
     },
