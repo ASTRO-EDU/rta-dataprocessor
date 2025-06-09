@@ -18,12 +18,10 @@
 #include "ccsds/include/packet.h"
 #include "../include/utils2.hh"
 
-
 Supervisor* Supervisor::instance = nullptr;
 
 Supervisor::Supervisor(std::string config_file, std::string name)
     : name(name), continueall(true), config_manager(nullptr), manager_num_workers(0) {
-    Supervisor::set_instance(this);  // Set the current instance
     load_configuration(config_file, name);
     fullname = name;
     globalname = "Supervisor-" + name;
@@ -86,9 +84,6 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         socket_lp_result.resize(100, nullptr);
         socket_hp_result.resize(100, nullptr);
 
-        ctrl_socket = new zmq::socket_t(context, ZMQ_PUSH);
-        std::string ctrl_address = "tcp://127.0.0.1:1235";     // Connect with gfse on port 1235
-        ctrl_socket->connect(ctrl_address);
     }
     catch (const std::exception& e) {
         // Handle any other unexpected exceptions
@@ -102,20 +97,6 @@ Supervisor::Supervisor(std::string config_file, std::string name)
     // stopdata = true;
 
     sendresultslock = std::make_shared<std::mutex>();
-
-    // Set up signal handlers
-    try {
-        if (std::signal(SIGTERM, handle_signals) == SIG_ERR) {
-            throw std::runtime_error("Failed to set SIGTERM handler");
-        }
-        if (std::signal(SIGINT, handle_signals) == SIG_ERR) {
-            throw std::runtime_error("Failed to set SIGINT handler");
-        }
-    }
-    catch (const std::exception& e) {
-        std::cerr << "WARNING! Signal only works in main thread. It is not possible to set up signal handlers!" << std::endl;
-        logger->warning("WARNING! Signal only works in main thread. It is not possible to set up signal handlers!", globalname);
-    }
 
     status = "Initialised";
     send_info(1, status, fullname, 1, "Low");
@@ -207,16 +188,7 @@ Supervisor::~Supervisor() {
         delete socket_monitoring;
         socket_monitoring = nullptr;
     }
-    if (ctrl_socket) {
-        try {
-            ctrl_socket->close();
-        }
-        catch (const zmq::error_t& e) {
-            logger->error("Error while closing ctrl_socket: {}", e.what());
-        }
-        delete ctrl_socket;
-        ctrl_socket = nullptr;
-    }
+
 
     zmq_ctx_shutdown(context.handle());
 
@@ -360,26 +332,50 @@ void Supervisor::start() {
     }
 }
 
-// Static function to handle signals
-void Supervisor::handle_signals(int signum) {
-    Supervisor* instance = Supervisor::get_instance();
 
-    if (instance) {
-        if (signum == SIGTERM) {
-            std::cout << "\n[Supervisor] SIGTERM received in main thread. Terminating with cleaned shutdown." << std::endl;
-            instance->logger->warning("[Supervisor] SIGTERM received in main thread. Terminating with cleaned shutdown", instance->globalname);
-            instance->command_cleanedshutdown();
-        }
-        else if (signum == SIGINT) {
-            std::cout << "\n[Supervisor] SIGINT received in main thread. Terminating with shutdown." << std::endl;
-            instance->logger->warning("[Supervisor] SIGINT received in main thread. Terminating with shutdown", instance->globalname);
-            instance->command_shutdown();
-        }
-        else {
-            std::cout << "\n[Supervisor] Received signal " << signum << "in main thread. Terminating." << std::endl;
-            instance->logger->warning("[Supervisor] Received signal " + std::to_string(signum) + "in main thread. Terminating", instance->globalname);
-            instance->command_shutdown();
-        }
+void signal_handler(int signum) {
+    Supervisor* supervisor = Supervisor::get_instance();
+    if (!supervisor) return;
+
+    supervisor->handle_signals(signum);
+}
+
+// Set up signal handlers in main thread
+void setup_signal_handlers(Supervisor* supervisor) {
+    Supervisor::set_instance(supervisor);  
+
+    struct sigaction sa;
+    std::memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+
+    if (sigaction(SIGINT, &sa, nullptr) < 0) {
+        std::cerr << "[ERROR] Failed to set SIGINT handler\n";
+    }
+    if (sigaction(SIGTERM, &sa, nullptr) < 0) {
+        std::cerr << "[ERROR] Failed to set SIGTERM handler\n";
+    }
+}
+
+
+//  function to handle signals
+void Supervisor::handle_signals(int signum) {
+
+    if (signum == SIGTERM) {
+        std::cout << "\n[Supervisor] SIGTERM received in main thread. Terminating with cleaned shutdown." << std::endl;
+        logger->warning("[Supervisor] SIGTERM received in main thread. Terminating with cleaned shutdown", instance->globalname);
+        command_cleanedshutdown();
+    }
+    else if (signum == SIGINT) {
+        std::cout << "\n[Supervisor] SIGINT received in main thread. Terminating with shutdown." << std::endl;
+        logger->warning("[Supervisor] SIGINT received in main thread. Terminating with shutdown", instance->globalname);
+        command_shutdown();
+    }
+    else {
+        std::cout << "\n[Supervisor] Received signal " << signum << "in main thread. Terminating." << std::endl;
+        logger->warning("[Supervisor] Received signal " + std::to_string(signum) + "in main thread. Terminating", instance->globalname);
+        command_shutdown();
     }
 }
 
@@ -795,14 +791,8 @@ void Supervisor::command_reset() {
 
 // Start command
 void Supervisor::command_start() {
-    // We send a start signal to the listening producer (gfse.py) in order for it to start sending data
-    {
-        std::string command = "START"; 
-        zmq::message_t msg(command.data(), command.size());
-        ctrl_socket->send(msg, zmq::send_flags::none);
-        logger->info("[Supervisor] Sent control command: ", command);
-    }
 
+    start_custom();
     command_startprocessing();
     command_startdata();
 }
@@ -954,13 +944,8 @@ void Supervisor::stop_all(bool fast) {
     std::cout << "[Supervisor] Stopping all workers and managers..." << std::endl;
     logger->info("[Supervisor] Stopping all workers and managers...", globalname);
 
-    // We send a stop signal to the listening producer (gfse.py) in order for it to stop sending data
-    {
-        std::string command = "STOP"; 
-        zmq::message_t msg(command.data(), command.size());
-        ctrl_socket->send(msg, zmq::send_flags::none);
-        logger->info("[Supervisor] Sent control command: ", command);
-    }
+    // Stop data processing custom logic if implemented
+    stop_custom();
 
     command_stop();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));

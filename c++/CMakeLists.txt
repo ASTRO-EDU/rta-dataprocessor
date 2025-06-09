@@ -196,6 +196,7 @@ add_subdirectory(${GS_COMM})
 list(APPEND RTADPPROTO1FILES
     ${RTADP_PROTO1_DIR}/ProcessDataConsumer1.cpp
     ${RTADP_PROTO1_DIR}/Supervisor1.cpp
+    ${RTADP_PROTO1_DIR}/SupervisorCtrlServer.cpp
     ${RTADP_PROTO1_DIR}/Worker1.cpp
     ${RTADP_PROTO1_DIR}/WorkerManager1.cpp
 )
@@ -203,6 +204,7 @@ list(APPEND RTADPPROTO1FILES
 list(APPEND RTADPPROTO2FILES
     ${RTADP_PROTO2_DIR}/ProcessDataConsumer2.cpp
     ${RTADP_PROTO2_DIR}/Supervisor2.cpp
+    ${RTADP_PROTO1_DIR}/SupervisorCtrlServer.cpp
     ${RTADP_PROTO2_DIR}/Worker2.cpp
     ${RTADP_PROTO2_DIR}/WorkerManager2.cpp
 )

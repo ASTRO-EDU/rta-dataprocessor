@@ -24,13 +24,14 @@
 
 using json = nlohmann::json;
 
+void setup_signal_handlers(Supervisor* supervisor);
 
 class Supervisor {
-    // Helper function to open file
-    std::pair<std::vector<json>, int> open_file(const std::string &filename);
-  
+
     // Static pointer to the current instance
     static Supervisor* instance;
+    // Helper function to open file
+    std::pair<std::vector<json>, int> open_file(const std::string &filename);
 
     std::shared_ptr<std::mutex> sendresultslock;
 
@@ -48,7 +49,7 @@ public:
     Supervisor(std::string config_file = "config.json", std::string name = "None");
 
     // Destructor to clean up resources
-    ~Supervisor();
+    virtual ~Supervisor();
 
     // Load configuration from the specified file and name
     void load_configuration(const std::string &config_file, const std::string &name);
@@ -69,7 +70,7 @@ public:
     virtual void start();
 
     // Static function to handle signals
-    static void handle_signals(int signum);
+    void handle_signals(int signum);
 
     // Listen for result data
     void listen_for_result();
@@ -111,7 +112,11 @@ public:
     void command_start();
 
     // Stop command
-    void command_stop();
+    void virtual command_stop();
+
+    // define processing command in the derived class
+    void virtual start_custom() = 0;
+    void virtual stop_custom() = 0;
 
     // Start processing command
     void command_startprocessing();
@@ -138,13 +143,13 @@ public:
     void send_info(int level, const std::string &message, const std::string &pidsource, int code = 0, const std::string &priority = "Low");
 
     // Stop all threads and processes
-    void stop_all(bool fast = false);
+    void virtual stop_all(bool fast = false);
 
-    // Static method to set the current instance
-    static void set_instance(Supervisor *instance);
+   // Static method to set the current instance
+   static void set_instance(Supervisor *instance);
 
-    // Static method to get the current instance
-    static Supervisor* get_instance();
+   // Static method to get the current instance
+   static Supervisor* get_instance();
 
     WorkerLogger* getLogger() const {return logger; }
 
@@ -165,7 +170,7 @@ public:
     zmq::socket_t *socket_command;
     zmq::socket_t *socket_monitoring;
 
-    zmq::socket_t* ctrl_socket;
+    
 
     std::vector<zmq::socket_t*> socket_lp_result;
     std::vector<zmq::socket_t*> socket_hp_result;

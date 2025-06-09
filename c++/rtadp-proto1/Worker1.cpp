@@ -1,5 +1,5 @@
 #include "include/Worker1.h"
-#include "Supervisor.h"
+#include "SupervisorCtrlServer.h"
 #include "avro/Generic.hh"
 #include "avro/Schema.hh"
 #include "avro/ValidSchema.hh"
@@ -313,7 +313,7 @@ std::vector<uint8_t> Worker1::processData(const std::vector<uint8_t>& data, int 
         else if (packet_type == Data_WaveData::TYPE) {
             // std::cout << "[Worker1] Waveform packet received. Starting inference.\n";
 
-            // Allocate a float buffer of 2×Nwords samples (since every waveform is composed of 2 float 16 samples)
+            // Allocate a float buffer of 2ï¿½Nwords samples (since every waveform is composed of 2 float 16 samples)
             std::vector<float> float_wave(2 * N);
 
             // Unpack each word into two uint16_t samples, then convert to float
