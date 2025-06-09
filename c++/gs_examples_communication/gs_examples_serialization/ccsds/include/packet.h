@@ -296,4 +296,26 @@ class Data_Header {
             };
         };  
     };
+    
+class Data_StartAcq {
+    public:
+    static const uint8_t TYPE = 0xA0;
+    static const uint8_t SUB_TYPE = 0x04;
+    
+    // Header data
+    union {
+        uint8_t _p8[12];
+        uint16_t _p16[6];
+        uint32_t _p32[3];
+        struct __attribute__((packed)) {
+            uint8_t type;
+            uint8_t subType;
+            uint8_t source;
+            uint8_t spare0;
+            uint32_t maxWaveNo;
+            uint32_t waitUsecs;
+        };
+    };
+};
+    
 #endif // __PACKET_H__
