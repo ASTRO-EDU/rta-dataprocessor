@@ -78,7 +78,7 @@ void Supervisor1::listen_for_lp_data() {
                     // std::cout << "TYPE: " << std::hex << static_cast<int>(packet_type) << ", SUBTYPE: " << static_cast<int>(subtype) << std::dec << std::endl;
 
                     if (packet_type == Data_WaveHeader::TYPE) {  // WF Packet
-                        std::cout << "[Supervisor1] Waveform packet received." << std::endl;
+                        // std::cout << "[Supervisor1] Waveform packet received." << std::endl;
 
                         // const WfPacketDams* packet_wf = reinterpret_cast<const WfPacketDams*>(raw_packet + sizeof(uint32_t));
 
