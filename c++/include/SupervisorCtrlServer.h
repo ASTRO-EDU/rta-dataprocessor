@@ -29,5 +29,5 @@ public:
 
 void buildDefaultA0Packet(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID)  ;
 void buildStartAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID) ;
-
+void buildStopAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID) ;
 #endif // SUPERVISORCTRLSERVER_H
