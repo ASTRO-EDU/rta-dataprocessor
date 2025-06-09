@@ -46,7 +46,7 @@ void Supervisor1::listen_for_lp_data() {
                         continue; // Keep looking for commands
                     }
                     */
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));     // No data received, sleep to reduce CPU usage
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));     //TODO: can be performance issue
                     continue; // Keep looking for commands
                 }
                 else {
