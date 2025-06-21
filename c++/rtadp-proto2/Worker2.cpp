@@ -56,7 +56,7 @@ std::vector<uint8_t> Worker2::processData(const std::vector<uint8_t>& data, int 
         uint8_t packet_type = receivedPayload->type;  // Store type in a variable
 
         if (packet_type == Data_WaveData::TYPE) {  // WF Packet
-            std::cout << "[Worker2] Waveform packet received. Printing infos: " << std::endl;
+            //std::cout << "[Worker2] Waveform packet received. Printing infos: " << std::endl;
         }
         else if (packet_type == Data_HkDams::TYPE) { // HK Packet
             std::cout << "[Worker2] Housekeeping packet received. Printing infos: " << std::endl;
@@ -71,6 +71,7 @@ std::vector<uint8_t> Worker2::processData(const std::vector<uint8_t>& data, int 
         uint16_t header_size = receivedHeader->size;
         uint32_t crc = receivedHeader->crc;
 
+        /*
         std::cout << "Header:" << std::endl;
         std::cout << "  Start Byte: " << std::hex << (int)start << std::endl;
         std::cout << "  APID: " << std::hex << (int)apid << std::endl;
@@ -80,7 +81,7 @@ std::vector<uint8_t> Worker2::processData(const std::vector<uint8_t>& data, int 
         printf("  CRC: %08X\n", crc);
         std::cout << "Payload:" << std::endl;
         std::cout << "  Type: " << std::hex << (int)packet_type << std::endl;
-
+        */
         // Payload to return
         // binary_result.insert(binary_result.end(), data.begin(), data.end());  // Append data at the end
         binary_result.insert(binary_result.end(), vec.begin(), vec.end());  // Append data at the end

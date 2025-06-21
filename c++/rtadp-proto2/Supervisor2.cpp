@@ -62,7 +62,7 @@ void Supervisor2::listen_for_lp_data() {
                         continue;
                     }
 
-                    std::cout << "Extracted packet size: " << std::dec << (int)size << " (0x" << std::hex << (int)size << ")" << std::endl;
+                    //std::cout << "Extracted packet size: " << std::dec << (int)size << " (0x" << std::hex << (int)size << ")" << std::endl;
 
                     // std::cout << "Received Raw Packet: ";
                     const uint8_t* raw_packet = static_cast<const uint8_t*>(data.data());

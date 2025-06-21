@@ -365,7 +365,7 @@ class SendThread(Thread):
     def stop(self):
         self.running = False
 
-DESCRIPTION = 'GammaFlash DAM server emulator v1.2.0'
+DESCRIPTION = 'DAM server emulator v1.2.0'
 
 if __name__ == '__main__':
     # ----------------------------------
@@ -390,6 +390,7 @@ if __name__ == '__main__':
     wform_dt = 1/args.wform_sec
     hk_dt = 1/args.hk_sec
     hk_rel_no = round(hk_dt / wform_dt)
+    #args.pkt_delay_sec = 0 #AB
 
     print("[GFSE] INFO: Main: Waveform x sec %f (%f s)" % (args.wform_sec, wform_dt))
     print("[GFSE] INFO: Main: HK x sec %f (%f s, %d wform period)" % (args.hk_sec, hk_dt, hk_rel_no))

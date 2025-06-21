@@ -11,6 +11,8 @@ from pathlib import Path
 import logging
 import zmq
 from unittest.runner import TextTestResult
+import datetime
+import shutil
 
 # Setup base paths relative to this script
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -41,7 +43,7 @@ class TestIntegration(unittest.TestCase):
     def setUp(self):
         logger.info('Setting up integration test environment')
         # Get the RTACONFIG environment variable or use default
-        self.rtaconfig = os.environ.get('RTACONFIG', str(CPP_DIR / 'config.json'))
+        self.rtaconfig = os.environ.get('RTACONFIG', str(TEST_DIR / 'config.json'))
         
         # Store process handles
         self.processes = []
@@ -84,37 +86,27 @@ class TestIntegration(unittest.TestCase):
         def terminate_process(process, name, timeout=3):
             if not process or process.poll() is not None:
                 return
-
+                
             try:
                 logger.info(f'Sending SIGINT to {name} (PID: {process.pid})')
-                os.killpg(process.pid, signal.SIGINT)
+                os.killpg(os.getpgid(process.pid), signal.SIGINT)
                 
-                # Poll for process termination
-                start_time = time.time()
-                while time.time() - start_time < timeout:
-                    if process.poll() is not None:
-                        logger.info(f'{name} terminated successfully')
-                        return
-                    time.sleep(0.1)
-                
-                # If still running, try SIGTERM
-                if process.poll() is None:
-                    logger.warning(f'{name} did not respond to SIGINT, sending SIGTERM')
-                    process.terminate()
+                # Wait for graceful termination
+                try:
+                    process.wait(timeout=timeout)
+                    logger.info(f'{name} terminated successfully')
+                except subprocess.TimeoutExpired:
+                    logger.warning(f'{name} did not terminate gracefully, sending SIGTERM')
+                    os.killpg(os.getpgid(process.pid), signal.SIGTERM)
                     
-                    # Wait again
-                    start_time = time.time()
-                    while time.time() - start_time < 2:
-                        if process.poll() is not None:
-                            logger.info(f'{name} terminated with SIGTERM')
-                            return
-                        time.sleep(0.1)
-                    
-                    # Last resort: SIGKILL
-                    if process.poll() is None:
+                    try:
+                        process.wait(timeout=timeout)
+                        logger.info(f'{name} terminated with SIGTERM')
+                    except subprocess.TimeoutExpired:
                         logger.error(f'{name} not responding, sending SIGKILL')
                         process.kill()
                         process.wait(timeout=1)
+                        
             except Exception as e:
                 logger.error(f'Error while terminating {name} (PID: {process.pid}): {e}')
                 try:
@@ -123,6 +115,14 @@ class TestIntegration(unittest.TestCase):
                         process.wait(timeout=1)
                 except:
                     pass
+            finally:
+                # Close log file if it exists
+                if hasattr(process, 'log_file') and process.log_file:
+                    try:
+                        process.log_file.close()
+                        logger.info(f'Closed log file: {process.log_file_path}')
+                    except Exception as e:
+                        logger.error(f'Error closing log file: {e}')
 
         # Find processes by their command
         consumer_process = None
@@ -174,7 +174,20 @@ class TestIntegration(unittest.TestCase):
     def run_process_monitoring(self):
         logger.info('Starting ProcessMonitoring')
         os.makedirs(LOGS_DIR, exist_ok=True)
-        log_file = open(LOGS_DIR / 'monitoring.log', 'w')
+        
+        # Create log file with timestamp to avoid conflicts
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_file_path = LOGS_DIR / f'monitoring_{timestamp}.log'
+        
+        try:
+            log_file = open(log_file_path, 'w', buffering=1)  # Line buffered for real-time output
+            logger.info(f'ProcessMonitoring log file: {log_file_path}')
+        except Exception as e:
+            logger.error(f'Failed to create log file {log_file_path}: {e}')
+            # Fallback to default location
+            log_file_path = LOGS_DIR / 'monitoring.log'
+            log_file = open(log_file_path, 'w', buffering=1)
+        
         cmd = ['python3', 'ProcessMonitoring.py', self.rtaconfig]
         process = subprocess.Popen(
             cmd,
@@ -183,6 +196,11 @@ class TestIntegration(unittest.TestCase):
             stderr=log_file,
             preexec_fn=os.setsid
         )
+        
+        # Store the log file reference so it can be closed later
+        process.log_file = log_file
+        process.log_file_path = log_file_path
+        
         self.processes.append(process)
         logger.info(f'ProcessMonitoring started with PID {process.pid}')
 
@@ -257,12 +275,42 @@ class TestIntegration(unittest.TestCase):
 
         return process
 
+    def check_monitoring_logs(self, process):
+        """Check and display ProcessMonitoring log contents"""
+        if hasattr(process, 'log_file_path') and process.log_file_path:
+            try:
+                # Flush the log file to ensure all output is written
+                if hasattr(process, 'log_file') and process.log_file:
+                    process.log_file.flush()
+                
+                # Read the log file contents
+                with open(process.log_file_path, 'r') as f:
+                    log_contents = f.read()
+                
+                if log_contents.strip():
+                    logger.info(f'ProcessMonitoring log contents ({process.log_file_path}):')
+                    for line in log_contents.strip().split('\n'):
+                        if line.strip():
+                            logger.info(f'  [MONITORING] {line.strip()}')
+                else:
+                    logger.info(f'ProcessMonitoring log file is empty: {process.log_file_path}')
+                    
+            except Exception as e:
+                logger.error(f'Error reading ProcessMonitoring log file: {e}')
+
     def test_full_integration(self):
         logger.info('Starting full integration test')
+
         # Start ProcessMonitoring
         monitoring_process = self.run_process_monitoring()
         self.assertIsNotNone(monitoring_process, "Failed to start ProcessMonitoring")
-        time.sleep(2)  # Give it time to initialize
+        time.sleep(3)  # Give it time to initialize
+
+        # Start the Consumer
+        consumer_process = self.run_consumer()
+        self.assertIsNotNone(consumer_process, "Failed to start Consumer")
+        # Wait before sending the start command to system components
+        time.sleep(3)  # Give it time to initialize
 
         # Start DAMS simulator
         simulator_process = self.run_dams_simulator(
@@ -270,31 +318,29 @@ class TestIntegration(unittest.TestCase):
             port=1234,
             indir=str(TEST_DIR / 'dl0_simulated'),
             rpid=1,
-            wform_sec=200
+            wform_sec=2000
         )
         self.assertIsNotNone(simulator_process, "Failed to start DAMS simulator")
-        time.sleep(6)  # Give it time to initialize
+        time.sleep(10)  # Give it time to initialize
 
-        # Start the Consumer
-        consumer_process = self.run_consumer()
-        self.assertIsNotNone(consumer_process, "Failed to start Consumer")
-        # time.sleep(2)  # Give it time to initialize
 
-        # Wait before sending the start command to system components
-        time.sleep(3)
         # Send start command to system components
         start_process = self.send_start_command()
         self.assertIsNotNone(start_process, "Failed to send start command")
         
         # Wait for some time to let the system process data
         logger.info('Waiting for system to process data (100)')
-        time.sleep(100)  # Adjust this time based on your needs
+        time.sleep(60)  # Adjust this time based on your needs
 
         # Check if processes are still running
         logger.info('Checking if main processes are still running')
         self.assertEqual(monitoring_process.poll(), None, "ProcessMonitoring died unexpectedly")
         self.assertEqual(consumer_process.poll(), None, "Consumer died unexpectedly")
         self.assertEqual(simulator_process.poll(), None, "DAMS simulator died unexpectedly")
+        
+        # Check ProcessMonitoring logs
+        self.check_monitoring_logs(monitoring_process)
+        
         logger.info('Integration test completed successfully')
 
 def main():
