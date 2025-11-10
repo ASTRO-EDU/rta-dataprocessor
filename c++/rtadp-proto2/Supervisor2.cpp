@@ -1,6 +1,6 @@
 #include "include/Supervisor2.h"
 #include "packet.h"
-#include "../include/utils2.hh"
+#include "utils2.hh"
 
 // Constructor
 Supervisor2::Supervisor2(const std::string& config_file, const std::string& name)

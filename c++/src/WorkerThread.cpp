@@ -9,7 +9,7 @@
 #include <memory>
 #include <execinfo.h>
 #include <unistd.h>
-#include "../include/utils2.hh"
+#include "utils2.hh"
 #include <iostream>
 #include "WorkerThread.h"
 

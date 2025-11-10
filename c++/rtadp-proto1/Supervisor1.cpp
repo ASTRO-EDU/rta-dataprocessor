@@ -1,5 +1,5 @@
 #include "include/Supervisor1.h"
-#include "../include/utils2.hh"
+#include "utils2.hh"
 
 // Constructor
 Supervisor1::Supervisor1(const std::string& config_file, const std::string& name)

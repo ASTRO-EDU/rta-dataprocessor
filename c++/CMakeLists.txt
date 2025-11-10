@@ -132,10 +132,6 @@ find_library(AVROCPP_LIBRARY
 include_directories(${AVRO_INCLUDE_DIRS})
 link_directories(${AVRO_LIBRARY_DIRS})
 
-# Directory locali
-set(GS_COMM ${PROJECT_SOURCE_DIR}/gs_examples_communication)
-set(GS_SER ${GS_COMM}/gs_examples_serialization)
-
 set(BOOST_ROOT "/usr")
 set(BOOST_LIBRARYDIR "/usr/lib/x86_64-linux-gnu")
 set(Boost_NO_SYSTEM_PATHS OFF)
@@ -177,9 +173,6 @@ include_directories(
     ${INC_DIR}
     "/include"
     ${JsonDom_INCLUDE_DIR}
-    ${GS_COMM}
-    ${GS_SER}
-    ${GS_SER}/ccsds/include
     ${ZeroMQ_INCLUDE_DIRS}
     ${spdlog_INCLUDE_DIRS}
     ${HDF5_INCLUDE_DIRS}
@@ -192,7 +185,6 @@ link_directories(
     "/usr/lib/x86_64-linux-gnu"
 )
 
-add_subdirectory(${GS_COMM})
 add_subdirectory(interface)
 
 list(APPEND RTADPPROTO1FILES
@@ -230,7 +222,6 @@ target_link_libraries(ProcessDataConsumer1 PRIVATE
     spdlog::spdlog
     ${Boost_LIBRARIES}
     pthread
-    GSccsds
     InterfacePacket
     ${AVROCPP_LIBRARY}
     ${TFLITE_C_LIB}
@@ -245,7 +236,6 @@ target_link_libraries(ProcessDataConsumer2 PRIVATE
     spdlog::spdlog
     ${Boost_LIBRARIES}
     pthread
-    GSccsds
     InterfacePacket
     ${AVROCPP_LIBRARY}
     ${HDF5_LIBRARIES}
