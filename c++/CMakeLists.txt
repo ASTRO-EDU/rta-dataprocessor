@@ -169,6 +169,7 @@ file(GLOB SRC_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/interface/include
     ${RTADP_PROTO1_DIR}/include
     ${RTADP_PROTO2_DIR}/include    
     ${Boost_INCLUDE_DIRS}
@@ -192,6 +193,7 @@ link_directories(
 )
 
 add_subdirectory(${GS_COMM})
+add_subdirectory(interface)
 
 list(APPEND RTADPPROTO1FILES
     ${RTADP_PROTO1_DIR}/ProcessDataConsumer1.cpp
@@ -229,6 +231,7 @@ target_link_libraries(ProcessDataConsumer1 PRIVATE
     ${Boost_LIBRARIES}
     pthread
     GSccsds
+    InterfacePacket
     ${AVROCPP_LIBRARY}
     ${TFLITE_C_LIB}
     ${HDF5_LIBRARIES}
@@ -243,6 +246,7 @@ target_link_libraries(ProcessDataConsumer2 PRIVATE
     ${Boost_LIBRARIES}
     pthread
     GSccsds
+    InterfacePacket
     ${AVROCPP_LIBRARY}
     ${HDF5_LIBRARIES}
     ${HDF5_CXX_LIBRARIES}

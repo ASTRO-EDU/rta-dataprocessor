@@ -10,7 +10,7 @@
 #include <condition_variable>
 #include <queue>
 
-#include "generators.hh"
+// #include "generators.hh"  // Not needed for rtadp-proto1/proto2 - causes conflicts with interface/packet.h
 #include "tchandler.h"
 
 #include "../src/zeromq/include/producer.hh"

@@ -8,7 +8,7 @@
 #include "avro/DataFile.hh"
 #include "avro/Decoder.hh"
 #include "avro/Specific.hh"
-#include "ccsds/include/packet.h"
+#include "packet.h"
 #include <iostream>
 #include <cstring>
 #include <H5Cpp.h>

@@ -9,6 +9,9 @@ if ! docker image inspect rta-dataprocessor:ubuntu >/dev/null 2>&1; then
     docker build -t rta-dataprocessor:ubuntu -f ../env/Dockerfile.ubuntu ..
 fi
 
+# Bootstrap the image to allow the container's standard user to write on user host
+../env/bootstrap.sh rta-dataprocessor:ubuntu $USER
+
 # Run Docker container and build the project
 echo "Building project in Docker container..."
 docker run -it --rm --platform linux/amd64 \
@@ -17,7 +20,7 @@ docker run -it --rm --platform linux/amd64 \
     -v "$(pwd)/../data01:/data01" \
     -v "$(pwd)/../data02:/data02" \
     --name rta-dataprocessor \
-    rta-dataprocessor:ubuntu \
+    rta-dataprocessor:ubuntu_$USER \
     bash -c "cd /home/worker/workspace/c++ && \
              rm -rf build && \
              mkdir build && \

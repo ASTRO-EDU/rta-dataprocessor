@@ -1,6 +1,4 @@
 #include "./include/SupervisorCtrlServer.h"
-#include "ccsds/include/packet.h"
-#include "../include/utils2.hh"
 
 static const size_t buffSz = 128;
 // Constructor
@@ -61,7 +59,7 @@ void SupervisorCtrlServer::stop_custom() {
 }
 
 void buildDefaultA0Packet(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID = 0) {
-    if (maxBufferSize < sizeof(Header) + sizeof(Data_Header)) {
+    if (maxBufferSize < sizeof(HeaderDams) + sizeof(Data_Header)) {
         printf("Error: buffer too small in buildDefaultA0Packet\n");
         return;
     }
@@ -77,10 +75,10 @@ void buildDefaultA0Packet(uint8_t* buffer, const size_t maxBufferSize, uint16_t 
 
     Data_Header* data = (Data_Header*)(buffer + sizeof(HeaderDams));
     data->type = 0xA0;
-    data->subType = 0x99; // caso "non definito" ? farà trigger FE
+    data->subType = 0x99; // caso "non definito" ? farï¿½ trigger FE
 }
 
-void buildStartAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID = 0) {
+void buildStartAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID) {
     if (maxBufferSize < sizeof(HeaderDams) + sizeof(Data_StartAcq)) {
         printf("Error: buffer too small in buildStartAcqPacket\n");
         return;
@@ -104,7 +102,7 @@ void buildStartAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t r
     data->waitUsecs = 0;
 }
 
-void buildStopAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID = 0) {
+void buildStopAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID) {
     if (maxBufferSize < sizeof(HeaderDams) + sizeof(Data_Header)) {
         printf("Error: buffer too small in buildStartAcqPacket\n");
         return;

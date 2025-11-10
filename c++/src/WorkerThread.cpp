@@ -9,7 +9,6 @@
 #include <memory>
 #include <execinfo.h>
 #include <unistd.h>
-#include "ccsds/include/packet.h"
 #include "../include/utils2.hh"
 #include <iostream>
 #include "WorkerThread.h"

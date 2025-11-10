@@ -33,6 +33,11 @@ class Supervisor {
     // Helper function to open file
     std::pair<std::vector<json>, int> open_file(const std::string &filename);
 
+    // Helper functions to reduce code duplication in listen_for_* methods
+    void receive_and_process_binary(zmq::socket_t* socket, bool is_low_priority, const std::string& log_context);
+    void receive_and_process_string(zmq::socket_t* socket, bool is_low_priority, const std::string& log_context);
+    void receive_and_process_file(zmq::socket_t* socket, bool is_low_priority, const std::string& log_context);
+
     std::shared_ptr<std::mutex> sendresultslock;
 
     std::condition_variable cv;

@@ -1,7 +1,6 @@
 #ifndef SUPERVISORCTRLSERVER_H
 #define SUPERVISORCTRLSERVER_H
 
-#include "Supervisor.h"
 #include <zmq.hpp>
 #include <thread>
 #include <chrono>
@@ -9,6 +8,9 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+
+#include "Supervisor.h"
+#include "packet.h"
 
 class SupervisorCtrlServer : public Supervisor {
 public:
@@ -27,4 +29,6 @@ public:
     void start_custom() override; 
 };
 
+void buildStartAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID = 0);
+void buildStopAcqPacket(uint8_t* buffer, const size_t maxBufferSize, uint16_t runID = 0);
 #endif // SUPERVISORCTRLSERVER_H

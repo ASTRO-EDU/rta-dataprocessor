@@ -15,8 +15,6 @@
 #include "avro/DataFile.hh"
 #include "avro/Decoder.hh"
 #include "avro/Specific.hh"
-#include "ccsds/include/packet.h"
-#include "../include/utils2.hh"
 
 Supervisor* Supervisor::instance = nullptr;
 
@@ -50,20 +48,20 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         if (datasockettype == "pushpull") {
             socket_lp_data = new zmq::socket_t(context, ZMQ_PULL);
             socket_lp_data->bind(config["data_lp_socket"].get<std::string>());
-            socket_lp_data->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+            socket_lp_data->set(zmq::sockopt::rcvtimeo, timeout);
             socket_hp_data = new zmq::socket_t(context, ZMQ_PULL);
             socket_hp_data->bind(config["data_hp_socket"].get<std::string>());
         }
         else if (datasockettype == "pubsub") {
             socket_lp_data = new zmq::socket_t(context, ZMQ_SUB);
             socket_lp_data->connect(config["data_lp_socket"].get<std::string>());
-            socket_lp_data->setsockopt(ZMQ_SUBSCRIBE, "", 0);
-            socket_lp_data->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+            socket_lp_data->set(zmq::sockopt::subscribe, "");
+            socket_lp_data->set(zmq::sockopt::rcvtimeo, timeout);
 
             socket_hp_data = new zmq::socket_t(context, ZMQ_SUB);
             socket_hp_data->connect(config["data_hp_socket"].get<std::string>());
-            socket_hp_data->setsockopt(ZMQ_SUBSCRIBE, "", 0);
-            socket_hp_data->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+            socket_hp_data->set(zmq::sockopt::subscribe, "");
+            socket_hp_data->set(zmq::sockopt::rcvtimeo, timeout);
         }
         else if (datasockettype == "custom") {
             logger->info("Supervisor started with custom data receiver", globalname);
@@ -75,8 +73,8 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         // Set up command and monitoring sockets
         socket_command = new zmq::socket_t(context, ZMQ_SUB);
         socket_command->connect(config["command_socket"].get<std::string>());
-        socket_command->setsockopt(ZMQ_SUBSCRIBE, "", 0);
-        socket_command->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+        socket_command->set(zmq::sockopt::subscribe, "");
+        socket_command->set(zmq::sockopt::rcvtimeo, timeout);
 
         socket_monitoring = new zmq::socket_t(context, ZMQ_PUSH);
         socket_monitoring->connect(config["monitoring_socket"].get<std::string>());
@@ -510,14 +508,101 @@ void Supervisor::send_result(WorkerManager* manager, int indexmanager) {
     }
 }
 
+// Helper function to receive and process binary data
+void Supervisor::receive_and_process_binary(zmq::socket_t* socket, bool is_low_priority, const std::string& log_context) {
+    zmq::message_t data;
+    auto result = socket->recv(data);
+    
+    if (!result) {
+        // Check if it's not a timeout error
+        int err = zmq_errno();
+        if (err != EAGAIN && err != EWOULDBLOCK) {
+            logger->warning(fmt::format("[{}] recv failed with error: {} ({})", 
+                log_context, zmq_strerror(err), err), globalname);
+        }
+        return;
+    }
+    
+    // Convert received binary data to vector
+    std::vector<unsigned char> data_vec(
+        static_cast<unsigned char*>(data.data()), 
+        static_cast<unsigned char*>(data.data()) + data.size()
+    );
+
+    // Push to all manager queues
+    for (auto& manager : manager_workers) {
+        if (is_low_priority) {
+            manager->getLowPriorityQueue()->push(data_vec);
+        } else {
+            manager->getHighPriorityQueue()->push(data_vec);
+        }
+    }
+}
+
+// Helper function to receive and process string data
+void Supervisor::receive_and_process_string(zmq::socket_t* socket, bool is_low_priority, const std::string& log_context) {
+    zmq::message_t data;
+    auto result = socket->recv(data);
+    
+    if (!result) {
+        // Check if it's not a timeout error
+        int err = zmq_errno();
+        if (err != EAGAIN && err != EWOULDBLOCK) {
+            logger->warning(fmt::format("[{}] recv failed with error: {} ({})", 
+                log_context, zmq_strerror(err), err), globalname);
+        }
+        return;
+    }
+    
+    std::string data_str(static_cast<char*>(data.data()), data.size());
+    std::vector<unsigned char> data_vec(data_str.begin(), data_str.end());
+
+    // Push to all manager queues
+    for (auto& manager : manager_workers) {
+        if (is_low_priority) {
+            manager->getLowPriorityQueue()->push(data_vec);
+        } else {
+            manager->getHighPriorityQueue()->push(data_vec);
+        }
+    }
+}
+
+// Helper function to receive and process file data
+void Supervisor::receive_and_process_file(zmq::socket_t* socket, bool is_low_priority, const std::string& log_context) {
+    zmq::message_t filename_msg;
+    auto result = socket->recv(filename_msg);
+    
+    if (!result) {
+        // Check if it's not a timeout error
+        int err = zmq_errno();
+        if (err != EAGAIN && err != EWOULDBLOCK) {
+            logger->warning(fmt::format("[{}] recv failed with error: {} ({})", 
+                log_context, zmq_strerror(err), err), globalname);
+        }
+        return;
+    }
+    
+    std::string filename(static_cast<char*>(filename_msg.data()), filename_msg.size());
+
+    for (auto& manager : manager_workers) {
+        auto [data, size] = open_file(filename);
+        for (int i = 0; i < size; i++) {
+            if (is_low_priority) {
+                manager->getLowPriorityQueue()->push(data[i]);
+            } else {
+                manager->getHighPriorityQueue()->push(data[i]);
+            }
+        }
+    }
+}
+
 // Listen for low priority data (method is overridden in Supervisor1 and Supervisor2)
 void Supervisor::listen_for_lp_data() {
     while (continueall) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
 
         if (!stopdata) {
-            zmq::message_t data;
-            socket_lp_data->recv(data);
+            receive_and_process_binary(socket_lp_data, true, "listen_for_lp_data");
         }
     }
 
@@ -531,8 +616,7 @@ void Supervisor::listen_for_hp_data() {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
 
         if (!stopdata) {
-            zmq::message_t data;
-            socket_hp_data->recv(data);
+            receive_and_process_binary(socket_hp_data, false, "listen_for_hp_data");
         }
     }
 
@@ -546,14 +630,7 @@ void Supervisor::listen_for_lp_string() {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
 
         if (!stopdata) {
-            zmq::message_t data;
-            socket_lp_data->recv(data);
-            std::string data_str(static_cast<char*>(data.data()), data.size());
-            std::vector<unsigned char> data_vec(data_str.begin(), data_str.end());
-
-            for (auto& manager : manager_workers) {
-                manager->getLowPriorityQueue()->push(data_vec);
-            }
+            receive_and_process_string(socket_lp_data, true, "listen_for_lp_string");
         }
     }
 
@@ -567,14 +644,7 @@ void Supervisor::listen_for_hp_string() {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
 
         if (!stopdata) {
-            zmq::message_t data;
-            socket_hp_data->recv(data);
-            std::string data_str(static_cast<char*>(data.data()), data.size());
-            std::vector<unsigned char> data_vec(data_str.begin(), data_str.end());
-
-            for (auto& manager : manager_workers) {
-                manager->getHighPriorityQueue()->push(data_vec);
-            }
+            receive_and_process_string(socket_hp_data, false, "listen_for_hp_string");
         }
     }
 
@@ -588,16 +658,7 @@ void Supervisor::listen_for_lp_file() {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
 
         if (!stopdata) {
-            zmq::message_t filename_msg;
-            socket_lp_data->recv(filename_msg);
-            std::string filename(static_cast<char*>(filename_msg.data()), filename_msg.size());
-
-            for (auto& manager : manager_workers) {
-                auto [data, size] = open_file(filename);
-                for (int i = 0; i < size; i++) {
-                    manager->getLowPriorityQueue()->push(data[i]);
-                }
-            }
+            receive_and_process_file(socket_lp_data, true, "listen_for_lp_file");
         }
     }
 
@@ -641,16 +702,7 @@ void Supervisor::listen_for_hp_file() {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));     // To avoid 100% CPU 
 
         if (!stopdata) {
-            zmq::message_t filename_msg;
-            socket_hp_data->recv(filename_msg);
-            std::string filename(static_cast<char*>(filename_msg.data()), filename_msg.size());
-
-            for (auto& manager : manager_workers) {
-                auto [data, size] = open_file(filename);
-                for (int i = 0; i < size; i++) {
-                    manager->getHighPriorityQueue()->push(data[i]);
-                }
-            }
+            receive_and_process_file(socket_hp_data, false, "listen_for_hp_file");
         }
     }
 
