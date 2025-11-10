@@ -4,13 +4,16 @@
 set -e
 
 # Build Docker image if it doesn't exist
-if ! docker image inspect rta-dataprocessor:ubuntu >/dev/null 2>&1; then
-    echo "Building Docker image..."
-    docker build -t rta-dataprocessor:ubuntu -f ../env/Dockerfile.ubuntu ..
+if ! docker image inspect rta-dataprocessor:ubuntu_$USER >/dev/null 2>&1; then
+    if ! docker image inspect rta-dataprocessor:ubuntu >/dev/null 2>&1; then
+        echo "Building Docker image..."
+        docker build -t rta-dataprocessor:ubuntu -f ../env/Dockerfile.ubuntu ..
+    fi
+    echo "Bootstrapping Docker image..."
+    # Bootstrap the image to allow the container's standard user to write on user host
+    ../env/bootstrap.sh rta-dataprocessor:ubuntu $USER
 fi
 
-# Bootstrap the image to allow the container's standard user to write on user host
-../env/bootstrap.sh rta-dataprocessor:ubuntu $USER
 
 # Run Docker container and build the project
 echo "Building project in Docker container..."
