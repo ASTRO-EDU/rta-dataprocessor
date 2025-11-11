@@ -5,7 +5,7 @@
 //
 //    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 //
-#include "ConfigurationManager.h"
+#include <rtadp/ConfigurationManager.h>
 
 using json = nlohmann::json;
 

@@ -5,8 +5,8 @@
 //
 //    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 //
-#include "MonitoringPoint.h"
-#include "WorkerManager.h"
+#include <rtadp/MonitoringPoint.h>
+#include <rtadp/WorkerManager.h>
 
 // Constructor to initialize the MonitoringPoint with a WorkerManager pointer
 MonitoringPoint::MonitoringPoint(WorkerManager* manager)

@@ -6,7 +6,7 @@
 //    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 //
 
-#include "Supervisor.h"
+#include <rtadp/Supervisor.h>
 #include "avro/Generic.hh"
 #include "avro/Schema.hh"
 #include "avro/ValidSchema.hh"

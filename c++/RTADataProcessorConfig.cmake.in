@@ -1,0 +1,15 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(PkgConfig REQUIRED)
+pkg_check_modules(PC_ZeroMQ REQUIRED libzmq)
+
+set(AVRO_VERSION 1.11.0)
+pkg_check_modules(AVRO avro-cpp>=${AVRO_VERSION})
+if(NOT AVRO_FOUND)
+    find_library(AVROCPP_LIBRARY NAMES avrocpp REQUIRED)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/RTADataProcessorTargets.cmake")
+

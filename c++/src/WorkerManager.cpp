@@ -6,7 +6,7 @@
 //    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 //
 #include <atomic>
-#include "WorkerManager.h"
+#include <rtadp/WorkerManager.h>
 
 // Constructor
 WorkerManager::WorkerManager(int manager_id, Supervisor* supervisor, const std::string& name)

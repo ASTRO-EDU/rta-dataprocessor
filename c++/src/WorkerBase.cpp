@@ -6,7 +6,7 @@
 //    Andrea Bulgarelli <andrea.bulgarelli@inaf.it>
 //
 
-#include "WorkerBase.h"
+#include <rtadp/WorkerBase.h>
 
 // Default constructor
 WorkerBase::WorkerBase()
