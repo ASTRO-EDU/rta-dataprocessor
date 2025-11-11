@@ -1,131 +1,142 @@
-# gammasky-env
-gammasky-env
+# RTA Data Processor - Docker Environment
 
-# RTADP-C++ Environment Setup and Execution Guide
+This directory contains Docker configurations for building the RTA Data Processor environment.
 
-## Setup Docker
+## Docker Image Architecture
 
-### Clone the repository:
+The build is organized in layers:
+
+1. **Base Image** (`rta-dataprocessor-base`) - System dependencies and C++ libraries
+2. **Production Image** (`rta-dataprocessor-prod`) - RTA Data Processor framework installed
+
+## Quick Start
+
+### Build Base Image (once)
+
 ```bash
-git clone --branch rta-dp-c++ https://github.com/ASTRO-EDU/rta-dataprocessor.git
+cd rta-dataprocessor/env
+./build-base-image.sh
 ```
 
-### Option 1: Use the prebuilt docker image
-```bash
-# Login to the registry
-docker login git.ia2.inaf.it:5050
+This creates `rta-dataprocessor-base:v1.0.0` with:
+- Ubuntu 22.04
+- GCC 11, CMake, Python 3
+- Boost, ZeroMQ, Avro, spdlog
+- System libraries (HDF5, TinyXML2, etc.)
 
-# Pull the image
-docker pull git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor:1.0.2
+### Build Production Image
+
+```bash
+cd rta-dataprocessor/env
+./build-prod-image.sh
 ```
 
-### Option 2: Build it yourself
-```bash
-# Navigate to the C++ directory
-cd rta-dataprocessor/c++
+This creates `rta-dataprocessor-prod:<branch>-<commit>` with:
+- Everything from base image
+- RTA Data Processor framework compiled and installed
 
-# Build the Docker image
-docker build -t rta-dataprocessor:1.0.2 -f ../env/Dockerfile.ubuntu ..
+### Bootstrap for User Permissions
+
+```bash
+./bootstrap.sh rta-dataprocessor-prod:<tag> $USER
 ```
 
-### Run bootstrap
+Creates a user-specific image that can write to your host filesystem.
+
+## Manual Build
+
+If you prefer to build manually:
+
 ```bash
-# Bootstrap the image to allow the container's standard user to write on user host
-cd ../env
-./bootstrap.sh rta-dataprocessor:1.0.2 $USER
+# Base image
+docker build -t rta-dataprocessor-base:v1.0.0 \
+    -f docker_base/Dockerfile.base \
+    ..
+
+# Production image
+docker build -t rta-dataprocessor-prod:latest \
+    --build-arg BASE_IMAGE=rta-dataprocessor-base:v1.0.0 \
+    -f Dockerfile.prod \
+    ..
 ```
 
-### Run and enter the container
-```bash
-# Run the container
-docker run -dt --platform linux/amd64 \
-    -v "$(pwd)/..:/home/worker/workspace" \
-    -v "$(pwd)/../shared_dir:/shared_dir" \
-    -v "$(pwd)/./data01:/data01" \
-    -v "$(pwd)/../data02:/data02" \
-    --name rtadataprocessor \
-    rta-dataprocessor:1.0.2
+## Using the Images
 
-# Enter the container
-docker exec -it rtadataprocessor bash
+### Interactive Shell
+
+```bash
+docker run -it --rm \
+    -v $(pwd)/..:/home/worker/rta-dataprocessor \
+    rta-dataprocessor-prod:latest \
+    bash
 ```
 
-## Build and Compile Project
-Once inside the container, follow these steps to build the project:
+### Run Application
+
 ```bash
-# Navigate to the C++ directory
-cd workspace/c++
-
-# Clean and create build directory
-rm -rf build
-mkdir build && cd build
-
-# Configure with CMake
-cmake -DENABLE_LOGGING=OFF ..
-
-# Build the project
-make -j4
+docker run -it --rm \
+    -v $(pwd)/..:/home/worker/rta-dataprocessor \
+    rta-dataprocessor-prod:latest \
+    /home/worker/rta-dataprocessor/c++/build/ProcessDataConsumer1
 ```
 
-## Set Up Model Environment
-Before running the tests, set up the environment variable for the inference model:
-```bash
-# Set the model path environment variable
-echo 'export RTADP_MODEL_PATH="/home/worker/workspace/test/ml_models/float_16.tflite"' >> ~/.bashrc
+## Directory Structure
 
-# Reload the bash configuration
-source ~/.bashrc
 ```
-Note: By default the float 16 quantized model (float_16.tflite) can be found under test/ml_models
-
-## Run Pipeline Tests
-1. To run the integration test of ProcessDataConsumer1 (inference + DL2 writing):
-```bash
-# Navigate to the test directory
-cd $HOME/workspace/test
-
-# Run the integration test
-python3 test_integration_rtadp1.py
+env/
+├── Dockerfile.base          # Base image with system dependencies
+├── Dockerfile.prod          # Production image with framework installed
+├── docker_base/
+│   ├── install-system-packages.sh  # Install Ubuntu packages
+│   └── build-dependencies.sh       # Build C++ libraries from source
+├── build-base-image.sh      # Script to build base image
+├── build-prod-image.sh      # Script to build production image
+└── bootstrap.sh             # Create user-specific image
 ```
 
-2. To run the integration test of ProcessDataConsumer2 (basic data processing):
-```bash
-# Navigate to the test directory
-cd $HOME/workspace/test
+## Updating Images
 
-# Run the integration test
-python3 test_integration_rtadp2.py
+### Update System Dependencies
+
+Edit `docker_base/install-system-packages.sh` or `docker_base/build-dependencies.sh`, then rebuild base image.
+
+### Update Framework
+
+Just rebuild the production image - it will recompile the latest code:
+
+```bash
+./build-prod-image.sh
 ```
 
-## Run the Components Separately
-1. DAMS-side (Terminal 1):
+## Troubleshooting
+
+### Build fails with permission errors
+
+Make sure you run bootstrap:
 ```bash
-# Launch the simulator/streamer
-cd $HOME/workspace/test/
-python gfse.py --addr 127.0.0.1 --port 1234 --indir dl0_simulated/ --rpid 1 --wform-sec 200
+./bootstrap.sh <image-name> $USER
 ```
 
-2. RTA-DP C++-side (requires 3 parallel terminals):
+### Image not found
 
-Terminal 2 - Process Monitoring:
+List available images:
 ```bash
-cd $HOME/workspace/workers
-python ProcessMonitoring.py $RTACONFIG
-```
-
-Terminal 3 - Consumer:
-```bash
-cd $HOME/workspace/c++/build
-./ProcessDataConsumer1 $RTACONFIG
-```
-Or:
-```bash
-cd $HOME/workspace/c++/build
-./ProcessDataConsumer2 $RTACONFIG
+docker images | grep rta-dataprocessor
 ```
 
-Terminal 4 - Send Command:
+### Clean rebuild
+
+Remove old images and rebuild:
 ```bash
-cd $HOME/workspace/workers
-python SendCommand.py $RTACONFIG start all
+docker rmi rta-dataprocessor-prod:latest
+docker rmi rta-dataprocessor-base:v1.0.0
+./build-base-image.sh
+./build-prod-image.sh
 ```
+
+## Notes
+
+- Base image needs to be rebuilt only when system dependencies change
+- Production image should be rebuilt when framework code changes
+- Image tags include git branch and commit hash for traceability
+- Bootstrap creates a user-specific image suffixed with your username
