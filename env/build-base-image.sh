@@ -3,7 +3,7 @@
 # Exit on error
 set -e
 
-IMAGE_MANIFEST="rta-dataprocessor-base"
+IMAGE_MANIFEST="git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor-base"
 TAG="v1.0.0"
 
 # Build Docker image if it doesn't exist

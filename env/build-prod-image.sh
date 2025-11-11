@@ -3,16 +3,16 @@
 # Exit on error
 set -e
 
-BASE_IMAGE="rta-dataprocessor-base:v1.0.0"
+BASE_IMAGE="git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor-base:v1.0.0"
 
-IMAGE_MANIFEST="rta-dataprocessor-prod"
+IMAGE_MANIFEST="git.ia2.inaf.it:5050/gammasky/gammasky-cimone/rta-dataprocessor-prod"
 
 ## take current git tag
 GIT_TAG=$(git describe --tags)
 
 echo "Git tag: $GIT_TAG"
 
-# Build Docker image if it doesn't exist
+# Build Docker image
 echo "Building Docker image..."
 docker build --build-arg BASE_IMAGE=$BASE_IMAGE -t $IMAGE_MANIFEST:$GIT_TAG -f ./Dockerfile.prod .. --no-cache
 
