@@ -1,0 +1,38 @@
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system packages
+COPY env/docker_base/install-system-packages.sh /tmp/
+RUN chmod +x /tmp/install-system-packages.sh && \
+    /tmp/install-system-packages.sh && \
+    rm /tmp/install-system-packages.sh
+
+# Build and install C++ dependencies
+COPY env/docker_base/build-dependencies.sh /tmp/
+RUN chmod +x /tmp/build-dependencies.sh && \
+    /tmp/build-dependencies.sh && \
+    rm /tmp/build-dependencies.sh
+
+# Create worker user and workspace
+RUN useradd -m -s /bin/bash worker
+WORKDIR /home/worker
+RUN mkdir -p /home/worker/workspace /home/worker/dependencies
+
+# Copy Python requirements
+COPY env/venv/requirements.txt /tmp/requirements.txt
+
+# Fix permissions and install Python dependencies for worker
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt && \
+    rm -f /tmp/requirements.txt
+
+# Switch to worker user
+USER worker
+
+# Mount point for workspace
+VOLUME /home/worker/workspace
+
+# Default command to keep container running
+CMD ["bash"]
+

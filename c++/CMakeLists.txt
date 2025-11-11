@@ -71,7 +71,7 @@ install(TARGETS rtadp-framework
     INCLUDES DESTINATION include
 )
 
-install(DIRECTORY include/
+install(DIRECTORY include/rtadp/
     DESTINATION include/rtadp
     FILES_MATCHING PATTERN "*.h" PATTERN "*.hh" PATTERN "*.hpp"
 )
