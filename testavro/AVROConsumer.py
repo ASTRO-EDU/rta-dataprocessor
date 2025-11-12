@@ -37,7 +37,7 @@ def main(config_file_path, processname):
                 {"name": "assembly", "type": "string"},
                 {"name": "name", "type": "string"},
                 {"name": "serial_number", "type": "string"},
-                {"name": "timestamp", "type": "long"},
+                {"name": "timestamp", "type": "double"},
                 {"name": "source_timestamp", "type": ["null", "long"]},
                 {"name": "units", "type": "string"},
                 {"name": "archive_suppress", "type": "boolean"},

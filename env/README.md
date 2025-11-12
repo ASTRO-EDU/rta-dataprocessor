@@ -1,67 +1,142 @@
-# gammaflash-env
-gammaflash-env
+# RTA Data Processor - Docker Environment
 
-## Install and run the environment
+This directory contains Docker configurations for building the RTA Data Processor environment.
 
-1. Install python3 (current supported version 3.8.8)
+## Docker Image Architecture
 
-2. Create the environment
+The build is organized in layers:
 
-```
-python3 -m venv /path/to/new/virtual/environment
-```
+1. **Base Image** (`rta-dataprocessor-base`) - System dependencies and C++ libraries
+2. **Production Image** (`rta-dataprocessor-prod`) - RTA Data Processor framework installed
 
-3. Install requirements
+## Quick Start
 
-```
-pip install -r venv/requirements.txt
-```
+### Build Base Image (once)
 
-4. Run the activate script
-
-```
-source /path/to/new/virtual/environment/bin/activate
+```bash
+cd rta-dataprocessor/env
+./build-base-image.sh
 ```
 
-=============
-Docker image
+This creates `rta-dataprocessor-base:v1.0.0` with:
+- Ubuntu 22.04
+- GCC 11, CMake, Python 3
+- Boost, ZeroMQ, Avro, spdlog
+- System libraries (HDF5, TinyXML2, etc.)
 
-docker system prune
+### Build Production Image
 
------
+```bash
+cd rta-dataprocessor/env
+./build-prod-image.sh
+```
 
-On MAC platform
-docker build --platform linux/amd64 -t worker:1.0.0 -f ./Dockerfile.amd .
-docker build --platform linux/arm64 -t worker:1.0.0 -f ./Dockerfile.arm .
+This creates `rta-dataprocessor-prod:<branch>-<commit>` with:
+- Everything from base image
+- RTA Data Processor framework compiled and installed
 
+### Bootstrap for User Permissions
 
-On Linux platform
-docker build -t worker:1.0.0 -f ./Dockerfile.amd .
+```bash
+./bootstrap.sh rta-dataprocessor-prod:<tag> $USER
+```
 
------
+Creates a user-specific image that can write to your host filesystem.
 
-docker build -t worker:1.0.0 .
+## Manual Build
 
-./bootstrap.sh worker:1.0.0 agileobs
+If you prefer to build manually:
 
-docker run -it -d -v /home/agileobs/worker/workspace:/home/worker/workspace -v /data02/:/data02/  -p 8001:8001 --name rtadp1 worker:1.0.0_agileobs /bin/bash
+```bash
+# Base image
+docker build -t rta-dataprocessor-base:v1.0.0 \
+    -f docker_base/Dockerfile.base \
+    ..
 
-docker exec -it rtadp1 /bin/bash
-cd
-. entrypoint.sh
+# Production image
+docker build -t rta-dataprocessor-prod:latest \
+    --build-arg BASE_IMAGE=rta-dataprocessor-base:v1.0.0 \
+    -f Dockerfile.prod \
+    ..
+```
 
-nohup jupyter-lab --ip="*" --port 8001 --no-browser --autoreload --NotebookApp.token='worker2024#'  --notebook-dir=/home/worker/workspace --allow-root > jupyterlab_start.log 2>&1 &
+## Using the Images
 
-SETUP ENV DEV
-------------
+### Interactive Shell
 
-docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name rtadp1 worker:1.0.0 /bin/bash
+```bash
+docker run -it --rm \
+    -v $(pwd)/..:/home/worker/rta-dataprocessor \
+    rta-dataprocessor-prod:latest \
+    bash
+```
 
-docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name rtadp2 worker:1.0.0 /bin/bash
+### Run Application
 
-docker run -it -d -v /Users/bulgarelli/devel/astri/rta-dataprocessor/:/home/worker/workspace  --name rtadp3 worker:1.0.0 /bin/bash
+```bash
+docker run -it --rm \
+    -v $(pwd)/..:/home/worker/rta-dataprocessor \
+    rta-dataprocessor-prod:latest \
+    /home/worker/rta-dataprocessor/c++/build/ProcessDataConsumer1
+```
 
-docker exec -it rtadp1 bash
-docker exec -it rtadp2 bash
-docker exec -it rtadp3 bash
+## Directory Structure
 
+```
+env/
+├── Dockerfile.base          # Base image with system dependencies
+├── Dockerfile.prod          # Production image with framework installed
+├── docker_base/
+│   ├── install-system-packages.sh  # Install Ubuntu packages
+│   └── build-dependencies.sh       # Build C++ libraries from source
+├── build-base-image.sh      # Script to build base image
+├── build-prod-image.sh      # Script to build production image
+└── bootstrap.sh             # Create user-specific image
+```
+
+## Updating Images
+
+### Update System Dependencies
+
+Edit `docker_base/install-system-packages.sh` or `docker_base/build-dependencies.sh`, then rebuild base image.
+
+### Update Framework
+
+Just rebuild the production image - it will recompile the latest code:
+
+```bash
+./build-prod-image.sh
+```
+
+## Troubleshooting
+
+### Build fails with permission errors
+
+Make sure you run bootstrap:
+```bash
+./bootstrap.sh <image-name> $USER
+```
+
+### Image not found
+
+List available images:
+```bash
+docker images | grep rta-dataprocessor
+```
+
+### Clean rebuild
+
+Remove old images and rebuild:
+```bash
+docker rmi rta-dataprocessor-prod:latest
+docker rmi rta-dataprocessor-base:v1.0.0
+./build-base-image.sh
+./build-prod-image.sh
+```
+
+## Notes
+
+- Base image needs to be rebuilt only when system dependencies change
+- Production image should be rebuilt when framework code changes
+- Image tags include git branch and commit hash for traceability
+- Bootstrap creates a user-specific image suffixed with your username

@@ -1,0 +1,3 @@
+[submodule "c++/external/avro"]
+	path = c++/external/avro
+	url = https://github.com/apache/avro.git

@@ -4,7 +4,6 @@ build/*
 *.inl
 *.log
 core.*
-
 rtadp-proto/ACS/lib/
 rtadp-proto/ACS/object/
 
@@ -15,3 +14,4 @@ workers/dist
 workers/workers.egg-info
 
 .vscode
+.vs

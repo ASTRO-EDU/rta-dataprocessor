@@ -15,12 +15,15 @@ import avro.schema
 import avro.io
 import sys
 from ConfigurationManager import ConfigurationManager
+from avro_schema import AVRO_SCHEMA
+
 
 class AvroDataGenerator:
     def __init__(self, config_file_path, queue, delay, processname):
         self.load_configuration(config_file_path, processname)
         self.delay = float(delay)
         self.queue = queue
+
         self.type = self.config.get("dataflow_type")
         self.datasocket_type = self.config.get("datasocket_type")
         print(f"{self.type} {self.datasocket_type}")
@@ -59,28 +62,7 @@ class AvroDataGenerator:
         return avro_data
 
     def create_avro_message(self):
-        avro_schema_str = '''
-            {
-                "type": "record",
-                "name": "AvroMonitoringPoint",
-                "namespace": "astri.mon.kafka",
-                "fields": [
-                    {"name": "assembly", "type": "string"},
-                    {"name": "name", "type": "string"},
-                    {"name": "serial_number", "type": "string"},
-                    {"name": "timestamp", "type": "long"},
-                    {"name": "source_timestamp", "type": ["null", "long"]},
-                    {"name": "units", "type": "string"},
-                    {"name": "archive_suppress", "type": "boolean"},
-                    {"name": "env_id", "type": "string"},
-                    {"name": "eng_gui", "type": "boolean"},
-                    {"name": "op_gui", "type": "boolean"},
-                    {"name": "data", "type": {"type": "array", "items": ["double", "int", "long", "string", "boolean"]}}
-                ]
-            }
-        '''
-
-        avro_schema = avro.schema.parse(avro_schema_str)
+        avro_schema = avro.schema.parse(AVRO_SCHEMA)
 
         # Fill in other fields based on your use case
         avro_message = {
@@ -114,6 +96,8 @@ class AvroDataGenerator:
                 encoder = avro.io.BinaryEncoder(bytes_io)
                 writer.write(avro_message, encoder)
                 avro_binary_data = bytes_io.getvalue()
+
+                # print(self.config.get("data_lp_socket"))
 
                 # Send the serialized Avro message via ZeroMQ
                 self.socket.send(avro_binary_data)

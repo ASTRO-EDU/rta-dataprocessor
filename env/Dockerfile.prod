@@ -1,0 +1,21 @@
+
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+USER root
+# Copy repository
+COPY . /home/worker/rta-dataprocessor/
+
+# Build and install RTA Data Processor
+RUN cd /home/worker/rta-dataprocessor/c++ && \
+    ./install.sh
+
+# Switch to worker user
+USER worker
+
+# Mount point for workspace
+VOLUME /home/worker/workspace
+
+# Default command to keep container running
+CMD ["bash"]
+

@@ -1,0 +1,16 @@
+**/*.so
+**/*.o
+**/*.a
+*.Identifier
+.vscode/
+.vs/
+build*/
+logs/
+CMakeFiles/
+CMakeCache.txt
+Makefile
+ProcessDataConsumer
+ProcessDataConsumer1
+lib/
+include/spdlog/
+output/
